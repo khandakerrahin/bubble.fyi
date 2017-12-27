@@ -20,6 +20,7 @@ public class BubbleFyiMDB implements MessageListener {
      * Default constructor. 
      */
     public BubbleFyiMDB() {
+    	
         // TODO Auto-generated constructor stub
     }
 	
