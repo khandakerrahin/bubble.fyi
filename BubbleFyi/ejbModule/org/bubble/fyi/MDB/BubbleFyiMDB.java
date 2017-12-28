@@ -22,7 +22,7 @@ public class BubbleFyiMDB implements MessageListener {
     public BubbleFyiMDB() {
     	
         // TODO Auto-generated constructor stub
-    }
+    }//test commit
 	
 	/**
      * @see MessageListener#onMessage(Message)
