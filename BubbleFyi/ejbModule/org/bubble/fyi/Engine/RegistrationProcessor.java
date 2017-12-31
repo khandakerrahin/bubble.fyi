@@ -3,10 +3,10 @@
  */
 package org.bubble.fyi.Engine;
 
-import org.bubble.fyi.DBOperations.Registration;
+import org.bubble.fyi.DBOperations.UserRegistration;
 
 /**
- * @author hafiz
+ * @author wasif
  *
  */
 public class RegistrationProcessor {
@@ -33,7 +33,7 @@ public class RegistrationProcessor {
 	 * <br>-3:General Exception
 	 * <br>-4:SQLException while closing connection
 	 */
-	public String processSchoolRegistration(String message, String messageBody) {
+	public String processCustomerRegistration(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder registrationInfo;
 		if(messageBody.isEmpty()) {
@@ -41,9 +41,9 @@ public class RegistrationProcessor {
 		}else {
 			registrationInfo=new JsonDecoder(messageBody);
 		}
-		Registration register=new Registration();
+		UserRegistration register=new UserRegistration();
 		if(registrationInfo.getErrorCode().equals("0")) {
-			retval=register.registerNew(registrationInfo);
+			retval=register.registerNewUser(registrationInfo);
 		}else{
 			//error decoding json
 			retval="E:JSON string invalid";
