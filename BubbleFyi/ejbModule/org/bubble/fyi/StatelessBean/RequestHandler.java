@@ -3,14 +3,13 @@ package org.bubble.fyi.StatelessBean;
 import javax.ejb.Asynchronous;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
+//import javax.ejb.TransactionManagement;
+//import javax.ejb.TransactionManagementType;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import javax.annotation.PostConstruct; 
 import javax.ejb.Startup;
-import javax.ejb.Stateless;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 
@@ -34,14 +33,6 @@ public class RequestHandler implements RequestHandlerRemote, RequestHandlerLocal
     }
 
 }/**/
-
-
-
-
-
-
-
-
 
 
 /**
@@ -112,6 +103,7 @@ public class RequestHandler implements RequestHandlerLocal {
 			//example: { "username":"t1@sp.com", "password":"specialt1pass", "mode":"1"}
 			retVal=new LoginProcessor().processLogin(message,messageBody);
 		}else if(action.equalsIgnoreCase("registerCustomer")) {//documented
+			
 			retVal=new RegistrationProcessor().processCustomerRegistration(message,messageBody);
 		}
 		
