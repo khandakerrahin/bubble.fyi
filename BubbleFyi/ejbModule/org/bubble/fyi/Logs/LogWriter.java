@@ -155,16 +155,16 @@ public class LogWriter {
 				+","+((newSubscriptionTime.equals("null")||newSubscriptionTime.equals("sysdate"))?newSubscriptionTime:"to_date('"+newSubscriptionTime+"','yyyymmddhh24miss')")//"sysdate"//newSubscriptionTime
 				+","+failCounter
 				+ ")";
-		LOGGER.info("Fees.School: "+"LogWriter Sql:"+sql);
+		LOGGER.info("Bubble.Fyi: "+"LogWriter Sql:"+sql);
 		int retVal=-1;
 		try {
 //			retVal = sData.executeSQL(sql);
 		} catch (/*SQLException e*/Exception e) {
 			e.printStackTrace();
-			LOGGER.severe("Fees.School: "+"LogWriter.flush() SQLException");
+			LOGGER.severe("Bubble.Fyi: "+"LogWriter.flush() SQLException");
 		}
 		retval=(retVal>0)?true:false;
-		LOGGER.severe("Fees.School: "+"LogWriter"+"flush() Response:"+retVal);
+		LOGGER.severe("Bubble.Fyi: "+"LogWriter"+"flush() Response:"+retVal);
 		return retval;
 	}
 

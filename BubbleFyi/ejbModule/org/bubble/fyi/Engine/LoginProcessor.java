@@ -7,7 +7,7 @@ import org.bubble.fyi.DBOperations.Login;
 import org.bubble.fyi.DBOperations.UserInfo;
 
 /**
- * @author hafiz
+ * @author wasif
  * Get login data from webserver
  * match login data with db users table
  * 

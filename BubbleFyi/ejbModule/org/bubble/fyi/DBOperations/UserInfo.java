@@ -1,13 +1,13 @@
 /**
  * 
  */
-package org.fees.school.DBOperations;
+package org.bubble.fyi.DBOperations;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.fees.school.DataSources.FeesSchoolDS;
-import org.fees.school.Engine.JsonEncoder;
-import org.fees.school.Logs.LogWriter;
+import org.bubble.fyi.DataSources.BubbleFyiDS;
+import org.bubble.fyi.Engine.JsonEncoder;
+import org.bubble.fyi.Logs.LogWriter;
 
 /**
  * @author hafiz

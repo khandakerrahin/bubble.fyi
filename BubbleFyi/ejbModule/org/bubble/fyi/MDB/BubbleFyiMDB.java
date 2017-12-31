@@ -21,7 +21,7 @@ import javax.naming.NamingException;
 import org.bubble.fyi.Initializations.LoadConfigurations;
 import org.bubble.fyi.StatelessBean.RequestHandlerLocal;
 import org.bubble.fyi.Utilities.QueueProcess;
-
+ 
 /**
  * Message-Driven Bean implementation class for: BubbleFyiMDB
  */
