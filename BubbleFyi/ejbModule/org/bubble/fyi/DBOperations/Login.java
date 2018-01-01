@@ -47,18 +47,20 @@ public class Login {
 	 */
 	public String compareCredentialsInDB(String loginCredential, String password, int mode) {
 		String retval="-2";
-		String sql="select count(*) as counter from users where <mode>=? and passwd_enc=AES_ENCRYPT(?,concat_ws('',?,key_seed,key_seed,key_seed))";
+		String sql="select count(*) as counter from tbl_users where <mode>=? and password=?";
 		if(mode==1) { //email
-			sql=sql.replace("<mode>", "user_email");
-		}else { //phone
 			sql=sql.replace("<mode>", "phone");
 			loginCredential=this.msisdnNormalize(loginCredential);
+		}else if(mode==2) { //phone
+			sql=sql.replace("<mode>", "email");			
+		}else{
+			sql=sql.replace("<mode>", "username");
 		}
 		try {
 			fsDS.prepareStatement(sql);
 			fsDS.getPreparedStatement().setString(1, loginCredential);
 			fsDS.getPreparedStatement().setString(2, password);
-			fsDS.getPreparedStatement().setString(3, SecretKey.SECRETKEY);
+			//fsDS.getPreparedStatement().setString(3, SecretKey.SECRETKEY);
 			ResultSet rs = fsDS.executeQuery();
 			while (rs.next()) {
 				retval=rs.getString(1);

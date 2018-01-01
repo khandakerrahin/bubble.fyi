@@ -53,34 +53,29 @@ public class UserInfo {
 	public JsonEncoder fetchUserInfo(String id, String mode) {
 		JsonEncoder jsonEncoder=new JsonEncoder();
 		String errorCode="-1";//default errorCode
-		String sql="SELECT u.user_id, u.user_name, o.organization_name, u.user_email, u.user_type, u.phone, u.status, o.custodian_email,o.custodian_name,o.custodian_phone,o.organization_type,o.address,o.city,o.postcode FROM users u left join organizations o on u.user_id=o.user_id where u.<mode>=?";
-		if(mode.equals("1")) { //email
-			sql=sql.replace("<mode>", "user_email");
-		}else { //phone
+		//String sql="SELECT u.user_id, u.user_name, o.organization_name, u.user_email, u.user_type, u.phone, u.status, o.custodian_email,o.custodian_name,o.custodian_phone,o.organization_type,o.address,o.city,o.postcode FROM users u left join organizations o on u.user_id=o.user_id where u.<mode>=?";
+		//TODO
+		String sql="SELECT u.id, u.custodian_name,u.address, u.organization_name, u.username,u.email, if(u.flag=5,'Admin','Customer') as user_type,u.flag, u.phone, u.postcode FROM tbl_users u where u.<mode>=?";
+		if(mode.equals("2")) { //email
+			sql=sql.replace("<mode>", "email");
+		}else if(mode.equals("1")) { //phone
 			sql=sql.replace("<mode>", "phone");
 			id=msisdnNormalize(id);
+		}else {
+			sql=sql.replace("<mode>", "username");
 		}
 		try {
 			fsDS.prepareStatement(sql);
 			fsDS.getPreparedStatement().setString(1, id);
 			ResultSet rs = fsDS.executeQuery();
 			if (rs.next()) {
-				jsonEncoder.addElement("id", rs.getString("user_id"));
-				jsonEncoder.addElement("username", rs.getString("user_name"));
-				jsonEncoder.addElement("email", rs.getString("user_email"));
+				jsonEncoder.addElement("id", rs.getString("id"));
+				jsonEncoder.addElement("username", rs.getString("username"));
+				jsonEncoder.addElement("email", rs.getString("email"));
 				jsonEncoder.addElement("phoneNumber", rs.getString("phone"));
 				jsonEncoder.addElement("userType", rs.getString("user_type"));
-				jsonEncoder.addElement("status", rs.getString("status"));
-				if(rs.getString("user_type").equalsIgnoreCase("Admin")) {
-					jsonEncoder.addElement("schoolName", rs.getString("organization_name"));
-					jsonEncoder.addElement("custodianEmail", rs.getString("custodian_email"));
-					jsonEncoder.addElement("custodianName", rs.getString("custodian_name"));
-					jsonEncoder.addElement("custodianPhone", rs.getString("custodian_phone"));
-					jsonEncoder.addElement("organisationType", rs.getString("organization_type"));
-					jsonEncoder.addElement("address", rs.getString("address"));
-					jsonEncoder.addElement("city", rs.getString("city"));
-					jsonEncoder.addElement("postcode", rs.getString("postcode"));
-				}
+				jsonEncoder.addElement("status", rs.getString("flag"));
+				
 				errorCode="0";
 			}else {
 				errorCode="-9:User details could not be retrieved";
@@ -93,6 +88,7 @@ public class UserInfo {
 		}catch(Exception e){
 			errorCode= "-3";
 			LogWriter.LOGGER.severe(e.getMessage());
+			e.printStackTrace();
 		}finally{
 			if(fsDS.getConnection() != null){
 				try {

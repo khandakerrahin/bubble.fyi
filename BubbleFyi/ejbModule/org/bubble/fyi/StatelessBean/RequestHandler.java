@@ -113,6 +113,7 @@ public class RequestHandler implements RequestHandlerLocal {
 		if(action.equalsIgnoreCase("login")) {//documented
 			//json: 
 			//example: { "username":"t1@sp.com", "password":"specialt1pass", "mode":"1"}
+			//LogWriter.LOGGER.severe("inside login");
 			retVal=new LoginProcessor().processLogin(message,messageBody);
 		}else if(action.equalsIgnoreCase("registerCustomer")) {//documented
 			

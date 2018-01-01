@@ -5,6 +5,8 @@ package org.bubble.fyi.Engine;
 
 import org.bubble.fyi.DBOperations.Login;
 import org.bubble.fyi.DBOperations.UserInfo;
+import org.bubble.fyi.Logs.LogWriter;
+import java.util.logging.Logger;;
 
 /**
  * @author wasif
@@ -46,6 +48,7 @@ public class LoginProcessor {
 		JsonDecoder loginCredentials;
 		if(messageBody.isEmpty()) {
 			loginCredentials=new JsonDecoder(message);
+			
 		}else {
 			loginCredentials=new JsonDecoder(messageBody);
 		}
