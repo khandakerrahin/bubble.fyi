@@ -4,6 +4,7 @@
 package org.bubble.fyi.Engine;
 
 import org.bubble.fyi.DBOperations.UserDBOperations;
+import org.bubble.fyi.Logs.LogWriter;
 import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 
 /**
@@ -148,12 +149,27 @@ public class UserOperations {
 	// list Spider Admins
 	// list Students from school
 	// list students under parent
-	public String getSchoolsList() {
-		return new UserDBOperations().getList("Admin");
+	public String getDashboard(String message, String messageBody) {
+		//TODO
+		LogWriter.LOGGER.severe(" inside get dashboard ");
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);
+			
+		}else {
+			Credentials=new JsonDecoder(messageBody);
+		}
+		//TODO
+		LogWriter.LOGGER.severe(" going to get list --> dashboard Credentials : "+Credentials);
+		retval=new UserDBOperations().getList(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"));
+		
+		return retval;
 	}
+	/*
 	public String getSpiderAdminList() {
 		return new UserDBOperations().getList("SpiderAdmin");
-	}
+	}/**/
 	public String getStudentListForParent(String userId) {
 		if(NullPointerExceptionHandler.isNullOrEmpty(userId)) return "-8:At least one parameter null or empty";
 		return new UserDBOperations().getStudentList(userId, "P");

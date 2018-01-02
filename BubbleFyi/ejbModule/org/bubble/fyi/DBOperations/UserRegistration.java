@@ -91,7 +91,7 @@ public class UserRegistration {
 					errorCode="11:Inserting user credentials failed";
 					LogWriter.LOGGER.severe("SQLException"+e.getMessage());
 				}catch(Exception e) {
-					errorCode="9450:generalize error";
+					errorCode="75:other Exception";
 					e.printStackTrace();
 				}
 			

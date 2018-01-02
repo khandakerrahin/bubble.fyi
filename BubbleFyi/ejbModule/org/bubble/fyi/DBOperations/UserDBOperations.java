@@ -444,33 +444,40 @@ public class UserDBOperations {
 	 * <br> u.user_id, u.user_name, u.user_email, u.phone, u.user_type, u.status, o.organization_name,o.custodian_name, o.custodian_email,o.custodian_phone,o.organization_type,o.city,o.postcode,o.address
 	 */
 	// for parents id,phone,email,name,otp,otp_expire_time,status
-	public String getList(String listType){
+	public String getList(String id,String userType){
+		//TODO
+		LogWriter.LOGGER.severe(" going to get list --> getList id:userType ::"+id+":"+userType);
 		String retval="";
 		String errorCode="-1";
-		String sql="SELECT u.user_id, u.user_name, u.user_email, u.phone, u.user_type, u.status, o.organization_name,o.custodian_name, o.custodian_email,o.custodian_phone,o.organization_type,o.city,o.postcode,o.address FROM users u left join organizations o on u.user_id=o.user_id where user_type=? order by user_id asc";
+		//String sql="SELECT u.user_id, u.user_name, u.user_email, u.phone, u.user_type, u.status, o.organization_name,o.custodian_name, o.custodian_email,o.custodian_phone,o.organization_type,o.city,o.postcode,o.address FROM users u left join organizations o on u.user_id=o.user_id where user_type=? order by user_id asc";
+		String sqlAdmin="SELECT t.aparty,t.bparty,t.message,t.sms_count,t.insert_date,t.flag,t.userid,t.exec_date,t.responseCode,t.source_id FROM smsinfo t ORDER BY `ID` ";
+		String sql="SELECT t.aparty,t.bparty,t.message,t.sms_count,t.insert_date,t.flag,t.userid,t.exec_date,t.responseCode,t.source_id FROM smsinfo t where t.userid=? ORDER BY `ID` asc";
 		try {
-			fsDS.prepareStatement(sql);
-			fsDS.getPreparedStatement().setString(1, listType);
+			if(userType.equals("Admin")) {
+				fsDS.prepareStatement(sqlAdmin);
+				//ResultSet rs = fsDS.executeQuery();
+			}else {
+				fsDS.prepareStatement(sql);
+				fsDS.getPreparedStatement().setString(1, id);			
+			}
+			LogWriter.LOGGER.severe(" This is test : "+fsDS);
 			ResultSet rs = fsDS.executeQuery();
 			while (rs.next()) {
-				retval+=rs.getString("user_id")+",";
-				retval+="\""+rs.getString("user_name")+"\""+",";
-				retval+="\""+rs.getString("user_email")+"\""+",";
-				retval+=rs.getString("phone")+",";
-				retval+=rs.getString("user_type")+",";
-				retval+=rs.getString("status");
-				if(rs.getString("user_type").equalsIgnoreCase("Admin")) {
-					retval+=","+"\""+rs.getString("organization_name")+"\""+",";
-					retval+="\""+rs.getString("custodian_name")+"\""+",";
-					retval+="\""+rs.getString("custodian_email")+"\""+",";
-					retval+=rs.getString("custodian_phone")+",";
-					retval+=rs.getString("organization_type")+",";
-					retval+="\""+rs.getString("city")+"\""+",";
-					retval+=rs.getString("postcode")+"\""+",";
-					retval+="\""+rs.getString("address")+"\"";
-				}
-				retval+="|";
 				
+				if(userType.equalsIgnoreCase("Admin")) {
+					retval+=rs.getString("aparty")+",";
+					//retval+="\""+rs.getString("organization_name")+"\""+",";
+					retval+=rs.getString("userid")+",";
+				}				
+				retval+=rs.getString("bparty")+",";
+				retval+="\""+rs.getString("message")+"\""+",";
+				retval+="\""+rs.getString("insert_date")+"\""+",";
+				retval+=rs.getString("sms_count")+",";
+				retval+="\""+rs.getString("exec_date")+"\""+",";
+				retval+=rs.getString("flag")+",";
+				retval+=rs.getString("source_id")+",";
+				retval+=rs.getString("responseCode");			
+				retval+="|";		
 			}
 			fsDS.closeResultSet();
 			fsDS.closePreparedStatement();
@@ -498,6 +505,7 @@ public class UserDBOperations {
 		if(!errorCode.startsWith("0")) {
 			retval=errorCode;
 		}
+		LogWriter.LOGGER.severe(" return from  get list --> "+retval);
 		return retval;
 	}
 	// list Students from school

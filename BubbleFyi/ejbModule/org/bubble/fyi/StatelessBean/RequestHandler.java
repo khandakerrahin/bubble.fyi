@@ -27,6 +27,7 @@ import javax.jms.MapMessage;
 
 import org.bubble.fyi.Engine.LoginProcessor;
 import org.bubble.fyi.Engine.RegistrationProcessor;
+import org.bubble.fyi.Engine.SMSProcessor;
 import org.bubble.fyi.Engine.UserOperations;
 import org.bubble.fyi.Initializations.LoadConfigurations;
 import org.bubble.fyi.Logs.LogWriter;
@@ -115,14 +116,15 @@ public class RequestHandler implements RequestHandlerLocal {
 			//example: { "username":"t1@sp.com", "password":"specialt1pass", "mode":"1"}
 			//LogWriter.LOGGER.severe("inside login");
 			retVal=new LoginProcessor().processLogin(message,messageBody);
-		}else if(action.equalsIgnoreCase("registerCustomer")) {//documented
-			
+		}else if(action.equalsIgnoreCase("registerUser")) {//documented			
 			retVal=new RegistrationProcessor().processCustomerRegistration(message,messageBody);
+		}else if(action.equalsIgnoreCase("sendSMS")) {//documented			
+			retVal=new SMSProcessor().processSendSMS(message,messageBody);
 		}
-		
-		/*else if(action.equalsIgnoreCase("getSchoolsList")) {//documented
-			retVal=new UserOperations().getSchoolsList();
-		}else if(action.equalsIgnoreCase("getSpiderAdminList")) {//documented
+		else if(action.equalsIgnoreCase("getDashboard")) {//documented
+			retVal=new UserOperations().getDashboard(message,messageBody);
+		}
+		/*else if(action.equalsIgnoreCase("getSpiderAdminList")) {//documented
 			retVal=new UserOperations().getSpiderAdminList();
 		}else if(action.equalsIgnoreCase("getStudentList")) {//documented
 			if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("parentId")))
