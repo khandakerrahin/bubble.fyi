@@ -77,12 +77,14 @@ public class UserOperations {
 		}
 		return retval;
 	}
+	/*
 	public String getUserType(String userId) {
 		return new UserDBOperations().getUserType(userId);
-	}
+	}/**/
+	/*
 	public String getUserId(String userId, String mode) {
 		return new UserDBOperations().getUserId(userId,mode);
-	}
+	}/**/
 	/**
 	 * 
 	 * @param userId
@@ -98,8 +100,12 @@ public class UserOperations {
 	 * -3: SQLException while closing connection
 	 * 
 	 */
-	public String modifyPassword(String userId, String oldPass, String newPass) {
-		return new UserDBOperations().modifyPassword(userId, oldPass, newPass);
+	public String modifyPasswordFunc(String userId, String oldPass, String newPass) {
+		return new UserDBOperations().modifyPasswordDB(userId, oldPass, newPass);
+	}
+	
+	public String updateCustomerStatus(String id, String customerid, String status) {
+		return new UserDBOperations().modifyCustomerStatus(id, customerid, status);
 	}
 	/**
 	 * 
@@ -124,12 +130,29 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=modifyPassword(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("oldPass"),credentials.getJsonObject().getString("newPass"));
+			retval=modifyPasswordFunc(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("oldPass"),credentials.getJsonObject().getString("newPass"));
 		}else{
 			retval="E:JSON string invalid";
 		}
 		return retval;
 	}
+	
+	public String modifyCustomerStatus(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=updateCustomerStatus(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("customerid"),credentials.getJsonObject().getString("status"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
 	//TODO modifyEmail
 	//TODO modifyPhone
 	//TODO modifyAddress
@@ -150,22 +173,30 @@ public class UserOperations {
 	// list Students from school
 	// list students under parent
 	public String getDashboard(String message, String messageBody) {
-		//TODO
-		LogWriter.LOGGER.severe(" inside get dashboard ");
 		String retval="E";
 		JsonDecoder Credentials;
 		if(messageBody.isEmpty()) {
-			Credentials=new JsonDecoder(message);
-			
-		}else {
+			Credentials=new JsonDecoder(message);			
+		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		//TODO
-		LogWriter.LOGGER.severe(" going to get list --> dashboard Credentials : "+Credentials);
-		retval=new UserDBOperations().getList(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"));
-		
+		retval=new UserDBOperations().getList(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"));		
 		return retval;
 	}
+	
+	public String getCustomerList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getAllCustomerList(Credentials.getJsonObject().getString("id"));		
+		return retval;
+	}
+	
+	
 	/*
 	public String getSpiderAdminList() {
 		return new UserDBOperations().getList("SpiderAdmin");

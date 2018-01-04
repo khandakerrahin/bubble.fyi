@@ -123,10 +123,15 @@ public class RequestHandler implements RequestHandlerLocal {
 		}
 		else if(action.equalsIgnoreCase("getDashboard")) {//documented
 			retVal=new UserOperations().getDashboard(message,messageBody);
+		}else if(action.equalsIgnoreCase("modifyPassword")) {
+			retVal=new UserOperations().modifyPassword(message,messageBody);
 		}
-		/*else if(action.equalsIgnoreCase("getSpiderAdminList")) {//documented
-			retVal=new UserOperations().getSpiderAdminList();
-		}else if(action.equalsIgnoreCase("getStudentList")) {//documented
+		else if(action.equalsIgnoreCase("CustomerList")) {//documented
+			retVal=new UserOperations().getCustomerList(message,messageBody);
+		}else if(action.equalsIgnoreCase("UpdateCustomerStatus")) {
+			retVal=new UserOperations().modifyCustomerStatus(message,messageBody);
+		}
+		/*else if(action.equalsIgnoreCase("getStudentList")) {//documented
 			if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("parentId")))
 				retVal=new UserOperations().getStudentListForParent(msg.getString("parentId"));
 			else if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("schoolId")))

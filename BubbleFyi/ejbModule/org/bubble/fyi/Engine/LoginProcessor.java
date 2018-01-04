@@ -60,6 +60,8 @@ public class LoginProcessor {
 		}
 		if(retval.equals("1")) {
 			retval=fetchUserInfo(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode"));
+		}else {
+			retval="-6:Error in user Credentials";
 		}
 		return retval;
 	}

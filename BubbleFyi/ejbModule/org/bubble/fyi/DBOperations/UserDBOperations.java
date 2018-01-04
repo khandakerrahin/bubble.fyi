@@ -90,29 +90,29 @@ public class UserDBOperations {
 	 * -2: SQLException
 	 * -3: SQLException while closing connection
 	 */
-	public String modifyPassword(String userId, String oldPass, String newPass) {
+	public String modifyPasswordDB(String userId, String oldPass, String newPass) {
 		//Modify password
 		String retval="-1";
 		//	check if old password matches
 		//	retrieve old password, keySeed
 		String keySeed="",passwd="";
-		String sql="select AES_DECRYPT(passwd_enc,concat_ws('',?,key_seed,key_seed,key_seed)) as passwd, key_seed from users where user_id=?";
+		//String sql="select AES_DECRYPT(passwd_enc,concat_ws('',?,key_seed,key_seed,key_seed)) as passwd, key_seed from tbl_users where id=?";
+		String sql="select password as passwd from tbl_users where id=?";
+		
 		try {
 			fsDS.prepareStatement(sql);
-			fsDS.getPreparedStatement().setString(1, SecretKey.SECRETKEY);
-			fsDS.getPreparedStatement().setString(2, userId);
+		fsDS.getPreparedStatement().setString(1, userId);
 			fsDS.executeQuery();
 			if(fsDS.getResultSet().next()) {
 				passwd=fsDS.getResultSet().getString(1);
-				keySeed=fsDS.getResultSet().getString(2);
-			}else {
+				}else {
 				retval="1:User not found";
 			}
 			fsDS.closeResultSet();
 			fsDS.closePreparedStatement();
 			if(oldPass.equals(passwd)) {
 				//proceed to change passwd
-				if(setNewPassword(userId,newPass,keySeed)) {
+				if(setNewPassword(userId,newPass)) {
 					retval="0:Password set";
 					LogWriter.LOGGER.info("New password");
 				}else {
@@ -141,15 +141,93 @@ public class UserDBOperations {
 		}
 		return retval;
 	}
-	private boolean setNewPassword(String userId,String newPass, String keySeed) {
+	
+	public String modifyCustomerStatus(String userId, String customerId, String Status) {
+		//Modify password
+		String retval="-1";
+		//	check if old password matches
+		//	retrieve old password, keySeed
+		/*String keySeed="",passwd="";
+		//String sql="select AES_DECRYPT(passwd_enc,concat_ws('',?,key_seed,key_seed,key_seed)) as passwd, key_seed from tbl_users where id=?";
+		String sql="select password as passwd from tbl_users where id=?";
+		
+		try {
+			fsDS.prepareStatement(sql);
+		    fsDS.getPreparedStatement().setString(1, userId);
+			fsDS.executeQuery();
+			if(fsDS.getResultSet().next()) {
+				passwd=fsDS.getResultSet().getString(1);
+				}else {
+				retval="1:User not found";
+			}
+			fsDS.closeResultSet();
+			fsDS.closePreparedStatement();
+			if(oldPass.equals(passwd)) {/**/
+				//proceed to change passwd
+				if(setNewStatus(userId,customerId,Status)) {
+					retval="0:Customer Status Updated";
+					LogWriter.LOGGER.info("New password");
+				}else {
+					retval="3:Error encountered while Updating Status";
+					LogWriter.LOGGER.info("Error encountered while updating Customer Status.");
+				}
+			/*}else {
+				//password didn't match
+				if(retval.startsWith("-1")) {
+					retval="2:Current password is invalid";
+					LogWriter.LOGGER.info("Current password did not match.");
+				}
+			}
+		} catch (SQLException e) {
+			retval="-2";
+			LogWriter.LOGGER.severe("modifyCustomerStatus(): "+e.getMessage());
+		}finally{
+			if(fsDS.getConnection() != null){
+				try {
+					fsDS.getConnection().close();
+				} catch (SQLException e) {
+					retval="-3";
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}/**/
+		return retval;
+	}
+	
+	private boolean setNewStatus(String userId,String customerId,String newflag) {
 		boolean retval=false;
-		String sqlUpdateUser="UPDATE users u set u.user_password=?,u.passwd_enc=AES_ENCRYPT(?,concat_ws('',?,key_seed,key_seed,key_seed)) WHERE u.user_id=?";
+		String sqlUpdateUser="UPDATE tbl_users u set u.flag=?,u.updated_by=?,u.updated_on= CURRENT_TIMESTAMP WHERE u.id=?";
+		try {
+			fsDS.prepareStatement(sqlUpdateUser);
+			fsDS.getPreparedStatement().setString(1, newflag);
+			fsDS.getPreparedStatement().setString(2, userId);
+			fsDS.getPreparedStatement().setString(3, customerId);
+			fsDS.execute();
+			fsDS.closePreparedStatement();
+			retval=true;
+		} catch (SQLException e) {
+			LogWriter.LOGGER.severe("setNewStatus(): "+e.getMessage());
+		}finally{
+			if(fsDS.getConnection() != null){
+				try {
+					fsDS.getConnection().close();
+				} catch (SQLException e) {
+					retval=false;
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+		return retval;
+	}
+	
+	
+	private boolean setNewPassword(String userId,String newPass) {
+		boolean retval=false;
+		String sqlUpdateUser="UPDATE tbl_users u set u.password=? WHERE u.id=?";
 		try {
 			fsDS.prepareStatement(sqlUpdateUser);
 			fsDS.getPreparedStatement().setString(1, newPass);
-			fsDS.getPreparedStatement().setString(2, newPass);
-			fsDS.getPreparedStatement().setString(3, SecretKey.SECRETKEY);
-			fsDS.getPreparedStatement().setString(4, userId);
+			fsDS.getPreparedStatement().setString(2, userId);
 			fsDS.execute();
 			fsDS.closePreparedStatement();
 			retval=true;
@@ -239,9 +317,10 @@ public class UserDBOperations {
 		}
 		return retval;
 	}
+
 	public String getUserType(String userId) {
 		String retval="-1";
-		String sql="select user_type from users where userId=?";
+		String sql="select flag from tbl_users where id=?";
 		if(retval.startsWith("-1")) {
 			try {
 				fsDS.prepareStatement(sql);
@@ -255,6 +334,7 @@ public class UserDBOperations {
 				fsDS.closeResultSet();
 				fsDS.closePreparedStatement();
 			} catch (SQLException e) {
+				e.printStackTrace();
 				retval="-2";
 				LogWriter.LOGGER.severe("getUserType(): "+e.getMessage());
 			}finally{
@@ -277,7 +357,7 @@ public class UserDBOperations {
 	 * @return userId in the users table
 	 * <br>1:User not found, 11:Invalid mode , -1 for unknown error, -2 for SQLException
 	 */
-	public String getUserId(String credential,String mode) {
+	/* public String getUserId(String credential,String mode) {
 		String retval="-1";
 		String sql="select user_id from users where <mode>=?";
 		if(mode.equals("1")) {//email
@@ -316,7 +396,7 @@ public class UserDBOperations {
 			}
 		}
 		return retval;
-	}
+	}/**/
 
 	//list Schools (Admins)
 	//list Spider Admins
@@ -330,7 +410,7 @@ public class UserDBOperations {
 	 * @return
 	 */
 	// for parents id,phone,email,name,otp,otp_expire_time,status
-	public Map<String,Object> getList(String listType,int x){
+	/*public Map<String,Object> getList(String listType,int x){
 		Map<String,Object> mapList=new HashMap<String,Object >();
 		List<String> row;
 		String errorCode="-1";
@@ -381,58 +461,8 @@ public class UserDBOperations {
 			mapList.put("errorcode", errorCode);
 		}
 		return mapList;
-	}
-	public String getListTest(String listType){
-		String retval="";
-		List<String> row;
-		String errorCode="-1";
-		String sql="SELECT u.user_id, u.user_name, o.organization_name, u.user_email, u.user_type, u.phone, u.status, o.custodian_email,o.custodian_name,o.custodian_phone,o.organization_type,o.address,o.city,o.postcode FROM users u, organizations o where u.user_id=o.user_id and user_type=? order by user_id asc";
-		try {
-			fsDS.prepareStatement(sql);
-			fsDS.getPreparedStatement().setString(1, listType);
-			ResultSet rs = fsDS.executeQuery();
-			while (rs.next()) {
-				row=new ArrayList<String>();
-				row.add(rs.getString("user_id"));
-				row.add(rs.getString("user_name"));
-				row.add(rs.getString("user_email"));
-				row.add(rs.getString("phone"));
-				row.add(rs.getString("user_type"));
-				row.add(rs.getString("status"));
-				if(rs.getString("user_type").equalsIgnoreCase("Admin")) {
-					row.add(rs.getString("organization_name"));
-					row.add(rs.getString("custodian_email"));
-					row.add(rs.getString("custodian_name"));
-					row.add(rs.getString("custodian_phone"));
-					row.add(rs.getString("organization_type"));
-					row.add(rs.getString("address"));
-					row.add(rs.getString("city"));
-					row.add(rs.getString("postcode"));
-				}
-				retval+=row;
-				errorCode="0";
-			}
-			fsDS.closeResultSet();
-			fsDS.closePreparedStatement();
-			LogWriter.LOGGER.info("RowList : "+retval);
-		}catch(Exception e){
-			errorCode= "-2";
-			LogWriter.LOGGER.severe(e.getMessage());
-		}finally{
-			if(fsDS.getConnection() != null){
-				try {
-					fsDS.getConnection().close();
-				} catch (SQLException e) {
-					errorCode="-3";
-					LogWriter.LOGGER.severe(e.getMessage());
-				}
-			}      
-		}
-		if(!errorCode.startsWith("0")) {
-			retval="errorcode"+ errorCode;
-		}
-		return retval;
-	}
+	}/**/
+
 	/**
 	 * 
 	 * 
@@ -460,7 +490,7 @@ public class UserDBOperations {
 				fsDS.prepareStatement(sql);
 				fsDS.getPreparedStatement().setString(1, id);			
 			}
-			LogWriter.LOGGER.severe(" This is test : "+fsDS);
+			
 			ResultSet rs = fsDS.executeQuery();
 			while (rs.next()) {
 				
@@ -510,6 +540,70 @@ public class UserDBOperations {
 	}
 	// list Students from school
 	// list students under parent
+	
+	public String getAllCustomerList(String id){
+		String retval="";
+		String errorCode="-1";
+		String userFlag=getUserType(id);
+		
+		if(userFlag.equals("5")) {
+		String sql="SELECT t.custodian_name,t.username,t.email,t.phone,t.organization_name,t.city,t.address,t.postcode,t.insert_date,t.flag FROM  tbl_users t where t.flag !=?";
+		
+		try {
+			fsDS.prepareStatement(sql);
+			
+			//fsDS.getPreparedStatement().setString(1, userFlag);
+			fsDS.getPreparedStatement().setString(1, userFlag);	
+			//TODO
+			LogWriter.LOGGER.severe(" after prepared Statement");
+			ResultSet rs = fsDS.executeQuery();
+			while (rs.next()) {
+				retval+="\""+rs.getString("custodian_name")+"\""+",";
+				retval+="\""+rs.getString("username")+"\""+",";
+				retval+="\""+rs.getString("organization_name")+"\""+",";
+				retval+=rs.getString("city")+",";
+				retval+="\""+rs.getString("address")+"\""+",";
+				retval+=rs.getString("postcode")+",";
+				retval+="\""+rs.getString("insert_date")+"\""+",";
+				retval+=rs.getString("flag")+",";						
+				retval+="|";		
+			}
+			fsDS.closeResultSet();
+			fsDS.closePreparedStatement();
+			if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+			int lio=retval.lastIndexOf("|");
+			if(lio>0) retval=retval.substring(0,lio);
+			errorCode="0";
+			LogWriter.LOGGER.info("MapList : "+retval);
+		}catch(SQLException e){
+			errorCode= "-2";
+			e.printStackTrace();
+			LogWriter.LOGGER.severe(e.getMessage());
+		}catch(Exception e){
+			errorCode= "-3";
+			e.printStackTrace();
+			LogWriter.LOGGER.severe(e.getMessage());
+		}finally{
+			if(fsDS.getConnection() != null){
+				try {
+					fsDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+	  }else {
+		  errorCode="-7: User not Authorized to perform this action";
+	  }
+		if(!errorCode.startsWith("0")) {
+			retval=errorCode;
+		}
+		LogWriter.LOGGER.severe(" return from  get Customer list --> userFlag : "+userFlag+":"+retval);
+		return retval;
+	}
+	
 	/**
 	 * 
 	 * @param userId Parents Phone, School's id TODO remove leading 0s
