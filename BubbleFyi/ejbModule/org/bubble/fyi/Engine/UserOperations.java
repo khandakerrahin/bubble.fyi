@@ -107,6 +107,14 @@ public class UserOperations {
 	public String updateCustomerStatus(String id, String customerid, String status) {
 		return new UserDBOperations().modifyCustomerStatus(id, customerid, status);
 	}
+	
+	public String createGroupDetailDB(String id, String listname) {
+		return new UserDBOperations().createGroupInfo(id, listname);
+	}
+	public String GroupSMSDetailDB(String id, String sch_date,String message,String filename) {
+		return new UserDBOperations().createGroupSMSInfo(id, sch_date,message,filename);
+	}
+	
 	/**
 	 * 
 	 * @param message
@@ -136,7 +144,21 @@ public class UserOperations {
 		}
 		return retval;
 	}
-	
+	/**
+	 * 
+	 * @param message
+	 * @param messageBody
+	 * @return String 
+	 *  0:Customer status updated
+	 *  1:User not found
+	 *  2:Current password is invalid
+	 *  3:Error encountered while setting password
+	 * -1: General Error
+	 * -2: SQLException
+	 * -8: User not Authorized update Admin status
+	 * -3: SQLException while closing connection
+	 *  E:JSON string invalid
+	 */
 	public String modifyCustomerStatus(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder credentials;
@@ -147,6 +169,41 @@ public class UserOperations {
 		}
 		if(credentials.getErrorCode().equals("0")) {
 			retval=updateCustomerStatus(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("customerid"),credentials.getJsonObject().getString("status"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	
+	public String createGroupDetail(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=createGroupDetailDB(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("listName"));
+		
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String instantGroupSMSDetail(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+				retval=GroupSMSDetailDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("filename"));
+			
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -181,6 +238,18 @@ public class UserOperations {
 			Credentials=new JsonDecoder(messageBody);
 		}
 		retval=new UserDBOperations().getList(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"));		
+		return retval;
+	}
+	
+	public String getGroupList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getCustomerGroupListInfo(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -361,7 +430,7 @@ public class UserOperations {
 	 * @return 0 is successfully inserted
 	 * Anything -ve is error.
 	 */
-	public String feesFileInsert(String message, String messageBody) {
+	public String bubbleFileInsert(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
 		if(messageBody.isEmpty()) {
@@ -370,7 +439,29 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations().feesFileInsert(json);
+			retval=new UserDBOperations().bubbleFileInsert(json);
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	/**
+	 * 
+	 * @param message
+	 * @param messageBody
+	 * @return
+	 * "E:JSON string invalid"
+	 */
+	public String uploadStatusGetter(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else {
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=getUploadStatus(json.getEString("filename"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -386,16 +477,37 @@ public class UserOperations {
 		if(NullPointerExceptionHandler.isNullOrEmpty(filename)) return "-8:At least one parameter null or empty";
 		return new UserDBOperations().getUploadStatus(filename);
 	}
+	
+	public String uploadFileListGetter(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else {
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=getFileList(json.getEString("id"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	
 	/**
 	 * 
 	 * @param schoolId
 	 * @return filename,schoolId,created,uploaded,status,month,estimated_upload_time,comments
 	 * -ve integer is error
 	 */
-	public String getFileList(String schoolId) {
-		if(NullPointerExceptionHandler.isNullOrEmpty(schoolId)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getFileList(schoolId);
+	public String getFileList(String id) {
+		if(NullPointerExceptionHandler.isNullOrEmpty(id)) return "-8:At least one parameter null or empty";
+		return new UserDBOperations().getFileList(id);
 	}
+	//TODO
+	//TODO
+	//TODO
 	/**
 	 * 
 	 * @param message userId,schoolId,sId,purpose,amount,txTime,pg,log

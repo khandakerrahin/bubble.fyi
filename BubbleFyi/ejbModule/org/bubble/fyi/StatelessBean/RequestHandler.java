@@ -120,16 +120,30 @@ public class RequestHandler implements RequestHandlerLocal {
 			retVal=new RegistrationProcessor().processCustomerRegistration(message,messageBody);
 		}else if(action.equalsIgnoreCase("sendSMS")) {//documented			
 			retVal=new SMSProcessor().processSendSMS(message,messageBody);
-		}
-		else if(action.equalsIgnoreCase("getDashboard")) {//documented
+		}else if(action.equalsIgnoreCase("getDashboard")) {//documented
 			retVal=new UserOperations().getDashboard(message,messageBody);
 		}else if(action.equalsIgnoreCase("modifyPassword")) {
 			retVal=new UserOperations().modifyPassword(message,messageBody);
-		}
-		else if(action.equalsIgnoreCase("CustomerList")) {//documented
+		}else if(action.equalsIgnoreCase("customerList")) {//documented
 			retVal=new UserOperations().getCustomerList(message,messageBody);
-		}else if(action.equalsIgnoreCase("UpdateCustomerStatus")) {
+		}else if(action.equalsIgnoreCase("updateCustomerStatus")) {
 			retVal=new UserOperations().modifyCustomerStatus(message,messageBody);
+		}else if(action.equalsIgnoreCase("createList")) {//documented	
+			retVal=new UserOperations().createGroupDetail(message,messageBody); 
+		}else if(action.equalsIgnoreCase("getGroupList")) {//documented	
+			retVal=new UserOperations().getGroupList(message,messageBody); 
+		}
+		
+		else if(action.equalsIgnoreCase("bubbleFileInsert")) {
+			retVal=new UserOperations().bubbleFileInsert(message,messageBody);
+		}else if(action.equalsIgnoreCase("getUploadStatus")) {
+			retVal=new UserOperations().uploadStatusGetter(message,messageBody);
+		}else if(action.equalsIgnoreCase("getFileList")) {
+			retVal=new UserOperations().uploadFileListGetter(message,messageBody);
+		}
+		
+		else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {
+			retVal=new UserOperations().instantGroupSMSDetail(message,messageBody); 
 		}
 		/*else if(action.equalsIgnoreCase("getStudentList")) {//documented
 			if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("parentId")))
