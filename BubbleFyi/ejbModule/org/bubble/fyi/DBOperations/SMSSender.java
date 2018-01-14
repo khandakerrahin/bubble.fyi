@@ -49,7 +49,8 @@ public class SMSSender {
 			} catch (SQLException e) {
 				retval="-2";
 				LogWriter.LOGGER.severe("getUserType(): "+e.getMessage());
-			}finally{
+			}
+			/*finally{
 				if(bubbleDS.getConnection() != null){
 					try {
 						bubbleDS.getConnection().close();
@@ -58,7 +59,7 @@ public class SMSSender {
 						LogWriter.LOGGER.severe(e.getMessage());
 					}
 				}      
-			}
+			}/**/
 		
 		return retval;
 	}
@@ -96,6 +97,7 @@ public class SMSSender {
 				errorCode="0:Successfully Inserted";
 			}catch(SQLException e) {
 				errorCode="11:Inserting  credentials failed";
+				e.printStackTrace();
 				LogWriter.LOGGER.severe(e.getMessage());
 				bubbleDS.closePreparedStatement();
 				//new UserDBOperations().deleteUsersEntry(userId); //only deletes from users table

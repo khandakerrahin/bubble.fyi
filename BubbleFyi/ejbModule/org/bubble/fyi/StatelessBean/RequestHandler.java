@@ -114,16 +114,17 @@ public class RequestHandler implements RequestHandlerLocal {
 		if(action.equalsIgnoreCase("login")) {//documented
 			//json: 
 			//example: { "username":"t1@sp.com", "password":"specialt1pass", "mode":"1"}
-			//LogWriter.LOGGER.severe("inside login");
 			retVal=new LoginProcessor().processLogin(message,messageBody);
 		}else if(action.equalsIgnoreCase("registerUser")) {//documented			
 			retVal=new RegistrationProcessor().processCustomerRegistration(message,messageBody);
 		}else if(action.equalsIgnoreCase("sendSMS")) {//documented			
 			retVal=new SMSProcessor().processSendSMS(message,messageBody);
-		}else if(action.equalsIgnoreCase("getDashboard")) {//documented
+		}else if(action.equalsIgnoreCase("getReports")) {//documented
 			retVal=new UserOperations().getDashboard(message,messageBody);
 		}else if(action.equalsIgnoreCase("modifyPassword")) {
 			retVal=new UserOperations().modifyPassword(message,messageBody);
+		}else if(action.equalsIgnoreCase("updateProfile")) {
+			retVal=new UserOperations().modifyProfile(message,messageBody);
 		}else if(action.equalsIgnoreCase("customerList")) {//documented
 			retVal=new UserOperations().getCustomerList(message,messageBody);
 		}else if(action.equalsIgnoreCase("updateCustomerStatus")) {
@@ -132,19 +133,27 @@ public class RequestHandler implements RequestHandlerLocal {
 			retVal=new UserOperations().createGroupDetail(message,messageBody); 
 		}else if(action.equalsIgnoreCase("getGroupList")) {//documented	
 			retVal=new UserOperations().getGroupList(message,messageBody); 
-		}
-		
-		else if(action.equalsIgnoreCase("bubbleFileInsert")) {
+		}else if(action.equalsIgnoreCase("bubbleFileInsert")) {
 			retVal=new UserOperations().bubbleFileInsert(message,messageBody);
 		}else if(action.equalsIgnoreCase("getUploadStatus")) {
 			retVal=new UserOperations().uploadStatusGetter(message,messageBody);
 		}else if(action.equalsIgnoreCase("getFileList")) {
 			retVal=new UserOperations().uploadFileListGetter(message,messageBody);
-		}
-		
-		else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {
+		}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {
 			retVal=new UserOperations().instantGroupSMSDetail(message,messageBody); 
+		}else if(action.equalsIgnoreCase("getTotalSMSCount")) {
+			//retVal=new LoginProcessor().processLogin(message,messageBody);
+			retVal=new UserOperations().TotalSMSCounter(message,messageBody); 
+		}else if(action.equalsIgnoreCase("getPendingBulksmsList")) {
+			retVal=new UserOperations().getPendingBulksmsList(message,messageBody);
+		}else if(action.equalsIgnoreCase("updatePendingBulksmsList")) {
+			retVal=new UserOperations().modifyBulksmsPendingStatus(message,messageBody);
+			
+		}else if(action.equalsIgnoreCase("sendBulksmsFromList")) {
+			retVal=new UserOperations().sentSMSFromList(message,messageBody); 
+			
 		}
+		//Delete user
 		/*else if(action.equalsIgnoreCase("getStudentList")) {//documented
 			if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("parentId")))
 				retVal=new UserOperations().getStudentListForParent(msg.getString("parentId"));

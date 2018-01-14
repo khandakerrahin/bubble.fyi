@@ -104,17 +104,28 @@ public class UserOperations {
 		return new UserDBOperations().modifyPasswordDB(userId, oldPass, newPass);
 	}
 	
+	public String modifyProfileFunc(String id, String email, String city,String postCode,String msisdn,String address,String custodianName,String organizationName,String userName) {
+		return new UserDBOperations().modifyProfileDB(id,email,city,postCode,msisdn,address,custodianName,organizationName,userName);
+		
+	}
+	
 	public String updateCustomerStatus(String id, String customerid, String status) {
 		return new UserDBOperations().modifyCustomerStatus(id, customerid, status);
+	}
+	
+	public String updateBulksmsStatus(String id, String customerid,String groupId, String status) {
+		return new UserDBOperations().modifyBulksmsPStatus(id, customerid,groupId, status);
 	}
 	
 	public String createGroupDetailDB(String id, String listname) {
 		return new UserDBOperations().createGroupInfo(id, listname);
 	}
 	public String GroupSMSDetailDB(String id, String sch_date,String message,String filename) {
-		return new UserDBOperations().createGroupSMSInfo(id, sch_date,message,filename);
+		return new UserDBOperations().createGroupSMSInfo(id, sch_date,message,filename).getJsonObject().toString();
 	}
-	
+	public String GetSMSCounterDB(String id) {
+		return new UserDBOperations().GetSMSCounter(id).getJsonObject().toString();
+	}
 	/**
 	 * 
 	 * @param message
@@ -144,6 +155,26 @@ public class UserOperations {
 		}
 		return retval;
 	}
+	
+	
+	
+	public String modifyProfile(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else {
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=modifyProfileFunc(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("email"),credentials.getJsonObject().getString("city"),credentials.getJsonObject().getString("postCode"),credentials.getJsonObject().getString("msisdn"),credentials.getJsonObject().getString("address"),credentials.getJsonObject().getString("custodianName"),credentials.getJsonObject().getString("organizationName"),credentials.getJsonObject().getString("userName"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	
 	/**
 	 * 
 	 * @param message
@@ -169,6 +200,22 @@ public class UserOperations {
 		}
 		if(credentials.getErrorCode().equals("0")) {
 			retval=updateCustomerStatus(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("customerid"),credentials.getJsonObject().getString("status"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String modifyBulksmsPendingStatus(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=updateBulksmsStatus(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("customerId"),credentials.getJsonObject().getString("groupId"),credentials.getJsonObject().getString("status"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -203,6 +250,41 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 				retval=GroupSMSDetailDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("filename"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String sentSMSFromList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+				retval=GroupSMSDetailDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("listId"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String TotalSMSCounter(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			
+				retval=GetSMSCounterDB(json.getJsonObject().getString("id"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -262,6 +344,18 @@ public class UserOperations {
 			Credentials=new JsonDecoder(messageBody);
 		}
 		retval=new UserDBOperations().getAllCustomerList(Credentials.getJsonObject().getString("id"));		
+		return retval;
+	}
+	
+	public String getPendingBulksmsList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getPendingBulksmsList(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
