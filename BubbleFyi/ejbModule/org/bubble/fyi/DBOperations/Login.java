@@ -14,12 +14,12 @@ import org.bubble.fyi.Logs.LogWriter;
  *
  */
 public class Login {
-	BubbleFyiDS fsDS;
+	BubbleFyiDS bubbleDS;
 	/**
 	 * 
 	 */
 	public Login() {
-		fsDS= new BubbleFyiDS();
+		bubbleDS= new BubbleFyiDS();
 	}
 	/**
 	 * If msisdn starts with 0, prepends 88.
@@ -57,26 +57,26 @@ public class Login {
 			sql=sql.replace("<mode>", "username");
 		}
 		try {
-			fsDS.prepareStatement(sql);
-			fsDS.getPreparedStatement().setString(1, loginCredential);
-			fsDS.getPreparedStatement().setString(2, password);
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, loginCredential);
+			bubbleDS.getPreparedStatement().setString(2, password);
 			//fsDS.getPreparedStatement().setString(3, SecretKey.SECRETKEY);
-			ResultSet rs = fsDS.executeQuery();
+			ResultSet rs = bubbleDS.executeQuery();
 			while (rs.next()) {
 				retval=rs.getString(1);
 				LogWriter.LOGGER.info("User count:"+retval);
 			}
-			fsDS.closeResultSet();
-			fsDS.closePreparedStatement();
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
 		}catch(Exception e){
 			LogWriter.LOGGER.severe(e.getMessage());
 		}finally{
-			if(fsDS.getConnection() != null){
-				try {
-					fsDS.getConnection().close();
-				} catch (SQLException e) {
-					LogWriter.LOGGER.severe(e.getMessage());
-				}
+			if(bubbleDS.getConnection() != null){
+//				try {
+//					bubbleDS.getConnection().close();
+//				} catch (SQLException e) {
+//					LogWriter.LOGGER.severe(e.getMessage());
+//				}
 			}      
 		}
 //		if(retval.equals("1")) //credentials valid

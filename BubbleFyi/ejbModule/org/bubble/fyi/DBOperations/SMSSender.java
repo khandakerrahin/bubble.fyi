@@ -79,6 +79,7 @@ public class SMSSender {
 	public String insertToSender(JsonDecoder jsonDecoder) {
 		String errorCode="-1";//default errorCode	
 		//TODO check if eligible to send sms.
+		try {
 		String userStatus=getUserType(jsonDecoder.getJsonObject().getString("id"));
 		if(userStatus.equals("1") || userStatus.equals("5")) {
 			
@@ -116,23 +117,33 @@ public class SMSSender {
 			errorCode= "-3";
 			LogWriter.LOGGER.severe(e.getMessage());
 			e.printStackTrace();
+		}finally {
+			try {
+				bubbleDS.closePreparedStatement();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				errorCode="-4";
+				e.printStackTrace();
+			}
+		}
+	}else {
+		errorCode="-6:Sent sms not allowed";
+	}
+		}catch(Exception e){
+			e.printStackTrace();
 		}finally{
 			if(bubbleDS.getConnection() != null){
 				try {
-					//					fsDS.getConnection().setAutoCommit(true);
 					bubbleDS.getConnection().close();
 				} catch (SQLException e) {
 					errorCode="-4";
 					LogWriter.LOGGER.severe(e.getMessage());
 				}
-			}      
-
-		}
-	}else {
-		errorCode="-6:Sent sms not allowed";
+			}  
+		
 	}
 		return errorCode;
 	}
-
-
 }
+
+

@@ -126,7 +126,7 @@ public class RequestHandler implements RequestHandlerLocal {
 		}else if(action.equalsIgnoreCase("updateProfile")) {
 			retVal=new UserOperations().modifyProfile(message,messageBody);
 		}else if(action.equalsIgnoreCase("customerList")) {//documented
-			retVal=new UserOperations().getCustomerList(message,messageBody);
+			retVal=new UserOperations().getCustomerList(message,messageBody);			
 		}else if(action.equalsIgnoreCase("updateCustomerStatus")) {
 			retVal=new UserOperations().modifyCustomerStatus(message,messageBody);
 		}else if(action.equalsIgnoreCase("createList")) {//documented	
@@ -147,12 +147,22 @@ public class RequestHandler implements RequestHandlerLocal {
 		}else if(action.equalsIgnoreCase("getPendingBulksmsList")) {
 			retVal=new UserOperations().getPendingBulksmsList(message,messageBody);
 		}else if(action.equalsIgnoreCase("updatePendingBulksmsList")) {
-			retVal=new UserOperations().modifyBulksmsPendingStatus(message,messageBody);
-			
-		}else if(action.equalsIgnoreCase("sendBulksmsFromList")) {
-			retVal=new UserOperations().sentSMSFromList(message,messageBody); 
-			
+			retVal=new UserOperations().modifyBulksmsPendingStatus(message,messageBody);			
 		}
+		
+		else if(action.equalsIgnoreCase("sendBulksmsFromList")) {
+			retVal=new UserOperations().sentSMSFromList(message,messageBody); 			
+		}else if(action.equalsIgnoreCase("getBulkSendStatus")) {
+			retVal=new UserOperations().BulkSendStatus(message,messageBody); 
+		}else if(action.equalsIgnoreCase("getAddressBook")) {//documented	
+			retVal=new UserOperations().getAddressBook(message,messageBody); 
+		}else if(action.equalsIgnoreCase("getListMsisdn")) {//documented	
+			retVal=new UserOperations().getListMsisdn(message,messageBody); 
+		}else if(action.equalsIgnoreCase("modifyGroupList")) {
+			retVal=new UserOperations().modifyGroupList(message,messageBody);			
+		}else if(action.equalsIgnoreCase("totalCountAddressBook")) {//documented	
+			retVal=new UserOperations().getCountAddressBook(message,messageBody); 
+		}	
 		//Delete user
 		/*else if(action.equalsIgnoreCase("getStudentList")) {//documented
 			if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("parentId")))

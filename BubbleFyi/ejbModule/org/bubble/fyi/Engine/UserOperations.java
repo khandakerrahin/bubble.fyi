@@ -116,15 +116,23 @@ public class UserOperations {
 	public String updateBulksmsStatus(String id, String customerid,String groupId, String status) {
 		return new UserDBOperations().modifyBulksmsPStatus(id, customerid,groupId, status);
 	}
-	
+	public String updateGroupList(String id, String msisdn,String flag,String listId) {
+		return new UserDBOperations().modifyGrouplistDB(id, msisdn,flag,listId);
+	}
 	public String createGroupDetailDB(String id, String listname) {
 		return new UserDBOperations().createGroupInfo(id, listname);
 	}
 	public String GroupSMSDetailDB(String id, String sch_date,String message,String filename) {
 		return new UserDBOperations().createGroupSMSInfo(id, sch_date,message,filename).getJsonObject().toString();
 	}
+	public String SendSMSFromListDB(String id, String sch_date,String message,String listId) {
+		return new UserDBOperations().sendSMSFromList(id, sch_date,message,listId).getJsonObject().toString();
+	}
 	public String GetSMSCounterDB(String id) {
 		return new UserDBOperations().GetSMSCounter(id).getJsonObject().toString();
+	}
+	public String GetSMSCounterBulkList(String id,String listId) {
+		return new UserDBOperations().GetSMSBulkCounter(id,listId).getJsonObject().toString();
 	}
 	/**
 	 * 
@@ -222,6 +230,22 @@ public class UserOperations {
 		return retval;
 	}
 	
+	public String modifyGroupList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=updateGroupList(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("msisdn"),credentials.getJsonObject().getString("flag"),credentials.getJsonObject().getString("listId"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
 	
 	public String createGroupDetail(String message, String messageBody) {
 		String retval="E";
@@ -266,7 +290,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=GroupSMSDetailDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("listId"));
+				retval=SendSMSFromListDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("listId"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -285,6 +309,24 @@ public class UserOperations {
 		if(json.getErrorCode().equals("0")) {
 			
 				retval=GetSMSCounterDB(json.getJsonObject().getString("id"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String BulkSendStatus(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			
+				retval=GetSMSCounterBulkList(json.getJsonObject().getString("id"),json.getJsonObject().getString("listId"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -335,6 +377,42 @@ public class UserOperations {
 		return retval;
 	}
 	
+	public String getAddressBook(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getAddressBookInfo(Credentials.getJsonObject().getString("id"));		
+		return retval;
+	}
+	
+	public String getCountAddressBook(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getAddressBookCount(Credentials.getJsonObject().getString("id")).getJsonObject().toString();;		
+		return retval;
+	}
+	
+	public String getListMsisdn(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getListMsisdnFunc(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("listId"));		
+		return retval;
+	}
+	
 	public String getCustomerList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder Credentials;
@@ -364,14 +442,7 @@ public class UserOperations {
 	public String getSpiderAdminList() {
 		return new UserDBOperations().getList("SpiderAdmin");
 	}/**/
-	public String getStudentListForParent(String userId) {
-		if(NullPointerExceptionHandler.isNullOrEmpty(userId)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getStudentList(userId, "P");
-	}
-	public String getStudentListForSchool(String userId) {
-		if(NullPointerExceptionHandler.isNullOrEmpty(userId)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getStudentList(userId, "S");
-	}
+
 	/**
 	 * 
 	 * @param phone
@@ -581,7 +652,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=getFileList(json.getEString("id"));
+			retval=getFileList(json.getEString("id"),json.getEString("userType"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -595,9 +666,9 @@ public class UserOperations {
 	 * @return filename,schoolId,created,uploaded,status,month,estimated_upload_time,comments
 	 * -ve integer is error
 	 */
-	public String getFileList(String id) {
+	public String getFileList(String id,String userType) {
 		if(NullPointerExceptionHandler.isNullOrEmpty(id)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getFileList(id);
+		return new UserDBOperations().getFileList(id,userType);
 	}
 	//TODO
 	//TODO
@@ -616,7 +687,7 @@ public class UserOperations {
 	 * 
 	 * Anything -ve is error
 	 */
-	public String logTransaction(String message, String messageBody) {
+	/*public String logTransaction(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
 		if(messageBody.isEmpty()) {
@@ -634,7 +705,7 @@ public class UserOperations {
 			retval="E:JSON string invalid";
 		}
 		return retval;
-	}
+	}/**/
 	//TODO view transaction for parents, for school
 	/**
 	 * 

@@ -96,7 +96,7 @@ public class BubbleFyiMDB implements MessageListener {
     						reply ="Configurations Loaded";
     					}else{               
     						reply  =  reqHandle.processNewRequest(msg,loadConf,force);
-    						LOGGER.info("Reply: "+reply);
+    					//	LOGGER.info("Reply: "+reply);
     					}
     					// reply  =  reqHandle.processNewRequest(msg,loadConf,force);
 
