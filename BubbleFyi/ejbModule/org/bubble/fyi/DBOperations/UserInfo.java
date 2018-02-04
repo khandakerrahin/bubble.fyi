@@ -55,7 +55,7 @@ public class UserInfo {
 		String errorCode="-1";//default errorCode
 		//String sql="SELECT u.user_id, u.user_name, o.organization_name, u.user_email, u.user_type, u.phone, u.status, o.custodian_email,o.custodian_name,o.custodian_phone,o.organization_type,o.address,o.city,o.postcode FROM users u left join organizations o on u.user_id=o.user_id where u.<mode>=?";
 		//TODO
-		String sql="SELECT u.id, u.custodian_name,u.address, u.organization_name, u.username,u.email, if(u.flag=5,'Admin','Customer') as user_type,u.flag, u.phone, u.postcode,u.city FROM tbl_users u where u.<mode>=?";
+		String sql="SELECT u.id, u.custodian_name,u.address, u.organization_name, u.username,u.email, if(u.flag=5,'Admin','Customer') as user_type,u.flag, u.phone, u.postcode,u.city,ifnull(u.logo_file,\"\") as logofile FROM tbl_users u where u.<mode>=?";
 		if(mode.equals("2")) { //email
 			sql=sql.replace("<mode>", "email");
 		}else if(mode.equals("1")) { //phone
@@ -75,6 +75,7 @@ public class UserInfo {
 				jsonEncoder.addElement("phoneNumber", rs.getString("phone"));
 				jsonEncoder.addElement("userType", rs.getString("user_type"));
 				jsonEncoder.addElement("status", rs.getString("flag"));
+				jsonEncoder.addElement("logoFileName", rs.getString("logofile"));
 				if(!rs.getString("user_type").equals("Admin")) {
 				jsonEncoder.addElement("custodian_name", rs.getString("custodian_name"));
 				jsonEncoder.addElement("address", rs.getString("address"));
@@ -87,6 +88,7 @@ public class UserInfo {
 			}else {
 				errorCode="-9:User details could not be retrieved";
 			}
+			rs.close();
 			fsDS.closeResultSet();
 			fsDS.closePreparedStatement();
 		}catch(SQLException e){

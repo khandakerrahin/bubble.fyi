@@ -47,7 +47,7 @@ public class Login {
 	 */
 	public String compareCredentialsInDB(String loginCredential, String password, int mode) {
 		String retval="-2";
-		String sql="select count(*) as counter from tbl_users where <mode>=? and password=?";
+		String sql="select count(*) as counter from tbl_users where <mode>=? and password=? and flag in (0,1,5,10)";
 		if(mode==1) { //email
 			sql=sql.replace("<mode>", "phone");
 			loginCredential=this.msisdnNormalize(loginCredential);
@@ -70,15 +70,16 @@ public class Login {
 			bubbleDS.closePreparedStatement();
 		}catch(Exception e){
 			LogWriter.LOGGER.severe(e.getMessage());
-		}finally{
-			if(bubbleDS.getConnection() != null){
-//				try {
-//					bubbleDS.getConnection().close();
-//				} catch (SQLException e) {
-//					LogWriter.LOGGER.severe(e.getMessage());
-//				}
-			}      
 		}
+		finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}    
+		}/**/  
 //		if(retval.equals("1")) //credentials valid
 //		else if(retval.equals("0")); //username and password does not match
 		if(retval.matches("1|0")) return retval;

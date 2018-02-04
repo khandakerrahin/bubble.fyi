@@ -79,11 +79,7 @@ public class UserRegistration {
 				
 				errorCode="0:Successfully Inserted";
 
-				boolean insertSuccess=false;
-				
 					bubbleDS.execute();
-					insertSuccess=true;
-					//userId=getUserId();
 				}catch(SQLIntegrityConstraintViolationException de) {
 					errorCode="1:User with the email address or phone number exists";
 					LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:"+de.getMessage());
@@ -137,7 +133,6 @@ public class UserRegistration {
 		}finally{
 			if(bubbleDS.getConnection() != null){
 				try {
-					//					fsDS.getConnection().setAutoCommit(true);
 					bubbleDS.getConnection().close();
 				} catch (SQLException e) {
 					errorCode="-4";

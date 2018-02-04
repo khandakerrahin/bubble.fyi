@@ -104,8 +104,8 @@ public class UserOperations {
 		return new UserDBOperations().modifyPasswordDB(userId, oldPass, newPass);
 	}
 	
-	public String modifyProfileFunc(String id, String email, String city,String postCode,String msisdn,String address,String custodianName,String organizationName,String userName) {
-		return new UserDBOperations().modifyProfileDB(id,email,city,postCode,msisdn,address,custodianName,organizationName,userName);
+	public String modifyProfileFunc(String id, String city,String postCode,String address,String custodianName,String logoFile) {
+		return new UserDBOperations().modifyProfileDB(id,city,postCode,address,custodianName,logoFile);
 		
 	}
 	
@@ -118,6 +118,12 @@ public class UserOperations {
 	}
 	public String updateGroupList(String id, String msisdn,String flag,String listId) {
 		return new UserDBOperations().modifyGrouplistDB(id, msisdn,flag,listId);
+	}
+	public String deleteGroupList(String id,String listId) {
+		return new UserDBOperations().deleteGrouplistDB(id,listId);
+	}
+	public String uploadLogoFile(String logoFile,String id) {
+		return new UserDBOperations().uploadLogoFileDB(logoFile,id);
 	}
 	public String createGroupDetailDB(String id, String listname) {
 		return new UserDBOperations().createGroupInfo(id, listname);
@@ -175,7 +181,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=modifyProfileFunc(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("email"),credentials.getJsonObject().getString("city"),credentials.getJsonObject().getString("postCode"),credentials.getJsonObject().getString("msisdn"),credentials.getJsonObject().getString("address"),credentials.getJsonObject().getString("custodianName"),credentials.getJsonObject().getString("organizationName"),credentials.getJsonObject().getString("userName"));
+			retval=modifyProfileFunc(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("city"),credentials.getJsonObject().getString("postCode"),credentials.getJsonObject().getString("address"),credentials.getJsonObject().getString("custodianName"),credentials.getJsonObject().getString("logoFileName"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -240,6 +246,40 @@ public class UserOperations {
 		}
 		if(credentials.getErrorCode().equals("0")) {
 			retval=updateGroupList(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("msisdn"),credentials.getJsonObject().getString("flag"),credentials.getJsonObject().getString("listId"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String deleteGroup(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=deleteGroupList(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("listId"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	
+	
+	public String uploadLogo(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=uploadLogoFile(credentials.getJsonObject().getString("logoFile"),credentials.getJsonObject().getString("userId"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -365,6 +405,18 @@ public class UserOperations {
 		return retval;
 	}
 	
+	public String getSingleSMSReport(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getListV2(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"),Credentials.getJsonObject().getString("msisdn"));		
+		return retval;
+	}
+	
 	public String getGroupList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder Credentials;
@@ -374,6 +426,18 @@ public class UserOperations {
 			Credentials=new JsonDecoder(messageBody);
 		}
 		retval=new UserDBOperations().getCustomerGroupListInfo(Credentials.getJsonObject().getString("id"));		
+		return retval;
+	}
+	
+	public String getBulksmsDetailC(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getBulkSMSDetailOfCustomer(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -460,6 +524,7 @@ public class UserOperations {
 		if(NullPointerExceptionHandler.isNullOrEmpty(phone)) return "-8:At least one parameter null or empty";
 		return new UserDBOperations().getStoredOtp(phone);
 	}
+	/*
 	public String createSpiderAdmin(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder registrationInfo;
@@ -474,7 +539,7 @@ public class UserOperations {
 			retval="E:JSON string invalid";
 		}
 		return retval;
-	}
+	}/**/
 	/**
 	 * 
 	 * @param message
@@ -482,6 +547,7 @@ public class UserOperations {
 	 * @return Positive number indicates userId
 	 * Anything else is error.
 	 */
+	/*
 	public String createParent(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder registrationInfo;
@@ -496,7 +562,7 @@ public class UserOperations {
 			retval="E:JSON string invalid";
 		}
 		return retval;
-	}
+	}/**/
 	/**
 	 * 
 	 * @param message
@@ -735,6 +801,7 @@ public class UserOperations {
 	 * @return logId
 	 * -ve is error
 	 */
+	/*
 	public String logSMS(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
@@ -749,7 +816,7 @@ public class UserOperations {
 			retval="E:JSON string invalid";
 		}
 		return retval;
-	}
+	}/**/
 	//TODO view sms for parents, for school
 	
 }

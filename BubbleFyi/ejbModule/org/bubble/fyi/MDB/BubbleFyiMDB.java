@@ -20,6 +20,7 @@ import javax.naming.NamingException;
 
 import org.bubble.fyi.Initializations.LoadConfigurations;
 import org.bubble.fyi.StatelessBean.RequestHandlerLocal;
+import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 import org.bubble.fyi.Utilities.QueueProcess;
  
 /**
@@ -88,7 +89,7 @@ public class BubbleFyiMDB implements MessageListener {
     					boolean force = true;//InhouseLogger.isTraceForced(msg);            
     					LOGGER.info("Received Message at "+appName+"=" + msg.getString("message"));
 
-    					String loadConfigurations = msg.getString("LoadConf");
+    					String loadConfigurations = NullPointerExceptionHandler.isNullOrEmpty(msg.getString("LoadConf"))?"N":msg.getString("LoadConf");
     					//boolean isNull = NullPointExceptionHendler.isNullOrEmptyAfterTrim(loadConfigurations);
     					String reply = "";
     					if(/*!isNull &&*/ loadConfigurations.equals("Y")){

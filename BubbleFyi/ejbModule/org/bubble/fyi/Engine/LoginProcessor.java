@@ -65,6 +65,29 @@ public class LoginProcessor {
 		}
 		return retval;
 	}
+	
+	public String processLoginAPI(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder loginCredentials;
+		if(messageBody.isEmpty()) {
+			loginCredentials=new JsonDecoder(message);
+			
+		}else {
+			loginCredentials=new JsonDecoder(messageBody);
+		}
+		LoginProcessor loginProcessor=new LoginProcessor();
+		if(loginCredentials.getErrorCode().equals("0")) {
+			retval=loginProcessor.checkCredentials(loginCredentials);
+		}else{
+			retval="E:JSON string invalid";
+		}
+		if(retval.equals("1")) {
+			retval=fetchUserInfo(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode"));
+		}else {
+			retval="-6:Error in user Credentials";
+		}
+		return retval;
+	}
 	/**
 	 * 
 	 * @param id

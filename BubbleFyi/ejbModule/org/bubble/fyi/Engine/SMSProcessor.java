@@ -47,4 +47,22 @@ public class SMSProcessor {
 		}
 		return retval;
 	}
+	
+	public String processSendSMSapi(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder SMSInfo;
+		if(messageBody.isEmpty()) {
+			SMSInfo=new JsonDecoder(message);
+		}else {
+			SMSInfo=new JsonDecoder(messageBody);
+		}
+		//SMSSender sendSMS=new SMSSender();
+		if(SMSInfo.getErrorCode().equals("0")) {
+			retval=new SMSSender().insertToSenderAPI(SMSInfo);
+		}else{
+			//error decoding json
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
 }

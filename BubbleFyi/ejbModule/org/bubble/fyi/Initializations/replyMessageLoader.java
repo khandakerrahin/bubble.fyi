@@ -38,7 +38,7 @@ public class replyMessageLoader  /*implements  InhouseDataFiller<DataContainerRe
 	public void getRelpyMessage() {
 		//ResultSet result = null;
 		try {
-/*			MultiDataSource<DataContainerReplyMessage> ds;
+	/**	MultiDataSource<DataContainerReplyMessage> ds;
 	    	ds = new MultiDataSource<DataContainerReplyMessage>(DSInfo.getDS_INPATHS_NEW(), this);
 	    	ds.setCallback(this); 
 	    	String sqlQuery = "select id,reply_text from quick_pack.replies t order by t.id";
@@ -46,7 +46,7 @@ public class replyMessageLoader  /*implements  InhouseDataFiller<DataContainerRe
 	    	for (int i = 0; i < data.size(); i++) {
 				DataContainerReplyMessage dataCon = (DataContainerReplyMessage) data.get(i);
 				replyMessage.put(new Integer(dataCon.id), dataCon.sms_text);
-	    	}*/
+	    	}/**/
 			 		 
 		} catch (Exception e) {
 			e.printStackTrace();
