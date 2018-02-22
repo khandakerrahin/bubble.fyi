@@ -54,6 +54,10 @@ public class BubbleFyiDS {
 		return this.preparedStatement.executeUpdate();
 	}
 	
+	public int executeUpdate_v2() throws SQLException {
+		return this.preparedStatement.executeUpdate();
+	}
+	
 	public void closePreparedStatement() throws SQLException {
 		this.preparedStatement.close();
 	}

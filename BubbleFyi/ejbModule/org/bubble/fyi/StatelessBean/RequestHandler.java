@@ -139,8 +139,11 @@ public class RequestHandler implements RequestHandlerLocal {
 			retVal=new UserOperations().uploadStatusGetter(message,messageBody);
 		}else if(action.equalsIgnoreCase("getFileList")) {
 			retVal=new UserOperations().uploadFileListGetter(message,messageBody);
-		}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {
+		}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both instant sms and scheduled sms
 			retVal=new UserOperations().instantGroupSMSDetail(message,messageBody); 
+		}else if(action.equalsIgnoreCase("sendScheduledSMS")) {
+			retVal=new UserOperations().sentSMSScheduled(message,messageBody); 	
+			
 		}else if(action.equalsIgnoreCase("getTotalSMSCount")) {
 			//retVal=new LoginProcessor().processLogin(message,messageBody);
 			retVal=new UserOperations().TotalSMSCounter(message,messageBody); 
@@ -149,8 +152,7 @@ public class RequestHandler implements RequestHandlerLocal {
 		}else if(action.equalsIgnoreCase("updatePendingBulksmsList")) {
 			retVal=new UserOperations().modifyBulksmsPendingStatus(message,messageBody);			
 		}else if(action.equalsIgnoreCase("sendBulksmsFromList")) {
-			retVal=new UserOperations().sentSMSFromList(message,messageBody); 
-			
+			retVal=new UserOperations().sentSMSFromList(message,messageBody); 			
 		}else if(action.equalsIgnoreCase("getBulksmsDetail")) {//documented	
 			retVal=new UserOperations().getBulksmsDetailC(message,messageBody); 
 		}else if(action.equalsIgnoreCase("getBulkSendStatus")) {
@@ -170,7 +172,17 @@ public class RequestHandler implements RequestHandlerLocal {
 		}else if(action.equalsIgnoreCase("deleteGroup")) {//documented
 			//retVal=new UserOperations().getSingleSMSReport(message,messageBody);
 			retVal=new UserOperations().deleteGroup(message,messageBody);
+		}else if(action.equalsIgnoreCase("getActivePackage")) {//documented	
+			retVal=new UserOperations().getPackageList(message,messageBody); 
+		}else if(action.equalsIgnoreCase("initiatePackagePurchase")) {//documented	
+			retVal=new UserOperations().packagePurchaseRequester(message,messageBody); 
+		}else if(action.equalsIgnoreCase("setPaymentResponse")) {//documented	
+			retVal=new UserOperations().paymentRecordUpdate(message,messageBody); 
+		}else if(action.equalsIgnoreCase("lowBalanceBulkSMSResend")) {
+			retVal=new UserOperations().lowBalanceBulkSMSResend(message,messageBody);			
 		}
+		
+		
 		//APIs for sms Sending through API
 		
 		else if(action.equalsIgnoreCase("sendSMSapi")) {//documented			
@@ -240,7 +252,7 @@ public class RequestHandler implements RequestHandlerLocal {
 		 * TODO ApplicationLog
 		 */
 		else retVal="I:Invalid action";
-		LogWriter.LOGGER.info("retVal"+retVal);
+		LogWriter.LOGGER.info("retVal: "+retVal);
 		return retVal;
 	}
 	

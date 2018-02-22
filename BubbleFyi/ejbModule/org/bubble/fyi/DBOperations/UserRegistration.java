@@ -35,6 +35,32 @@ public class UserRegistration {
 		}
 		return msisdn;
 	}
+	public String insertToCustomerBalanceTable(String userId) {
+		String retval= "-1";
+		double balance=1.0;
+		String sql="INSERT INTO customer_balance"
+				+ " (user_id,balance) "
+				+ "VALUES ("
+				+ "?, ?)";
+		try {
+			bubbleDS.prepareStatement(sql,true);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+			bubbleDS.getPreparedStatement().setDouble(2, balance);
+		
+			retval="0:Successfully Inserted";
+				bubbleDS.execute();
+	    }catch(Exception e) {				
+				e.printStackTrace();
+		}finally {
+			try {
+				bubbleDS.closePreparedStatement();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}			
+		return retval;		
+	}
 	/**
 	 * 
 	 * @param jsonDecoder schoolName,email,phone,password,custodianName,address,city,postcode
@@ -79,7 +105,8 @@ public class UserRegistration {
 				
 				errorCode="0:Successfully Inserted";
 
-					bubbleDS.execute();
+					bubbleDS.execute(); 
+					userId=getUserId();
 				}catch(SQLIntegrityConstraintViolationException de) {
 					errorCode="1:User with the email address or phone number exists";
 					LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:"+de.getMessage());
@@ -97,7 +124,7 @@ public class UserRegistration {
 		}else {
 
 			try {
-				bubbleDS.prepareStatement(sqlInsertCustomer);
+				bubbleDS.prepareStatement(sqlInsertCustomer,true);
 				//	(custodian_name,organisation_name,username,password,email,phone, address,postcode,city);
 				bubbleDS.getPreparedStatement().setString(1, jsonDecoder.getJsonObject().getString("custodian_name"));					
 				bubbleDS.getPreparedStatement().setString(2, jsonDecoder.getJsonObject().getString("organisation_name"));
@@ -109,6 +136,7 @@ public class UserRegistration {
 				bubbleDS.getPreparedStatement().setString(8, jsonDecoder.getJsonObject().getString("postcode"));
                 bubbleDS.getPreparedStatement().setString(9, jsonDecoder.getJsonObject().getString("city"));
 				bubbleDS.execute();
+				userId=getUserId();
 				errorCode="0:Successfully Inserted";
 			}catch(SQLIntegrityConstraintViolationException de) {
 				errorCode="1:User with the email address or phone number exists";
@@ -131,6 +159,9 @@ public class UserRegistration {
 			LogWriter.LOGGER.severe(e.getMessage());
 			e.printStackTrace();
 		}finally{
+			if(!userId.equalsIgnoreCase("-1")) {
+				insertToCustomerBalanceTable(userId);
+			}
 			if(bubbleDS.getConnection() != null){
 				try {
 					bubbleDS.getConnection().close();
@@ -140,6 +171,7 @@ public class UserRegistration {
 				}
 			}      
 		}
+      LogWriter.LOGGER.info("userID: "+userId);
 	
 	return errorCode;
 }
@@ -156,6 +188,8 @@ private String getUserId() throws SQLException {
 	}
 	return retval;
 }
+
+
 @SuppressWarnings("unused")
 private String getUserIdFromSequence(BubbleFyiDS bubbleDS) throws SQLException {
 	String retval="-1";
