@@ -1,6 +1,7 @@
 
 package org.bubble.fyi.DBOperations;
 
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Engine.JsonDecoder;
@@ -27,6 +28,10 @@ public class SMSSender {
 	private String msisdnNormalize(String msisdn) {
 		if(msisdn.startsWith("0")) {
 			msisdn="88"+msisdn;
+		}else if(msisdn.startsWith("+0")) {
+			msisdn="88"+msisdn.substring(1);
+		}else if(msisdn.startsWith("+88")) {
+			msisdn=msisdn.substring(1);
 		}
 		return msisdn;
 	}
@@ -178,6 +183,17 @@ public class SMSSender {
 		double smsPrice=0.25;
 		String userID=jsonDecoder.getJsonObject().getString("id"); 
 		String message=jsonDecoder.getJsonObject().getString("smsText");
+		/*
+		String s1 = message;
+		try {
+			byte[] bytes = s1.getBytes("UTF-8");
+			message = new String(bytes, "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}/**/
+		LogWriter.LOGGER.info(" ----message----:"+message);
+		
 		try {
 			String userStatus=getUserType(userID);
 			String aparty=getAparty(userID);

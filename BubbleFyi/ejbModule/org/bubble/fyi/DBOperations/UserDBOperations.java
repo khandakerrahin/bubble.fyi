@@ -1358,7 +1358,7 @@ public class UserDBOperations {
 						if(updateBalanceBulkSMS(userId,listMsCount*smsCount,smsPrice)) {	
 
 							//TODO count LIST maisdn, check with balance then deduct 
-							
+
 							if(userFlag.equalsIgnoreCase("10")) {
 								statusFlag=0;
 							}
@@ -1501,6 +1501,96 @@ public class UserDBOperations {
 		jsonEncoder.buildJsonObject();
 		//errorCode=jsonEncoder;
 
+		return jsonEncoder;
+	}
+	
+	
+	public JsonEncoder sendSMStargetBased(String userId,String targetDiv,String targetDis,String targetTUpazila, String sch_date,String message,String amount) {
+
+		String errorCode="-1";
+		String errorResponse="";
+		String receiverCount="-1";
+		//String userFlag="-1";
+		double smsPrice=0.60;
+		//int statusFlag=-1;
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		//TODO userID check with listID in group_list table
+		try {
+			
+			Double totalBudget=Double.parseDouble(amount);
+		
+					int smsCount=getSMSSize(message);
+					int TotalSMS=(int)Math.floor(totalBudget/(smsPrice*smsCount));
+					double customerBalance=getCustomerBalance(userId);
+					if(customerBalance>=totalBudget) {
+						if(updateBalanceBulkSMS(userId,totalBudget.intValue(),1.0)) {	
+							//(int)Math.floor(1000/smsPrice)
+							String sql="INSERT INTO target_based_sms (user_id,schedule_date,message,target_division,budget,unit_cost,target_district,target_upazila) VALUES (?,?,?,?,?,?,?,?)";
+						
+
+								try {
+									bubbleDS.prepareStatement(sql,true);			
+									bubbleDS.getPreparedStatement().setString(1,userId);
+									bubbleDS.getPreparedStatement().setString(2,sch_date);
+									bubbleDS.getPreparedStatement().setString(3,message);
+									bubbleDS.getPreparedStatement().setString(4,targetDiv);
+									bubbleDS.getPreparedStatement().setString(5,amount);
+									bubbleDS.getPreparedStatement().setDouble(6,smsPrice);
+									bubbleDS.getPreparedStatement().setString(7,targetDis);
+									bubbleDS.getPreparedStatement().setString(8,targetTUpazila);
+									bubbleDS.execute();
+
+
+										errorCode="0";
+										receiverCount=""+TotalSMS;
+										errorResponse="Successfully insterted";
+
+
+								}catch(SQLException e) {
+									errorCode="11";
+									errorResponse="SQL Exception";
+									updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
+									e.printStackTrace();
+									LogWriter.LOGGER.severe("SQLException"+e.getMessage());
+								}catch(Exception e) {
+									e.printStackTrace();
+									updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
+									errorCode="10";
+									errorResponse="General Exception";
+									e.printStackTrace();
+								}
+								try {
+									bubbleDS.closePreparedStatement();
+								} catch (SQLException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							
+						}else {
+							errorCode="-16";
+							errorResponse="Payment Deduction Failed"; 
+						}
+					}else {
+						errorCode="5";
+						errorResponse="low Balance";
+					}		
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					errorResponse="connection close Exception";
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponse", errorResponse);
+		jsonEncoder.addElement("ReceiverCount", receiverCount);
+		
+		jsonEncoder.buildJsonObject();
 		return jsonEncoder;
 	}
 
@@ -1836,6 +1926,77 @@ public class UserDBOperations {
 		//LogWriter.LOGGER.info("UserID:"+userId);
 
 		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.buildJsonObject();
+
+
+		return jsonEncoder;
+	}
+
+
+	public JsonEncoder downloadSingleSMSReport(String userId, String start_date,String end_date,String output_type) {
+		//TODO needs to stop purchasing smse package within a timelimit
+		//TODO package not available check active packages
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		String errorCode="-1";
+		String errorResponse="";
+		String query="select t.source_id as ID,t.bparty as Receiver,t.aparty as Sender,t.message as SMS_TEXT,t.sms_count,DATE_FORMAT(t.insert_date, \"%d-%m-%Y %H:%i\") as insert_date,DATE_FORMAT(t.exec_date, \"%d-%m-%Y %H:%i\") as exec_date,IFNULL(ELT(FIELD(t.responseCode,0, -3, -1, -500),'Success','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response FROM smsinfo t where t.userid="+userId+" and  insert_date between '"+start_date+"' and '" +end_date+"' ORDER BY `ID` desc;";
+
+		try {
+
+			String sql="INSERT INTO file_dump_query (`user_id`,`query`, `output_type`) VALUES (?,?,?);";
+
+			try {			
+				bubbleDS.prepareStatement(sql,true);			
+				bubbleDS.getPreparedStatement().setString(1,userId);
+				bubbleDS.getPreparedStatement().setString(2,query);
+				bubbleDS.getPreparedStatement().setString(3,output_type);
+				errorCode="0";
+				errorResponse="Successfully Inserted";
+				bubbleDS.execute();
+
+			}catch(SQLException e) {
+				errorCode="11";
+				errorResponse="Inserting parameters failed";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException"+e.getMessage());
+			}catch(Exception e) {
+				e.printStackTrace();
+				errorCode="10";
+				errorResponse="other Exception";
+				e.printStackTrace();
+			}finally{
+				if(bubbleDS.getConnection() != null){
+					try {
+						bubbleDS.closePreparedStatement();
+						//bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						errorCode="-4";
+						errorResponse="Connection close Exception";
+						e.printStackTrace();
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}      
+			}
+
+
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.closePreparedStatement();
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					errorResponse="Connection close Exception";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+
+		//LogWriter.LOGGER.info("UserID:"+userId);
+
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponse", errorResponse);
 		jsonEncoder.buildJsonObject();
 
 
@@ -2186,7 +2347,7 @@ public class UserDBOperations {
 		String errorCode="-1";
 		//String sql="SELECT u.user_id, u.user_name, u.user_email, u.phone, u.user_type, u.status, o.organization_name,o.custodian_name, o.custodian_email,o.custodian_phone,o.organization_type,o.city,o.postcode,o.address FROM users u left join organizations o on u.user_id=o.user_id where user_type=? order by user_id asc";
 		String sqlAdmin="SELECT t.aparty,t.bparty,t.message,t.sms_count,DATE_FORMAT(t.insert_date, \"%d-%m-%Y %H:%i\") as insert_date,t.flag,t.userid,DATE_FORMAT(t.exec_date, \"%d-%m-%Y %H:%i\") as exec_date,t.responseCode,t.source_id FROM smsinfo t ORDER BY `ID` ";
-		String sql="SELECT t.aparty,t.bparty,t.message,t.sms_count,DATE_FORMAT(t.insert_date, \"%d-%m-%Y %H:%i\") as insert_date,t.flag,t.userid,DATE_FORMAT(t.exec_date, \"%d-%m-%Y %H:%i\") as exec_date,t.responseCode,t.source_id FROM smsinfo t where t.userid=? ORDER BY `ID` desc limit 0,999";
+		String sql="SELECT t.aparty,t.bparty,t.message,t.sms_count,DATE_FORMAT(t.insert_date, \"%d-%m-%Y %H:%i\") as insert_date,t.flag,t.userid,DATE_FORMAT(t.exec_date, \"%d-%m-%Y %H:%i\") as exec_date,t.responseCode,t.source_id FROM smsinfo t where t.userid=? ORDER BY `ID` desc limit 0,500";
 		try {
 			if(userType.equals("Admin")) {
 				bubbleDS.prepareStatement(sqlAdmin);
@@ -2216,8 +2377,7 @@ public class UserDBOperations {
 				retval+=rs.getString("source_id")+",";
 				retval+=rs.getString("responseCode");			
 				retval+="|";		
-			}
-			LogWriter.LOGGER.info("after execution ");
+			}			
 			rs.close();
 			//bubbleDS.closeResultSet();
 			bubbleDS.closePreparedStatement();
@@ -2248,6 +2408,237 @@ public class UserDBOperations {
 		LogWriter.LOGGER.severe(" return from  get list --> "+retval);
 		return retval;
 	}
+
+	public String getPaymentRecords(String id){
+
+		String retval="";
+		String errorCode="-1";
+		String sql="SELECT DATE_FORMAT(insert_date, \"%d-%m-%Y %H:%i\") as insert_date,package_name,price,purchase_status,process_date FROM smsdb.payment_log where user_id=? ORDER BY `ID` desc limit 0,25";
+		try {
+
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, id);			
+
+
+			ResultSet rs = bubbleDS.executeQuery();
+
+			while (rs.next()) {
+				retval+="\""+rs.getString("insert_date")+"\""+",";
+				retval+=rs.getString("package_name")+",";
+				retval+=rs.getString("price")+",";
+
+				retval+=rs.getString("purchase_status")+",";
+
+				retval+="\""+rs.getString("process_date")+"\"";			
+				retval+="|";		
+			}
+			rs.close();
+			bubbleDS.closePreparedStatement();
+			if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+			int lio=retval.lastIndexOf("|");
+			if(lio>0) retval=retval.substring(0,lio);
+			errorCode="0";
+			LogWriter.LOGGER.info("MapList : "+retval);
+		}catch(SQLException e){
+			errorCode= "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}catch(Exception e){
+			errorCode= "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+		if(!errorCode.startsWith("0")) {
+			retval=errorCode;
+		}
+		LogWriter.LOGGER.severe(" return from  get list --> "+retval);
+		return retval;
+	}
+
+	public String getReportRecords(String id){
+
+		String retval="";
+		String errorCode="-1";
+		String sql="SELECT IFNULL(FILE_NAME,'File Generation in Progress') as file_name,DATE_FORMAT(insert_date, \"%d-%m-%Y %H:%i\") as insert_date,status,DATE_FORMAT(dump_time, \"%d-%m-%Y %H:%i\") as dump_time,output_type FROM smsdb.file_dump_query where user_id=? and  (insert_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) order by id desc";
+		try {
+
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, id);			
+
+
+			ResultSet rs = bubbleDS.executeQuery();
+
+			while (rs.next()) {
+				retval+="\""+rs.getString("file_name")+"\""+",";
+				retval+="\""+rs.getString("insert_date")+"\""+",";
+				retval+=rs.getString("status")+",";
+				retval+=rs.getString("output_type")+",";
+				retval+="\""+rs.getString("dump_time")+"\"";			
+				retval+="|";		
+			}
+			rs.close();
+			bubbleDS.closePreparedStatement();
+			if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+			int lio=retval.lastIndexOf("|");
+			if(lio>0) retval=retval.substring(0,lio);
+			errorCode="0";
+			LogWriter.LOGGER.info("MapList : "+retval);
+		}catch(SQLException e){
+			errorCode= "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}catch(Exception e){
+			errorCode= "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+		if(!errorCode.startsWith("0")) {
+			retval=errorCode;
+		}
+		LogWriter.LOGGER.severe(" return from  get list --> "+retval);
+		return retval;
+	}
+	
+	public JsonEncoder getBulkSMSSummary(String id,String start_date,String end_date,String output_type){
+		
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		String errorCode="-1";
+		String errorResponse="";
+		String query="SELECT message as SMS_TEXT, sms_count as NumberOfSMS, IFNULL(ELT(FIELD(flag, -1,0,1,2,3,-2,5),'Approval Pending','Approved','SMS Sent','Rejected By admin','Cancelled By user','File not uploaded','low Balance'),'failed') AS Status, DATE_FORMAT(scheduled_date, '%d-%m-%Y %H:%i') AS scheduled_date, IFNULL(DATE_FORMAT(done_date, '%d-%m-%Y %H:%i'), 'Not Applicable') done_date,\r\n" + 
+				"(SELECT COUNT(*) FROM  groupsms_sender t  WHERE t.group_id = u.group_id) TotalNumber,\r\n" + 
+				"(SELECT COUNT(*) FROM groupsms_sender t WHERE t.group_id = u.group_id  AND t.response_code = 0) TotalSuccessCount\r\n" + 
+				" FROM groupsms_sender_info u WHERE  user_id = "+id+" and scheduled_date between '"+start_date+"' and '" +end_date+ "' ORDER BY group_id DESC LIMIT 0 , 50;";
+		try {
+
+			String sql="INSERT INTO file_dump_query (`user_id`,`query`, `output_type`) VALUES (?,?,?);";
+
+			try {			
+				bubbleDS.prepareStatement(sql,true);			
+				bubbleDS.getPreparedStatement().setString(1,id);
+				bubbleDS.getPreparedStatement().setString(2,query);
+				bubbleDS.getPreparedStatement().setString(3,output_type);
+				errorCode="0";
+				errorResponse="Successfully Inserted";
+				bubbleDS.execute();
+
+			}catch(SQLException e) {
+				errorCode="11";
+				errorResponse="Inserting parameters failed";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException"+e.getMessage());
+			}catch(Exception e) {
+				e.printStackTrace();
+				errorCode="10";
+				errorResponse="other Exception";
+				e.printStackTrace();
+			}finally{
+				if(bubbleDS.getConnection() != null){
+					try {
+						bubbleDS.closePreparedStatement();
+						bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						errorCode="-4";
+						errorResponse="Connection close Exception";
+						e.printStackTrace();
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}      
+			}
+
+
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.closePreparedStatement();
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					errorResponse="Connection close Exception";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+
+		//LogWriter.LOGGER.info("UserID:"+userId);
+
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponse", errorResponse);
+		jsonEncoder.buildJsonObject();
+
+
+		return jsonEncoder;
+		
+		
+	}
+	
+	/*
+	public String getBulkSMSSummary dffdh(String id){		
+
+		String retval="";
+		String errorCode="-1";
+		String sql="SELECT file_name,DATE_FORMAT(insert_date, \"%d-%m-%Y %H:%i\") as insert_date,status,DATE_FORMAT(dump_time, \"%d-%m-%Y %H:%i\") as dump_time,output_type FROM smsdb.file_dump_query where flag=1 and user_id=? and  (insert_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))";
+		
+		
+		try {
+
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, id);			
+
+
+			ResultSet rs = bubbleDS.executeQuery();
+
+			while (rs.next()) {
+				retval+="\""+rs.getString("file_name")+"\""+",";
+				retval+="\""+rs.getString("insert_date")+"\""+",";
+				retval+=rs.getString("status")+",";
+				retval+=rs.getString("output_type")+",";
+				retval+="\""+rs.getString("dump_time")+"\"";			
+				retval+="|";		
+			}
+			rs.close();
+			bubbleDS.closePreparedStatement();
+			if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+			int lio=retval.lastIndexOf("|");
+			if(lio>0) retval=retval.substring(0,lio);
+			errorCode="0";
+			LogWriter.LOGGER.info("MapList : "+retval);
+		}catch(SQLException e){
+			errorCode= "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}catch(Exception e){
+			errorCode= "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+		if(!errorCode.startsWith("0")) {
+			retval=errorCode;
+		}
+		LogWriter.LOGGER.severe(" return from  get list --> "+retval);
+		return retval;
+	}/**/
 
 
 	public String getListV2(String id,String userType,String msidn){
@@ -2429,6 +2820,63 @@ public class UserDBOperations {
 				}
 			}      
 		}
+		if(!errorCode.startsWith("0")) {
+			retval=errorCode;
+		}
+		return retval;
+	}
+	
+	
+	public String getGeoDeatil(String geoTarget){
+		String retval="";
+		String errorCode="-1";
+		String sql="";
+		if(geoTarget.equalsIgnoreCase("DIVISION")) {
+			sql="SELECT Division_name FROM divisions";
+		}else if(geoTarget.equalsIgnoreCase("DISTRICT")) {
+			sql="SELECT District_name FROM districts";
+		}else if(geoTarget.equalsIgnoreCase("UPAZILA")) {
+			sql="SELECT Upazila_name FROM upazilas";
+		}else{
+			retval="-1";
+		}
+		if(!retval.equalsIgnoreCase("-1")) {
+		try {
+
+			bubbleDS.prepareStatement(sql);		
+
+
+			ResultSet rs = bubbleDS.executeQuery();
+			while (rs.next()) {
+				//  String tempListId=rs.getString("list_id");
+				//  String msisdnCount=rs.getString("msisdnCount");				
+				retval+="\""+rs.getString(1)+"\""+",";	
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+			if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+			int lio=retval.lastIndexOf(",");
+			if(lio>0) retval=retval.substring(0,lio);
+			errorCode="0";
+			LogWriter.LOGGER.info("MapList : "+retval);
+		}catch(SQLException e){
+			errorCode= "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}catch(Exception e){
+			errorCode= "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode="-4";
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+	}else {
+	}
 		if(!errorCode.startsWith("0")) {
 			retval=errorCode;
 		}

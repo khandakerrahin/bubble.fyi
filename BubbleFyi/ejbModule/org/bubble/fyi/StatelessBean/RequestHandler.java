@@ -180,7 +180,21 @@ public class RequestHandler implements RequestHandlerLocal {
 			retVal=new UserOperations().paymentRecordUpdate(message,messageBody); 
 		}else if(action.equalsIgnoreCase("lowBalanceBulkSMSResend")) {
 			retVal=new UserOperations().lowBalanceBulkSMSResend(message,messageBody);			
-		}
+		}else if(action.equalsIgnoreCase("getPaymentReports")) {//documented
+			retVal=new UserOperations().getPaymentLog(message,messageBody);
+		}else if(action.equalsIgnoreCase("requestSingleSMSReport")) {//documented	
+			retVal=new UserOperations().reportDownloadSinglesms(message,messageBody); 
+		}else if(action.equalsIgnoreCase("requestBulkSMSSummaryReport")) {//documented
+			retVal=new UserOperations().getBulkReportSummary(message,messageBody);
+		}else if(action.equalsIgnoreCase("downloadReports")) {//documented
+			retVal=new UserOperations().getReportInfo(message,messageBody);
+		}else if(action.equalsIgnoreCase("getGeoLocation")) {//documented	
+			retVal=new UserOperations().getGeoList(message,messageBody); 
+		}else if(action.equalsIgnoreCase("requestSMSReport")) {//documented	
+			retVal=new UserOperations().reportRequestSMS(message,messageBody); 
+		}else if(action.equalsIgnoreCase("targetBasedSMSRequest")) {
+			retVal=new UserOperations().sentTargetBasedSMS(message,messageBody); 			
+		} 
 		
 		
 		//APIs for sms Sending through API

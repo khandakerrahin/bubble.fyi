@@ -32,6 +32,10 @@ public class UserRegistration {
 	private String msisdnNormalize(String msisdn) {
 		if(msisdn.startsWith("0")) {
 			msisdn="88"+msisdn;
+		}else if(msisdn.startsWith("+0")) {
+			msisdn="88"+msisdn.substring(1);
+		}else if(msisdn.startsWith("+88")) {
+			msisdn=msisdn.substring(1);
 		}
 		return msisdn;
 	}

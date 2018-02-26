@@ -145,6 +145,9 @@ public class UserOperations {
 	public String SendSMSFromListDB(String id, String sch_date,String message,String listId) {
 		return new UserDBOperations().sendSMSFromList(id, sch_date,message,listId).getJsonObject().toString();
 	}
+	public String SendSMStargetBasedDB(String id, String targetDV,String targetDis,String targetUpz,String sch_date,String message,String amount) {
+		return new UserDBOperations().sendSMStargetBased(id,targetDV,targetDis,targetUpz, sch_date,message,amount).getJsonObject().toString();
+	}
 	public String SendScheduledSMS(String id, String sch_date,String message,String listFile,String mode) {
 		if(mode.equalsIgnoreCase("1")) {
 			return new UserDBOperations().sendSMSFromList(id, sch_date,message,listFile).getJsonObject().toString();		
@@ -153,6 +156,12 @@ public class UserOperations {
 		}
 	}
 	
+	public String DownloadSingleSMSReport(String id, String start_date,String end_date,String output_type) {
+			return new UserDBOperations().downloadSingleSMSReport(id, start_date,end_date,output_type).getJsonObject().toString();				
+	}
+	public String GetBulkSMSSummary(String id,String start_date,String end_date,String output_type) {
+		return new UserDBOperations().getBulkSMSSummary(id,start_date,end_date,output_type).getJsonObject().toString();				
+    }
 	public String GetSMSCounterDB(String id) {
 		return new UserDBOperations().GetSMSCounter(id).getJsonObject().toString();
 	}
@@ -410,6 +419,23 @@ public class UserOperations {
 		return retval;
 	}
 	
+	public String sentTargetBasedSMS(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+				retval=SendSMStargetBasedDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("targetDivision"),json.getJsonObject().getString("targetDistrict"),json.getJsonObject().getString("targetUpazila"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("amount"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
 	public String sentSMSScheduled(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
@@ -423,6 +449,47 @@ public class UserOperations {
 				retval=SendScheduledSMS(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("listFile"),json.getJsonObject().getString("mode"));
 			
 		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String reportDownloadSinglesms(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			//mode=1 list mode=2 file 
+				retval=DownloadSingleSMSReport(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String reportRequestSMS(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			String report_Type=json.getJsonObject().getString("reportId");
+			if(report_Type.equals("1")) { //Single SMS Report
+			//mode=1 list mode=2 file 
+				retval=DownloadSingleSMSReport(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));
+			}else if(report_Type.equals("2"))  { //Bulk Summary Report
+				retval=GetBulkSMSSummary(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));	
+			}else {
+				retval=DownloadSingleSMSReport(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));			
+			}
+			}else{
 			retval="E:JSON string invalid";
 		}
 		return retval;
@@ -495,6 +562,42 @@ public class UserOperations {
 		return retval;
 	}
 	
+	public String getPaymentLog(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getPaymentRecords(Credentials.getJsonObject().getString("id"));		
+		return retval;
+	}
+	
+	public String getReportInfo(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getReportRecords(Credentials.getJsonObject().getString("id"));		
+		return retval;
+	}
+	
+	public String getBulkReportSummary(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		retval=GetBulkSMSSummary(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));	
+		return retval;
+	}
+	
 	public String getSingleSMSReport(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder Credentials;
@@ -516,6 +619,18 @@ public class UserOperations {
 			Credentials=new JsonDecoder(messageBody);
 		}
 		retval=new UserDBOperations().getCustomerGroupListInfo(Credentials.getJsonObject().getString("id"));		
+		return retval;
+	}
+	
+	public String getGeoList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations().getGeoDeatil(json.getJsonObject().getString("targetGroup"));		
 		return retval;
 	}
 	
