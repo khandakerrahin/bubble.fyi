@@ -1503,8 +1503,8 @@ public class UserDBOperations {
 
 		return jsonEncoder;
 	}
-	
-	
+
+
 	public JsonEncoder sendSMStargetBased(String userId,String targetDiv,String targetDis,String targetTUpazila, String sch_date,String message,String amount) {
 
 		String errorCode="-1";
@@ -1516,64 +1516,64 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder=new JsonEncoder();
 		//TODO userID check with listID in group_list table
 		try {
-			
+
 			Double totalBudget=Double.parseDouble(amount);
-		
-					int smsCount=getSMSSize(message);
-					int TotalSMS=(int)Math.floor(totalBudget/(smsPrice*smsCount));
-					double customerBalance=getCustomerBalance(userId);
-					if(customerBalance>=totalBudget) {
-						if(updateBalanceBulkSMS(userId,totalBudget.intValue(),1.0)) {	
-							//(int)Math.floor(1000/smsPrice)
-							String sql="INSERT INTO target_based_sms (user_id,schedule_date,message,target_division,budget,unit_cost,target_district,target_upazila) VALUES (?,?,?,?,?,?,?,?)";
-						
 
-								try {
-									bubbleDS.prepareStatement(sql,true);			
-									bubbleDS.getPreparedStatement().setString(1,userId);
-									bubbleDS.getPreparedStatement().setString(2,sch_date);
-									bubbleDS.getPreparedStatement().setString(3,message);
-									bubbleDS.getPreparedStatement().setString(4,targetDiv);
-									bubbleDS.getPreparedStatement().setString(5,amount);
-									bubbleDS.getPreparedStatement().setDouble(6,smsPrice);
-									bubbleDS.getPreparedStatement().setString(7,targetDis);
-									bubbleDS.getPreparedStatement().setString(8,targetTUpazila);
-									bubbleDS.execute();
+			int smsCount=getSMSSize(message);
+			int TotalSMS=(int)Math.floor(totalBudget/(smsPrice*smsCount));
+			double customerBalance=getCustomerBalance(userId);
+			if(customerBalance>=totalBudget) {
+				if(updateBalanceBulkSMS(userId,totalBudget.intValue(),1.0)) {	
+					//(int)Math.floor(1000/smsPrice)
+					String sql="INSERT INTO target_based_sms (user_id,schedule_date,message,target_division,budget,unit_cost,target_district,target_upazila) VALUES (?,?,?,?,?,?,?,?)";
 
 
-										errorCode="0";
-										receiverCount=""+TotalSMS;
-										errorResponse="Successfully insterted";
+					try {
+						bubbleDS.prepareStatement(sql,true);			
+						bubbleDS.getPreparedStatement().setString(1,userId);
+						bubbleDS.getPreparedStatement().setString(2,sch_date);
+						bubbleDS.getPreparedStatement().setString(3,message);
+						bubbleDS.getPreparedStatement().setString(4,targetDiv);
+						bubbleDS.getPreparedStatement().setString(5,amount);
+						bubbleDS.getPreparedStatement().setDouble(6,smsPrice);
+						bubbleDS.getPreparedStatement().setString(7,targetDis);
+						bubbleDS.getPreparedStatement().setString(8,targetTUpazila);
+						bubbleDS.execute();
 
 
-								}catch(SQLException e) {
-									errorCode="11";
-									errorResponse="SQL Exception";
-									updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
-									e.printStackTrace();
-									LogWriter.LOGGER.severe("SQLException"+e.getMessage());
-								}catch(Exception e) {
-									e.printStackTrace();
-									updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
-									errorCode="10";
-									errorResponse="General Exception";
-									e.printStackTrace();
-								}
-								try {
-									bubbleDS.closePreparedStatement();
-								} catch (SQLException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							
-						}else {
-							errorCode="-16";
-							errorResponse="Payment Deduction Failed"; 
-						}
-					}else {
-						errorCode="5";
-						errorResponse="low Balance";
-					}		
+						errorCode="0";
+						receiverCount=""+TotalSMS;
+						errorResponse="Successfully insterted";
+
+
+					}catch(SQLException e) {
+						errorCode="11";
+						errorResponse="SQL Exception";
+						updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
+						e.printStackTrace();
+						LogWriter.LOGGER.severe("SQLException"+e.getMessage());
+					}catch(Exception e) {
+						e.printStackTrace();
+						updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
+						errorCode="10";
+						errorResponse="General Exception";
+						e.printStackTrace();
+					}
+					try {
+						bubbleDS.closePreparedStatement();
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				}else {
+					errorCode="-16";
+					errorResponse="Payment Deduction Failed"; 
+				}
+			}else {
+				errorCode="5";
+				errorResponse="low Balance";
+			}		
 		}finally{
 			if(bubbleDS.getConnection() != null){
 				try {
@@ -1589,7 +1589,7 @@ public class UserDBOperations {
 		jsonEncoder.addElement("ErrorCode", errorCode);
 		jsonEncoder.addElement("ErrorResponse", errorResponse);
 		jsonEncoder.addElement("ReceiverCount", receiverCount);
-		
+
 		jsonEncoder.buildJsonObject();
 		return jsonEncoder;
 	}
@@ -2512,9 +2512,9 @@ public class UserDBOperations {
 		LogWriter.LOGGER.severe(" return from  get list --> "+retval);
 		return retval;
 	}
-	
+
 	public JsonEncoder getBulkSMSSummary(String id,String start_date,String end_date,String output_type){
-		
+
 		JsonEncoder jsonEncoder=new JsonEncoder();
 		String errorCode="-1";
 		String errorResponse="";
@@ -2582,18 +2582,18 @@ public class UserDBOperations {
 
 
 		return jsonEncoder;
-		
-		
+
+
 	}
-	
+
 	/*
 	public String getBulkSMSSummary dffdh(String id){		
 
 		String retval="";
 		String errorCode="-1";
 		String sql="SELECT file_name,DATE_FORMAT(insert_date, \"%d-%m-%Y %H:%i\") as insert_date,status,DATE_FORMAT(dump_time, \"%d-%m-%Y %H:%i\") as dump_time,output_type FROM smsdb.file_dump_query where flag=1 and user_id=? and  (insert_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))";
-		
-		
+
+
 		try {
 
 			bubbleDS.prepareStatement(sql);
@@ -2825,9 +2825,9 @@ public class UserDBOperations {
 		}
 		return retval;
 	}
-	
-	
-	public String getGeoDeatil(String geoTarget){
+
+
+	public String getGeoDetail(String geoTarget){
 		String retval="";
 		String errorCode="-1";
 		String sql="";
@@ -2841,42 +2841,42 @@ public class UserDBOperations {
 			retval="-1";
 		}
 		if(!retval.equalsIgnoreCase("-1")) {
-		try {
+			try {
 
-			bubbleDS.prepareStatement(sql);		
+				bubbleDS.prepareStatement(sql);		
 
 
-			ResultSet rs = bubbleDS.executeQuery();
-			while (rs.next()) {
-				//  String tempListId=rs.getString("list_id");
-				//  String msisdnCount=rs.getString("msisdnCount");				
-				retval+="\""+rs.getString(1)+"\""+",";	
-			}
-			bubbleDS.closeResultSet();
-			bubbleDS.closePreparedStatement();
-			if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
-			int lio=retval.lastIndexOf(",");
-			if(lio>0) retval=retval.substring(0,lio);
-			errorCode="0";
-			LogWriter.LOGGER.info("MapList : "+retval);
-		}catch(SQLException e){
-			errorCode= "-2";
-			LogWriter.LOGGER.severe(e.getMessage());
-		}catch(Exception e){
-			errorCode= "-3";
-			LogWriter.LOGGER.severe(e.getMessage());
-		}finally{
-			if(bubbleDS.getConnection() != null){
-				try {
-					bubbleDS.getConnection().close();
-				} catch (SQLException e) {
-					errorCode="-4";
-					LogWriter.LOGGER.severe(e.getMessage());
+				ResultSet rs = bubbleDS.executeQuery();
+				while (rs.next()) {
+					//  String tempListId=rs.getString("list_id");
+					//  String msisdnCount=rs.getString("msisdnCount");				
+					retval+="\""+rs.getString(1)+"\""+",";	
 				}
-			}      
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+				int lio=retval.lastIndexOf(",");
+				if(lio>0) retval=retval.substring(0,lio);
+				errorCode="0";
+				LogWriter.LOGGER.info("MapList : "+retval);
+			}catch(SQLException e){
+				errorCode= "-2";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}catch(Exception e){
+				errorCode= "-3";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}finally{
+				if(bubbleDS.getConnection() != null){
+					try {
+						bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						errorCode="-4";
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}      
+			}
+		}else {
 		}
-	}else {
-	}
 		if(!errorCode.startsWith("0")) {
 			retval=errorCode;
 		}
@@ -4014,6 +4014,247 @@ function msisdnMakeFormate($msisdn){
 		}
 		return retval;
 	}*/
-	//TODO getSMSLog for school
-	//TODO getSMSLog for parents
+	/**
+	 * 
+	 * @param userId
+	 * @param lastIndex
+	 * @param isDescending
+	 * @return list in counts of 100 in ascending or descending order from the index
+	 */
+	public String getInbox(String userId, long lastIndex, boolean isDescending) {
+		String retval="";
+		String errorCode="-1";
+		//		String sql="select i.id,sender,OriginTime,text,BPLNumber as inbox_number from inbound_sms i,tbl_users u where u.id=? and u.inbox_msisdn like concat_ws('%',i.BPLNumber,'%') and i.id <condition> ? order by i.OriginTime <order>,i.id <order> limit 100";
+		String sql="select i.id, sender,OriginTime,text,BPLNumber as inbox_number from inbound_sms i,inbox_numbers n where n.user_id=? and n.inbox_msisdn = i.BPLNumber and i.id <condition> ? order by i.OriginTime <order>,i.id <order> limit 100";
+		if(isDescending) {
+			sql=sql.replaceAll("<order>", "desc");
+			if(lastIndex==0) sql=sql.replace("and i.id <condition> ? ", "");
+			else sql=sql.replaceAll("<condition> ?", "<"+lastIndex);
+		}else {
+			sql=sql.replaceAll("<order>", "asc");
+			sql=sql.replaceAll("<condition>", ">");
+		}
+		ResultSet rs = null;
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+
+			rs = bubbleDS.executeQuery();
+			if(rs.isBeforeFirst()) {
+				while (rs.next()) {
+					retval+="\""+rs.getString("id")+"\""+",";
+					retval+="\""+rs.getString("sender")+"\""+",";
+					retval+="\""+rs.getString("OriginTime")+"\""+",";
+					retval+="\""+rs.getString("text")+"\""+",";
+					retval+="\""+rs.getString("inbox_number")+"\""+"|";
+				}
+			}else {
+				retval="0";
+			}
+
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+			int lio=retval.lastIndexOf("|");
+			if(lio>0) retval=retval.substring(0,lio);
+			errorCode="0";
+			//			retval=retval.substring(0,retval.lastIndexOf("|"));
+		}catch(Exception e){
+			retval="-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					if(rs!=null) if(!rs.isClosed()) rs.close();
+					if(!bubbleDS.isResultSetClosed()) bubbleDS.closeResultSet();
+					if(!bubbleDS.isPreparedStatementClosed()) bubbleDS.closePreparedStatement();
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					retval="-3";
+					LogWriter.LOGGER.severe(e.getMessage());
+					//					this.logWriter.appendLog("s:FSE");
+					//					this.logWriter.appendAdditionalInfo("UDO.getList():"+e.getMessage());
+				}
+			}
+		}
+		if(!errorCode.startsWith("0")) {
+			retval= errorCode;
+		}
+		return retval;
+	}
+
+	/**
+	 * 
+	 * @param country
+	 * @return division id,name|id,name|...
+	 */
+	public String getGeoLocation(String country){
+		String retval="";
+		String errorCode="-1";
+		String sql;
+		if(country.equalsIgnoreCase("1") || country.equalsIgnoreCase("Bangladesh")) {
+			sql="SELECT id,Division_name FROM divisions";
+			ResultSet rs=null;
+			try {
+				bubbleDS.prepareStatement(sql);
+				rs = bubbleDS.executeQuery();
+				while (rs.next()) {			
+					retval+="\""+rs.getString(1)+"\""+",";
+					retval+="\""+rs.getString(2)+"\""+"|";
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+				int lio=retval.lastIndexOf("|");
+				if(lio>0) retval=retval.substring(0,lio);
+				errorCode="0";
+				LogWriter.LOGGER.info("MapList : "+retval);
+			}catch(SQLException e){
+				errorCode= "-2";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}catch(Exception e){
+				errorCode= "-3";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}finally{
+				if(bubbleDS.getConnection() != null){
+					try {
+						if(rs!=null) if(!rs.isClosed()) rs.close();
+						if(!bubbleDS.isResultSetClosed()) bubbleDS.closeResultSet();
+						if(!bubbleDS.isPreparedStatementClosed()) bubbleDS.closePreparedStatement();
+						bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						retval="-3";
+						LogWriter.LOGGER.severe(e.getMessage());
+						//						this.logWriter.appendLog("s:FSE");
+						//						this.logWriter.appendAdditionalInfo("UDO.getList():"+e.getMessage());
+					}
+				}      
+			}
+			if(!errorCode.startsWith("0")) {
+				retval=errorCode;
+			}
+		}else{
+			retval="-1:Country "+country+" is not available";
+		}
+		return retval;
+	}
+	/**
+	 * 
+	 * @param country
+	 * @param division
+	 * @return district id,name|id,name|...
+	 */
+	public String getGeoLocation(String country,String division){
+		String retval="";
+		String errorCode="-1";
+		String sql;
+		if(!NullPointerExceptionHandler.isNullOrEmpty(division)) {
+			sql="SELECT id,District_name FROM districts where division_id=?";
+			ResultSet rs=null;
+			try {
+				bubbleDS.prepareStatement(sql);
+				bubbleDS.getPreparedStatement().setString(1, division);
+				rs = bubbleDS.executeQuery();
+				//if before first then ok otherwise division is not found
+				while (rs.next()) {
+					retval+="\""+rs.getString(1)+"\""+",";
+					retval+="\""+rs.getString(2)+"\""+"|";
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+				int lio=retval.lastIndexOf("|");
+				if(lio>0) retval=retval.substring(0,lio);
+				errorCode="0";
+				LogWriter.LOGGER.info("MapList : "+retval);
+			}catch(SQLException e){
+				errorCode= "-2";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}catch(Exception e){
+				errorCode= "-3";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}finally{
+				if(bubbleDS.getConnection() != null){
+					try {
+						if(rs!=null) if(!rs.isClosed()) rs.close();
+						if(!bubbleDS.isResultSetClosed()) bubbleDS.closeResultSet();
+						if(!bubbleDS.isPreparedStatementClosed()) bubbleDS.closePreparedStatement();
+						bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						retval="-3";
+						LogWriter.LOGGER.severe(e.getMessage());
+						//						this.logWriter.appendLog("s:FSE");
+						//						this.logWriter.appendAdditionalInfo("UDO.getList():"+e.getMessage());
+					}
+				}      
+			}
+			if(!errorCode.startsWith("0")) {
+				retval=errorCode;
+			}
+		}else{
+			retval="-1:Division cannot be null";
+		}
+		return retval;
+	}
+	/**
+	 * 
+	 * @param country
+	 * @param division
+	 * @param district
+	 * @return upazilla id,name|id,name|...
+	 */
+	public String getGeoLocation(String country,String division,String district){
+		String retval="";
+		String errorCode="-1";
+		String sql;
+		//		if(!NullPointerExceptionHandler.isNullOrEmpty(division) && !NullPointerExceptionHandler.isNullOrEmpty(district) ) {
+		if(!NullPointerExceptionHandler.isNullOrEmpty(district) ) {
+			sql="SELECT id,Upazila_name FROM upazilas where district_id=?";
+			ResultSet rs=null;
+			try {
+				bubbleDS.prepareStatement(sql);
+				//				bubbleDS.getPreparedStatement().setString(1, division);
+				bubbleDS.getPreparedStatement().setString(1, district);
+				rs = bubbleDS.executeQuery();
+				//if before first then ok otherwise division is not found
+				while (rs.next()) {
+					retval+="\""+rs.getString(1)+"\""+",";
+					retval+="\""+rs.getString(2)+"\""+"|";
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+				int lio=retval.lastIndexOf("|");
+				if(lio>0) retval=retval.substring(0,lio);
+				errorCode="0";
+				LogWriter.LOGGER.info("MapList : "+retval);
+			}catch(SQLException e){
+				errorCode= "-2";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}catch(Exception e){
+				errorCode= "-3";
+				LogWriter.LOGGER.severe(e.getMessage());
+			}finally{
+				if(bubbleDS.getConnection() != null){
+					try {
+						if(rs!=null) if(!rs.isClosed()) rs.close();
+						if(!bubbleDS.isResultSetClosed()) bubbleDS.closeResultSet();
+						if(!bubbleDS.isPreparedStatementClosed()) bubbleDS.closePreparedStatement();
+						bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						retval="-3";
+						LogWriter.LOGGER.severe(e.getMessage());
+						//						this.logWriter.appendLog("s:FSE");
+						//						this.logWriter.appendAdditionalInfo("UDO.getList():"+e.getMessage());
+					}
+				}      
+			}
+			if(!errorCode.startsWith("0")) {
+				retval=errorCode;
+			}
+		}else{
+			retval="-1:District cannot be null";
+			//			retval="-1:Division or District cannot be null";
+		}
+		return retval;
+	}
 }

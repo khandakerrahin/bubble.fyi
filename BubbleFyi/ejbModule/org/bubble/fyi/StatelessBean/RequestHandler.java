@@ -194,9 +194,17 @@ public class RequestHandler implements RequestHandlerLocal {
 			retVal=new UserOperations().reportRequestSMS(message,messageBody); 
 		}else if(action.equalsIgnoreCase("targetBasedSMSRequest")) {
 			retVal=new UserOperations().sentTargetBasedSMS(message,messageBody); 			
-		} 
+		}
 		
+		//SMS inbound
+		else if(action.equalsIgnoreCase("getInbox")) {
+			retVal=new UserOperations().getInbox(message,messageBody); 			
+		}
 		
+		//Get district and upazillas
+		else if(action.equalsIgnoreCase("getGeoLocation2")) {//documented	
+			retVal=new UserOperations().getGeoLocation(message,messageBody); 
+		}
 		//APIs for sms Sending through API
 		
 		else if(action.equalsIgnoreCase("sendSMSapi")) {//documented			

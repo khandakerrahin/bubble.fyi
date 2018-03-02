@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
+import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
+
 public class BubbleFyiDS {
 	DataSource dataStore;
 	Connection connection; 
@@ -148,6 +150,28 @@ public class BubbleFyiDS {
 	 */
 	public void setResultSet(ResultSet resultSet) {
 		this.resultSet = resultSet;
+	}
+	
+	public boolean isPreparedStatementClosed() throws SQLException {
+		if(this.preparedStatement==null) {
+			return true;
+		}else {
+			return this.preparedStatement.isClosed();
+		}
+	}
+	public boolean isResultSetClosed() throws SQLException {
+		if(this.resultSet==null) {
+			return true;
+		}else {
+			return this.resultSet.isClosed();
+		}
+	}
+	public void setString(int index, String value) throws SQLException{
+		if(NullPointerExceptionHandler.isNullOrEmpty(value)) {
+			this.preparedStatement.setNull(index, java.sql.Types.NULL);
+		}else {
+			this.preparedStatement.setString(index, value);
+		}
 	}
 /*
 	private String exampleQuery() {

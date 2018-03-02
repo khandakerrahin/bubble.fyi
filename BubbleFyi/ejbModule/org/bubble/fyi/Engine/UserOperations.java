@@ -630,7 +630,57 @@ public class UserOperations {
 		}else{
 			json=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getGeoDeatil(json.getJsonObject().getString("targetGroup"));		
+		retval=new UserDBOperations().getGeoDetail(json.getJsonObject().getString("targetGroup"));		
+		return retval;
+	}
+	/**
+	 * 
+	 * @param message
+	 * @param messageBody
+	 * @return
+	 */
+	public String getGeoLocation(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			if(json.isParameterPresent("country") && !json.isParameterPresent("division")) {
+				//get division
+				if(NullPointerExceptionHandler.isNullOrEmpty(json.getEString("country"))) {
+					retval="E:JSON string invalid. country value is invalid";
+				}else {
+					retval=new UserDBOperations().getGeoLocation(json.getEString("country"));
+				}
+			}else if(json.isParameterPresent("division")) {
+				if(json.isParameterPresent("district")) {
+					//get upazilla
+//					if(NullPointerExceptionHandler.isNullOrEmpty(json.getEString("division"))) {
+//						retval="E:JSON string invalid. division value is invalid";
+//					}else 
+						if(NullPointerExceptionHandler.isNullOrEmpty(json.getEString("district"))) {
+						retval="E:JSON string invalid. district value is invalid";
+					}else {
+						retval=new UserDBOperations().getGeoLocation("1",json.getEString("division"),json.getEString("district"));
+					}
+				}else {
+					//get district
+					if(NullPointerExceptionHandler.isNullOrEmpty(json.getEString("division"))) {
+						retval="E:JSON string invalid. division value is invalid";
+					}else {
+						retval=new UserDBOperations().getGeoLocation("1",json.getEString("division"));
+					}
+				}
+			}else {
+				retval="E:JSON string does not contain either country or division parameter";
+			}
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
 		return retval;
 	}
 	
@@ -1037,6 +1087,58 @@ public class UserOperations {
 		}
 		return retval;
 	}/**/
-	//TODO view sms for parents, for school
+
+	/**
+	 * 
+	 * @param message (id,lastIndex,order: 1 desc, 0 asc)
+	 * @param messageBody
+	 * @return
+	 */
+	public String getInbox(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else {
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			try {
+				long li=Long.parseLong(json.isParameterPresent("lastIndex")?json.getEString("lastIndex"):"0");
+
+				boolean isDescending;
+				if(json.isParameterPresent("order")) {
+					if(json.getEString("order").equalsIgnoreCase("1") || json.getEString("order").equalsIgnoreCase("desc")){
+						isDescending=true;
+					}else if(json.getEString("order").equalsIgnoreCase("0") || json.getEString("order").equalsIgnoreCase("asc")) {
+						isDescending=false;
+					}else {
+						isDescending=true;
+					}
+				}else {
+					isDescending=true;
+				}
+				if(json.isParameterPresent("id")) {
+					if(!NullPointerExceptionHandler.isNullOrEmpty(json.getEString("id"))) {
+						retval=getInbox(json.getEString("id"),li,isDescending);
+					}else {
+						retval="E:JSON string invalid, id value is invalid";
+					}
+				}else {
+					retval="E:JSON string invalid, id missing";
+				}
+			}catch(NumberFormatException nfe) {
+				retval="E:JSON string invalid, lastIndex NumberFormatException";
+			}
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	public String getInbox(String userId, long lastIndex, boolean isDescending) {
+		if(NullPointerExceptionHandler.isNullOrEmpty(userId)) return "-8:At least one parameter null or empty";
+		if(lastIndex < 0) lastIndex=0;
+		return new UserDBOperations().getInbox(userId,lastIndex,isDescending);
+	}
 	
 }

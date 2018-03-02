@@ -126,4 +126,12 @@ public class JsonDecoder {
 			return null;
 		}
 	}
+	/**
+	 * 
+	 * @param string
+	 * @return true if available, otherwise false
+	 */
+	public boolean isParameterPresent(String string) {
+		return this.jsonObject.containsKey(string);
+	}
 }
