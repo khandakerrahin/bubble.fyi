@@ -4,6 +4,7 @@
 package org.bubble.fyi.Engine;
 
 import org.bubble.fyi.DBOperations.UserDBOperations;
+import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Logs.LogWriter;
 import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 
@@ -12,11 +13,12 @@ import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
  *
  */
 public class UserOperations {
-
+	BubbleFyiDS bubbleDS;
 	/**
 	 * 
 	 */
-	public UserOperations() {
+	public UserOperations(BubbleFyiDS bubbleDS) {
+		this.bubbleDS= bubbleDS;
 		// Auto-generated constructor stub
 	}
 	/**
@@ -27,7 +29,7 @@ public class UserOperations {
 	 * all negative values is error.
 	 */
 	public String deleteUser(String userId) {
-		return new UserDBOperations().deleteUser(userId);
+		return new UserDBOperations(bubbleDS).deleteUser(userId);
 	}
 	/**
 	 * 
@@ -103,70 +105,84 @@ public class UserOperations {
 	 * 
 	 */
 	public String modifyPasswordFunc(String userId, String oldPass, String newPass) {
-		return new UserDBOperations().modifyPasswordDB(userId, oldPass, newPass);
+		return new UserDBOperations(bubbleDS).modifyPasswordDB(userId, oldPass, newPass);
 	}
 	
 	public String modifyProfileFunc(String id, String city,String postCode,String address,String custodianName,String logoFile) {
-		return new UserDBOperations().modifyProfileDB(id,city,postCode,address,custodianName,logoFile);
+		return new UserDBOperations(bubbleDS).modifyProfileDB(id,city,postCode,address,custodianName,logoFile);
 		
 	}
 	
 	public String updateCustomerStatus(String id, String customerid, String status) {
-		return new UserDBOperations().modifyCustomerStatus(id, customerid, status);
+		return new UserDBOperations(bubbleDS).modifyCustomerStatus(id, customerid, status);
 	}
 	
 	public String updateBulksmsStatus(String id, String customerid,String groupId, String status) {
-		return new UserDBOperations().modifyBulksmsPStatus(id, customerid,groupId, status);
+		return new UserDBOperations(bubbleDS).modifyBulksmsPStatus(id, customerid,groupId, status);
 	}
 	public String retryBulksmsLowBalanceStatus( String customerid,String groupId) {
-		return new UserDBOperations().BulksmsLowBalanceStatusChange(customerid,groupId).getJsonObject().toString();
+		return new UserDBOperations(bubbleDS).BulksmsLowBalanceStatusChange(customerid,groupId).getJsonObject().toString();
 	}
 	public String updateGroupList(String id, String msisdn,String flag,String listId) {
-		return new UserDBOperations().modifyGrouplistDB(id, msisdn,flag,listId);
+		return new UserDBOperations(bubbleDS).modifyGrouplistDB(id, msisdn,flag,listId);
 	}
 	public String deleteGroupList(String id,String listId) {
-		return new UserDBOperations().deleteGrouplistDB(id,listId);
+		return new UserDBOperations(bubbleDS).deleteGrouplistDB(id,listId);
 	}
 	public String uploadLogoFile(String logoFile,String id) {
-		return new UserDBOperations().uploadLogoFileDB(logoFile,id);
+		return new UserDBOperations(bubbleDS).uploadLogoFileDB(logoFile,id);
 	}
 	public String createGroupDetailDB(String id, String listname) {
-		return new UserDBOperations().createGroupInfo(id, listname);
+		return new UserDBOperations(bubbleDS).createGroupInfo(id, listname);
 	}
 	public String GroupSMSDetailDB(String id, String sch_date,String message,String filename) {
-		return new UserDBOperations().createGroupSMSInfo(id, sch_date,message,filename).getJsonObject().toString();
+		return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date,message,filename).getJsonObject().toString();
 	}
 	public String RequestPackagePurchaseDB(String id, String package_name,String price) {
-		return new UserDBOperations().packagePurchaseRequester(id, package_name,price).getJsonObject().toString();		
+		return new UserDBOperations(bubbleDS).packagePurchaseRequester(id, package_name,price).getJsonObject().toString();		
 	}
 	public String PaymentRecordUpdateDB(String id, String trxID,String price,String status) {
-		return new UserDBOperations().updatePaymentInfoDB(id, trxID,price,status);		
+		return new UserDBOperations(bubbleDS).updatePaymentInfoDB(id, trxID,price,status);		
 	}
 	public String SendSMSFromListDB(String id, String sch_date,String message,String listId) {
-		return new UserDBOperations().sendSMSFromList(id, sch_date,message,listId).getJsonObject().toString();
+		return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date,message,listId).getJsonObject().toString();
 	}
 	public String SendSMStargetBasedDB(String id, String targetDV,String targetDis,String targetUpz,String sch_date,String message,String amount) {
-		return new UserDBOperations().sendSMStargetBased(id,targetDV,targetDis,targetUpz, sch_date,message,amount).getJsonObject().toString();
+		return new UserDBOperations(bubbleDS).sendSMStargetBased(id,targetDV,targetDis,targetUpz, sch_date,message,amount).getJsonObject().toString();
 	}
+	
+	public String RequestTargetBasedSMSDB(String id, String targetGroup,String sch_date,String message,String budget,String targetCount) {
+		return new UserDBOperations(bubbleDS).requestTargetBasedSMS(id,targetGroup, sch_date,message,budget,targetCount).getJsonObject().toString();
+	}
+	
+	/**
+	 * 
+	 * @param id
+	 * @param sch_date
+	 * @param message
+	 * @param listFile
+	 * @param mode
+	 * @return
+	 */
 	public String SendScheduledSMS(String id, String sch_date,String message,String listFile,String mode) {
 		if(mode.equalsIgnoreCase("1")) {
-			return new UserDBOperations().sendSMSFromList(id, sch_date,message,listFile).getJsonObject().toString();		
+			return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date,message,listFile).getJsonObject().toString();		
 		}else {
-			return new UserDBOperations().createGroupSMSInfo(id, sch_date,message,listFile).getJsonObject().toString();		
+			return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date,message,listFile).getJsonObject().toString();		
 		}
 	}
 	
 	public String DownloadSingleSMSReport(String id, String start_date,String end_date,String output_type) {
-			return new UserDBOperations().downloadSingleSMSReport(id, start_date,end_date,output_type).getJsonObject().toString();				
+			return new UserDBOperations(bubbleDS).downloadSingleSMSReport(id, start_date,end_date,output_type).getJsonObject().toString();				
 	}
 	public String GetBulkSMSSummary(String id,String start_date,String end_date,String output_type) {
-		return new UserDBOperations().getBulkSMSSummary(id,start_date,end_date,output_type).getJsonObject().toString();				
+		return new UserDBOperations(bubbleDS).getBulkSMSSummary(id,start_date,end_date,output_type).getJsonObject().toString();				
     }
 	public String GetSMSCounterDB(String id) {
-		return new UserDBOperations().GetSMSCounter(id).getJsonObject().toString();
+		return new UserDBOperations(bubbleDS).GetSMSCounter(id).getJsonObject().toString();
 	}
 	public String GetSMSCounterBulkList(String id,String listId) {
-		return new UserDBOperations().GetSMSBulkCounter(id,listId).getJsonObject().toString();
+		return new UserDBOperations(bubbleDS).GetSMSBulkCounter(id,listId).getJsonObject().toString();
 	}
 	/**
 	 * 
@@ -436,6 +452,23 @@ public class UserOperations {
 		return retval;
 	}
 	
+	public String requestTargetBasedSMS(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+				retval=RequestTargetBasedSMSDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("targetGroup"),json.getJsonObject().getString("scheduleDate"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("budget"),json.getJsonObject().getString("targetCount"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
 	public String sentSMSScheduled(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
@@ -558,7 +591,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getList(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"));		
+		retval=new UserDBOperations(bubbleDS).getList(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"));		
 		return retval;
 	}
 	
@@ -570,7 +603,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getPaymentRecords(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getPaymentRecords(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -582,7 +615,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getReportRecords(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getReportRecords(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -606,7 +639,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getListV2(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"),Credentials.getJsonObject().getString("msisdn"));		
+		retval=new UserDBOperations(bubbleDS).getListV2(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"),Credentials.getJsonObject().getString("msisdn"));		
 		return retval;
 	}
 	
@@ -618,7 +651,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getCustomerGroupListInfo(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getCustomerGroupListInfo(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -630,7 +663,7 @@ public class UserOperations {
 		}else{
 			json=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getGeoDetail(json.getJsonObject().getString("targetGroup"));		
+		retval=new UserDBOperations(bubbleDS).getGeoDetail(json.getJsonObject().getString("targetGroup"));		
 		return retval;
 	}
 	/**
@@ -653,7 +686,7 @@ public class UserOperations {
 				if(NullPointerExceptionHandler.isNullOrEmpty(json.getEString("country"))) {
 					retval="E:JSON string invalid. country value is invalid";
 				}else {
-					retval=new UserDBOperations().getGeoLocation(json.getEString("country"));
+					retval=new UserDBOperations(bubbleDS).getGeoLocation(json.getEString("country"));
 				}
 			}else if(json.isParameterPresent("division")) {
 				if(json.isParameterPresent("district")) {
@@ -664,14 +697,14 @@ public class UserOperations {
 						if(NullPointerExceptionHandler.isNullOrEmpty(json.getEString("district"))) {
 						retval="E:JSON string invalid. district value is invalid";
 					}else {
-						retval=new UserDBOperations().getGeoLocation("1",json.getEString("division"),json.getEString("district"));
+						retval=new UserDBOperations(bubbleDS).getGeoLocation("1",json.getEString("division"),json.getEString("district"));
 					}
 				}else {
 					//get district
 					if(NullPointerExceptionHandler.isNullOrEmpty(json.getEString("division"))) {
 						retval="E:JSON string invalid. division value is invalid";
 					}else {
-						retval=new UserDBOperations().getGeoLocation("1",json.getEString("division"));
+						retval=new UserDBOperations(bubbleDS).getGeoLocation("1",json.getEString("division"));
 					}
 				}
 			}else {
@@ -692,7 +725,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getActivePackageList(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getActivePackageList(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -704,7 +737,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getBulkSMSDetailOfCustomer(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getBulkSMSDetailOfCustomer(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -716,7 +749,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getAddressBookInfo(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getAddressBookInfo(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -728,7 +761,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getAddressBookCount(Credentials.getJsonObject().getString("id")).getJsonObject().toString();;		
+		retval=new UserDBOperations(bubbleDS).getAddressBookCount(Credentials.getJsonObject().getString("id")).getJsonObject().toString();;		
 		return retval;
 	}
 	
@@ -740,7 +773,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getListMsisdnFunc(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("listId"));		
+		retval=new UserDBOperations(bubbleDS).getListMsisdnFunc(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("listId"));		
 		return retval;
 	}
 	
@@ -752,7 +785,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getAllCustomerList(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getAllCustomerList(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -764,7 +797,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations().getPendingBulksmsList(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getPendingBulksmsList(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
 	
@@ -940,7 +973,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations().bubbleFileInsert(json);
+			retval=new UserDBOperations(bubbleDS).bubbleFileInsert(json);
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -976,7 +1009,7 @@ public class UserOperations {
 	 */
 	public String getUploadStatus(String filename) {
 		if(NullPointerExceptionHandler.isNullOrEmpty(filename)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getUploadStatus(filename);
+		return new UserDBOperations(bubbleDS).getUploadStatus(filename);
 	}
 	
 	public String uploadFileListGetter(String message, String messageBody) {
@@ -1004,7 +1037,7 @@ public class UserOperations {
 	 */
 	public String getFileList(String id,String userType) {
 		if(NullPointerExceptionHandler.isNullOrEmpty(id)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getFileList(id,userType);
+		return new UserDBOperations(bubbleDS).getFileList(id,userType);
 	}
 	//TODO
 	//TODO
@@ -1049,20 +1082,12 @@ public class UserOperations {
 	 * @return dataId,studentId,name,schoolName,amount,month,status,txtime
 	 * -ve is error
 	 */
+	/*
 	public String getTransactionList(String userId) {
 		if(NullPointerExceptionHandler.isNullOrEmpty(userId)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getTransactionList(userId);
-	}
-	/**
-	 * 
-	 * @param userId
-	 * @return dataId,studentId,name,class,section,amount,month,status,txtime,log,purpose
-	 * -ve is error
-	 */
-	public String getTxListSchool(String userId) {
-		if(NullPointerExceptionHandler.isNullOrEmpty(userId)) return "-8:At least one parameter null or empty";
-		return new UserDBOperations().getTxListSchool(userId);
-	}
+		return new UserDBOperations(bubbleDS).getTransactionList(userId);
+	}/**/
+	
 	//logSMS
 	/**
 	 * 
@@ -1138,7 +1163,7 @@ public class UserOperations {
 	public String getInbox(String userId, long lastIndex, boolean isDescending) {
 		if(NullPointerExceptionHandler.isNullOrEmpty(userId)) return "-8:At least one parameter null or empty";
 		if(lastIndex < 0) lastIndex=0;
-		return new UserDBOperations().getInbox(userId,lastIndex,isDescending);
+		return new UserDBOperations(bubbleDS).getInbox(userId,lastIndex,isDescending);
 	}
 	
 }

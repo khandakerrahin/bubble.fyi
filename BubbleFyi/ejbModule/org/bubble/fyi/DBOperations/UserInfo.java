@@ -14,12 +14,13 @@ import org.bubble.fyi.Logs.LogWriter;
  *
  */
 public class UserInfo {
-	BubbleFyiDS fsDS;
+	BubbleFyiDS bubbleDS;
 	/**
 	 * 
 	 */
-	public UserInfo() {
-		fsDS= new BubbleFyiDS(); 
+	public UserInfo(BubbleFyiDS bubbleDS) {
+		//bubbleDS= new BubbleFyiDS(); 
+		this.bubbleDS=bubbleDS;
 	}
 	
 	public JsonEncoder listUsers() {
@@ -68,9 +69,9 @@ public class UserInfo {
 			sql=sql.replace("<mode>", "username");
 		}
 		try {
-			fsDS.prepareStatement(sql);
-			fsDS.getPreparedStatement().setString(1, id);
-			ResultSet rs = fsDS.executeQuery();
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, id);
+			ResultSet rs = bubbleDS.executeQuery();
 			if (rs.next()) {
 				jsonEncoder.addElement("id", rs.getString("id"));
 				jsonEncoder.addElement("username", rs.getString("username"));
@@ -93,8 +94,8 @@ public class UserInfo {
 				errorCode="-9:User details could not be retrieved";
 			}
 			rs.close();
-			fsDS.closeResultSet();
-			fsDS.closePreparedStatement();
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
 		}catch(SQLException e){
 			errorCode= "-2";
 			LogWriter.LOGGER.severe(e.getMessage());
@@ -102,16 +103,17 @@ public class UserInfo {
 			errorCode= "-3";
 			LogWriter.LOGGER.severe(e.getMessage());
 			e.printStackTrace();
-		}finally{
-			if(fsDS.getConnection() != null){
+		}
+		/*finally{
+			if(bubbleDS.getConnection() != null){
 				try {
-					fsDS.getConnection().close();
+					bubbleDS.getConnection().close();
 				} catch (SQLException e) {
 					errorCode="-4";
 					LogWriter.LOGGER.severe(e.getMessage());
 				}
 			}      
-		}
+		}/**/
 		jsonEncoder.addElement("ErrorCode", errorCode);
 		jsonEncoder.buildJsonObject();
 		return jsonEncoder;

@@ -1,17 +1,19 @@
 package org.bubble.fyi.Engine;
 
 import org.bubble.fyi.DBOperations.SMSSender;
+import org.bubble.fyi.DataSources.BubbleFyiDS;
 
 /**
  * @author wasif
  *
  */
 public class SMSProcessor {
-
+	BubbleFyiDS bubbleDS;
 	/**
 	 * 
 	 */
-	public SMSProcessor() {
+	public SMSProcessor(BubbleFyiDS bubbleDS) {
+		this.bubbleDS=bubbleDS;
 		// TODO Auto-generated constructor stub
 	}
 	/**
@@ -38,7 +40,7 @@ public class SMSProcessor {
 		}else {
 			SMSInfo=new JsonDecoder(messageBody);
 		}
-		SMSSender sendSMS=new SMSSender();
+		SMSSender sendSMS=new SMSSender(bubbleDS);
 		if(SMSInfo.getErrorCode().equals("0")) {
 			retval=sendSMS.insertToSender(SMSInfo);
 		}else{
@@ -58,7 +60,7 @@ public class SMSProcessor {
 		}
 		//SMSSender sendSMS=new SMSSender();
 		if(SMSInfo.getErrorCode().equals("0")) {
-			retval=new SMSSender().insertToSenderAPI(SMSInfo);
+			retval=new SMSSender(bubbleDS).insertToSenderAPI(SMSInfo);
 		}else{
 			//error decoding json
 			retval="E:JSON string invalid";

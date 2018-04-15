@@ -20,8 +20,8 @@ public class UserRegistration {
 	/**
 	 * 
 	 */
-	public UserRegistration() {
-		bubbleDS = new BubbleFyiDS();
+	public UserRegistration(BubbleFyiDS bubbleDS) {
+		bubbleDS = this.bubbleDS;
 	}
 	/**
 	 * If msisdn starts with 0, prepends 88.
@@ -39,9 +39,15 @@ public class UserRegistration {
 		}
 		return msisdn;
 	}
+	/**
+	 * 
+	 * @param userId
+	 * @return 0:Successfully Inserted
+	 * 
+	 */
 	public String insertToCustomerBalanceTable(String userId) {
 		String retval= "-1";
-		double balance=1.0;
+		double balance=0.0;
 		String sql="INSERT INTO customer_balance"
 				+ " (user_id,balance) "
 				+ "VALUES ("
@@ -65,9 +71,41 @@ public class UserRegistration {
 		}			
 		return retval;		
 	}
+	
 	/**
 	 * 
-	 * @param jsonDecoder schoolName,email,phone,password,custodianName,address,city,postcode
+	 * @param userId
+	 * @return 0:Successfully Inserted
+	 * -1 failed
+	 */
+	public String insertToTblChargingTable(String userId) {
+		String retval= "-1";		
+		String sql="INSERT INTO tbl_charging"
+				+ " (user_id) "
+				+ "VALUES ("
+				+ "?)";
+		try {
+			bubbleDS.prepareStatement(sql,true);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+		
+			retval="0:Successfully Inserted";
+				bubbleDS.execute();
+	    }catch(Exception e) {				
+				e.printStackTrace();
+		}finally {
+			try {
+				bubbleDS.closePreparedStatement();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}			
+		return retval;		
+	}
+	/**
+	 * 
+	 * @param jsonDecoder Admin username, email, password, phone,flag
+	 * @param jsonDecoder Customer custodian_name,organization_name,username,password,email,phone, address,postcode,city
 	 * @return 0:Successfully Inserted
 	 * <br>1:User with the email address exists
 	 * <br>2:Inserting organization details failed
@@ -77,7 +115,9 @@ public class UserRegistration {
 	 * <br>-2:SQLException
 	 * <br>-3:General Exception
 	 * <br>-4:SQLException while closing connection
+	 * insert to customer balance table and TODO tbl_charging table 
 	 */
+	
 	public String registerNewUser(JsonDecoder jsonDecoder) {
 		String errorCode="-1";//default errorCode
 		/*
@@ -163,9 +203,12 @@ public class UserRegistration {
 			LogWriter.LOGGER.severe(e.getMessage());
 			e.printStackTrace();
 		}finally{
+			//insert to customer balance table
 			if(!userId.equalsIgnoreCase("-1")) {
 				insertToCustomerBalanceTable(userId);
+				insertToTblChargingTable(userId);
 			}
+			/*
 			if(bubbleDS.getConnection() != null){
 				try {
 					bubbleDS.getConnection().close();
@@ -173,7 +216,7 @@ public class UserRegistration {
 					errorCode="-4";
 					LogWriter.LOGGER.severe(e.getMessage());
 				}
-			}      
+			} /**/     
 		}
       LogWriter.LOGGER.info("userID: "+userId);
 	
@@ -193,7 +236,7 @@ private String getUserId() throws SQLException {
 	return retval;
 }
 
-
+/*
 @SuppressWarnings("unused")
 private String getUserIdFromSequence(BubbleFyiDS bubbleDS) throws SQLException {
 	String retval="-1";
@@ -205,6 +248,6 @@ private String getUserIdFromSequence(BubbleFyiDS bubbleDS) throws SQLException {
 	}
 	bubbleDS.closePreparedStatement();		
 	return retval;
-}
+}/**/
 
 }

@@ -6,6 +6,8 @@ package org.bubble.fyi.Engine;
 import org.bubble.fyi.DBOperations.Login;
 import org.bubble.fyi.DBOperations.UserInfo;
 import org.bubble.fyi.Logs.LogWriter;
+import org.bubble.fyi.DataSources.BubbleFyiDS;
+
 import java.util.logging.Logger;;
 
 /**
@@ -15,13 +17,17 @@ import java.util.logging.Logger;;
  * 
  */
 public class LoginProcessor {
-	Login loginDBOperations;
+	//Login loginDBOperations;
+	
+	BubbleFyiDS bubbleDS;
+	LogWriter logWriter;
 	/**
 	 * 
 	 */
 	
-	public LoginProcessor() {
-		loginDBOperations = new Login();
+	public LoginProcessor(BubbleFyiDS bubbleDS) {
+		//loginDBOperations = new Login();
+		this.bubbleDS=bubbleDS;
 	}
 	
 	/**
@@ -52,9 +58,9 @@ public class LoginProcessor {
 		}else {
 			loginCredentials=new JsonDecoder(messageBody);
 		}
-		LoginProcessor loginProcessor=new LoginProcessor();
+		//LoginProcessor loginProcessor=new LoginProcessor(bubbleDS);
 		if(loginCredentials.getErrorCode().equals("0")) {
-			retval=loginProcessor.checkCredentials(loginCredentials);
+			retval=this.checkCredentials(loginCredentials);
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -75,9 +81,9 @@ public class LoginProcessor {
 		}else {
 			loginCredentials=new JsonDecoder(messageBody);
 		}
-		LoginProcessor loginProcessor=new LoginProcessor();
+		//LoginProcessor loginProcessor=new LoginProcessor();
 		if(loginCredentials.getErrorCode().equals("0")) {
-			retval=loginProcessor.checkCredentials(loginCredentials);
+			retval=this.checkCredentials(loginCredentials);
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -101,7 +107,7 @@ public class LoginProcessor {
 	 * 
 	 */
 	private String fetchUserInfo(String id, String mode) {
-		return new UserInfo().fetchUserInfo(id, mode).getJsonObject().toString();
+		return new UserInfo(bubbleDS).fetchUserInfo(id, mode).getJsonObject().toString();
 	}
 	/**
 	 * 
@@ -112,7 +118,7 @@ public class LoginProcessor {
 	 * -2:General Error at compareCredentialsInDB()
 	 */
 	public String checkCredentials(JsonDecoder loginCredentials){
-		return loginDBOperations.compareCredentialsInDB(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("password"),Integer.parseInt(loginCredentials.getJsonObject().getString("mode")));
+		return new Login().compareCredentialsInDB(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("password"),Integer.parseInt(loginCredentials.getJsonObject().getString("mode")));
 	}
 	/**
 	 * 
@@ -125,7 +131,7 @@ public class LoginProcessor {
 	 * -2:General Error at compareCredentialsInDB()
 	 */
 	public String checkCredentials(String loginCredential, String password, int mode){
-		return loginDBOperations.compareCredentialsInDB(loginCredential,password,mode);
+		return new Login().compareCredentialsInDB(loginCredential,password,mode);
 	}
 	
 }

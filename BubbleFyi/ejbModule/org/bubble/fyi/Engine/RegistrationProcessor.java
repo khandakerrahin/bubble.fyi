@@ -4,17 +4,20 @@
 package org.bubble.fyi.Engine;
 
 import org.bubble.fyi.DBOperations.UserRegistration;
+import org.bubble.fyi.DataSources.BubbleFyiDS;
 
 /**
  * @author wasif
  *
  */
 public class RegistrationProcessor {
+	BubbleFyiDS bubbleDS;
 
 	/**
 	 * 
 	 */
-	public RegistrationProcessor() {
+	public RegistrationProcessor(BubbleFyiDS bubbleDS) {
+		this.bubbleDS=bubbleDS;
 		// TODO Auto-generated constructor stub
 	}
 	/**
@@ -41,7 +44,7 @@ public class RegistrationProcessor {
 		}else {
 			registrationInfo=new JsonDecoder(messageBody);
 		}
-		UserRegistration register=new UserRegistration();
+		UserRegistration register=new UserRegistration(bubbleDS);
 		if(registrationInfo.getErrorCode().equals("0")) {
 			retval=register.registerNewUser(registrationInfo);
 		}else{
