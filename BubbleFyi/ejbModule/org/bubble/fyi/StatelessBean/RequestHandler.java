@@ -1,5 +1,6 @@
 package org.bubble.fyi.StatelessBean;
 
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -14,24 +15,16 @@ import javax.jms.MapMessage;
 
 import org.bubble.fyi.Initializations.LoadConfigurations;
 import org.bubble.fyi.Logs.LogWriter;
+import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Engine.LoginProcessor;
 import org.bubble.fyi.StatelessBean.RequestHandlerLocal;
 import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import javax.annotation.PostConstruct; 
 import javax.ejb.Startup;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
 
-import org.bubble.fyi.Engine.LoginProcessor;
 import org.bubble.fyi.Engine.RegistrationProcessor;
 import org.bubble.fyi.Engine.SMSProcessor;
 import org.bubble.fyi.Engine.UserOperations;
-import org.bubble.fyi.Initializations.LoadConfigurations;
-import org.bubble.fyi.Logs.LogWriter;
-import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 /**
  * Session Bean implementation class RequestHandler
  */
@@ -106,114 +99,121 @@ public class RequestHandler implements RequestHandlerLocal {
 		this.logWriter.setTarget(target);
 		this.logWriter.setSource(src);
 		this.logWriter.setAction(action);
-		
+
 		this.loadConf = loadConf;
 		String retVal =  "10000";
 		LogWriter.LOGGER.info("Message :"+message);
 		LogWriter.LOGGER.info("Message Body :"+messageBody);
-		if(action.equalsIgnoreCase("login")) {//documented
-			//json: 
-			//example: { "username":"t1@sp.com", "password":"specialt1pass", "mode":"1"}
-			retVal=new LoginProcessor().processLogin(message,messageBody);
-		}else if(action.equalsIgnoreCase("registerUser")) {//documented			
-			retVal=new RegistrationProcessor().processCustomerRegistration(message,messageBody);
-		}else if(action.equalsIgnoreCase("sendSMS")) {//documented			
-			retVal=new SMSProcessor().processSendSMS(message,messageBody);
-		}else if(action.equalsIgnoreCase("getReports")) {//documented
-			retVal=new UserOperations().getDashboard(message,messageBody);
-		}else if(action.equalsIgnoreCase("modifyPassword")) {
-			retVal=new UserOperations().modifyPassword(message,messageBody);
-		}else if(action.equalsIgnoreCase("updateProfile")) {
-			retVal=new UserOperations().modifyProfile(message,messageBody);
-		}else if(action.equalsIgnoreCase("customerList")) {//documented
-			retVal=new UserOperations().getCustomerList(message,messageBody);			
-		}else if(action.equalsIgnoreCase("updateCustomerStatus")) {
-			retVal=new UserOperations().modifyCustomerStatus(message,messageBody);
-		}else if(action.equalsIgnoreCase("createList")) {//documented	
-			retVal=new UserOperations().createGroupDetail(message,messageBody); 
-		}else if(action.equalsIgnoreCase("getGroupList")) {//documented	
-			retVal=new UserOperations().getGroupList(message,messageBody); 
-		}else if(action.equalsIgnoreCase("bubbleFileInsert")) {
-			retVal=new UserOperations().bubbleFileInsert(message,messageBody);
-		}else if(action.equalsIgnoreCase("getUploadStatus")) {
-			retVal=new UserOperations().uploadStatusGetter(message,messageBody);
-		}else if(action.equalsIgnoreCase("getFileList")) {
-			retVal=new UserOperations().uploadFileListGetter(message,messageBody);
-		}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both instant sms and scheduled sms
-			retVal=new UserOperations().instantGroupSMSDetail(message,messageBody); 
-		}else if(action.equalsIgnoreCase("sendScheduledSMS")) {
-			retVal=new UserOperations().sentSMSScheduled(message,messageBody); 	
-			
-		}else if(action.equalsIgnoreCase("getTotalSMSCount")) {
-			//retVal=new LoginProcessor().processLogin(message,messageBody);
-			retVal=new UserOperations().TotalSMSCounter(message,messageBody); 
-		}else if(action.equalsIgnoreCase("getPendingBulksmsList")) {
-			retVal=new UserOperations().getPendingBulksmsList(message,messageBody);
-		}else if(action.equalsIgnoreCase("updatePendingBulksmsList")) {
-			retVal=new UserOperations().modifyBulksmsPendingStatus(message,messageBody);			
-		}else if(action.equalsIgnoreCase("sendBulksmsFromList")) {
-			retVal=new UserOperations().sentSMSFromList(message,messageBody); 			
-		}else if(action.equalsIgnoreCase("getBulksmsDetail")) {//documented	
-			retVal=new UserOperations().getBulksmsDetailC(message,messageBody); 
-		}else if(action.equalsIgnoreCase("getBulkSendStatus")) {
-			retVal=new UserOperations().BulkSendStatus(message,messageBody); 
-		}else if(action.equalsIgnoreCase("getAddressBook")) {//documented	
-			retVal=new UserOperations().getAddressBook(message,messageBody); 
-		}else if(action.equalsIgnoreCase("getListMsisdn")) {//documented	
-			retVal=new UserOperations().getListMsisdn(message,messageBody); 
-		}else if(action.equalsIgnoreCase("modifyGroupList")) {
-			retVal=new UserOperations().modifyGroupList(message,messageBody);			
-		}else if(action.equalsIgnoreCase("totalCountAddressBook")) {//documented	
-			retVal=new UserOperations().getCountAddressBook(message,messageBody); 
-		}else if(action.equalsIgnoreCase("uploadLogo")) {//documented	
-			retVal=new UserOperations().uploadLogo(message,messageBody); 
-		}else if(action.equalsIgnoreCase("singleSMSReport")) {//documented
-			retVal=new UserOperations().getSingleSMSReport(message,messageBody);
-		}else if(action.equalsIgnoreCase("deleteGroup")) {//documented
-			//retVal=new UserOperations().getSingleSMSReport(message,messageBody);
-			retVal=new UserOperations().deleteGroup(message,messageBody);
-		}else if(action.equalsIgnoreCase("getActivePackage")) {//documented	
-			retVal=new UserOperations().getPackageList(message,messageBody); 
-		}else if(action.equalsIgnoreCase("initiatePackagePurchase")) {//documented	
-			retVal=new UserOperations().packagePurchaseRequester(message,messageBody); 
-		}else if(action.equalsIgnoreCase("setPaymentResponse")) {//documented	
-			retVal=new UserOperations().paymentRecordUpdate(message,messageBody); 
-		}else if(action.equalsIgnoreCase("lowBalanceBulkSMSResend")) {
-			retVal=new UserOperations().lowBalanceBulkSMSResend(message,messageBody);			
-		}else if(action.equalsIgnoreCase("getPaymentReports")) {//documented
-			retVal=new UserOperations().getPaymentLog(message,messageBody);
-		}else if(action.equalsIgnoreCase("requestSingleSMSReport")) {//documented	
-			retVal=new UserOperations().reportDownloadSinglesms(message,messageBody); 
-		}else if(action.equalsIgnoreCase("requestBulkSMSSummaryReport")) {//documented
-			retVal=new UserOperations().getBulkReportSummary(message,messageBody);
-		}else if(action.equalsIgnoreCase("downloadReports")) {//documented
-			retVal=new UserOperations().getReportInfo(message,messageBody);
-		}else if(action.equalsIgnoreCase("getGeoLocation")) {//documented	
-			retVal=new UserOperations().getGeoList(message,messageBody); 
-		}else if(action.equalsIgnoreCase("requestSMSReport")) {//documented	
-			retVal=new UserOperations().reportRequestSMS(message,messageBody); 
-		}else if(action.equalsIgnoreCase("targetBasedSMSRequest")) {
-			retVal=new UserOperations().sentTargetBasedSMS(message,messageBody); 			
-		}
-		
-		//SMS inbound
-		else if(action.equalsIgnoreCase("getInbox")) {
-			retVal=new UserOperations().getInbox(message,messageBody); 			
-		}
-		
-		//Get district and upazillas
-		else if(action.equalsIgnoreCase("getGeoLocation2")) {//documented	
-			retVal=new UserOperations().getGeoLocation(message,messageBody); 
-		}
-		//APIs for sms Sending through API
-		
-		else if(action.equalsIgnoreCase("sendSMSapi")) {//documented			
-			retVal=new SMSProcessor().processSendSMSapi(message,messageBody);
-		}else if(action.equalsIgnoreCase("CheckloginAPI")) {
-			retVal=new LoginProcessor().processLoginAPI(message,messageBody);
-		}
-		//Delete user
-		/*else if(action.equalsIgnoreCase("getStudentList")) {//documented
+		BubbleFyiDS bubbleDS = new BubbleFyiDS();
+		try {
+			if(action.equalsIgnoreCase("login")) {//documented
+				//json: 
+				//example: { "username":"t1@sp.com", "password":"specialt1pass", "mode":"1"}
+				retVal=new LoginProcessor(bubbleDS).processLogin(message,messageBody);
+			}else if(action.equalsIgnoreCase("registerUser")) {//documented			
+				retVal=new RegistrationProcessor(bubbleDS).processCustomerRegistration(message,messageBody);
+			}else if(action.equalsIgnoreCase("sendSMS")) {//documented			
+				retVal=new SMSProcessor(bubbleDS).processSendSMS(message,messageBody);
+			}else if(action.equalsIgnoreCase("getReports")) {//documented
+				retVal=new UserOperations(bubbleDS).getDashboard(message,messageBody);
+			}else if(action.equalsIgnoreCase("modifyPassword")) {
+				retVal=new UserOperations(bubbleDS).modifyPassword(message,messageBody);
+			}else if(action.equalsIgnoreCase("updateProfile")) {
+				retVal=new UserOperations(bubbleDS).modifyProfile(message,messageBody);
+			}else if(action.equalsIgnoreCase("customerList")) {//documented
+				retVal=new UserOperations(bubbleDS).getCustomerList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("updateCustomerStatus")) {
+				retVal=new UserOperations(bubbleDS).modifyCustomerStatus(message,messageBody);
+			}else if(action.equalsIgnoreCase("createList")) {//documented	
+				retVal=new UserOperations(bubbleDS).createGroupDetail(message,messageBody); 
+			}else if(action.equalsIgnoreCase("getGroupList")) {//documented	
+				retVal=new UserOperations(bubbleDS).getGroupList(message,messageBody); 
+			}else if(action.equalsIgnoreCase("bubbleFileInsert")) {
+				retVal=new UserOperations(bubbleDS).bubbleFileInsert(message,messageBody);
+			}else if(action.equalsIgnoreCase("getUploadStatus")) {
+				retVal=new UserOperations(bubbleDS).uploadStatusGetter(message,messageBody);
+			}else if(action.equalsIgnoreCase("getFileList")) {
+				retVal=new UserOperations(bubbleDS).uploadFileListGetter(message,messageBody);
+			}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both instant sms and scheduled sms
+				retVal=new UserOperations(bubbleDS).instantGroupSMSDetail(message,messageBody); 
+			}else if(action.equalsIgnoreCase("sendScheduledSMS")) {
+				retVal=new UserOperations(bubbleDS).sentSMSScheduled(message,messageBody); 	
+
+			}else if(action.equalsIgnoreCase("getTotalSMSCount")) {
+				//retVal=new LoginProcessor().processLogin(message,messageBody);
+				retVal=new UserOperations(bubbleDS).TotalSMSCounter(message,messageBody); 
+				//TODO Changed on 20180312
+			}else if(action.equalsIgnoreCase("getPendingBulksmsList")) {
+				retVal=new UserOperations(bubbleDS).getPendingBulksmsList(message,messageBody);
+			}else if(action.equalsIgnoreCase("updatePendingBulksmsList")) {
+				retVal=new UserOperations(bubbleDS).modifyBulksmsPendingStatus(message,messageBody);			
+			}else if(action.equalsIgnoreCase("sendBulksmsFromList")) {
+				retVal=new UserOperations(bubbleDS).sentSMSFromList(message,messageBody); 			
+			}else if(action.equalsIgnoreCase("getBulksmsDetail")) {//documented	
+				retVal=new UserOperations(bubbleDS).getBulksmsDetailC(message,messageBody); 
+			}else if(action.equalsIgnoreCase("getBulkSendStatus")) {
+				retVal=new UserOperations(bubbleDS).BulkSendStatus(message,messageBody); 
+			}else if(action.equalsIgnoreCase("getAddressBook")) {//documented	
+				retVal=new UserOperations(bubbleDS).getAddressBook(message,messageBody); 	
+			}else if(action.equalsIgnoreCase("getListMsisdn")) {//documented	
+				retVal=new UserOperations(bubbleDS).getListMsisdn(message,messageBody); 
+			}else if(action.equalsIgnoreCase("modifyGroupList")) {
+				retVal=new UserOperations(bubbleDS).modifyGroupList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("totalCountAddressBook")) {//documented	
+				retVal=new UserOperations(bubbleDS).getCountAddressBook(message,messageBody); 
+			}else if(action.equalsIgnoreCase("uploadLogo")) {//documented	
+				retVal=new UserOperations(bubbleDS).uploadLogo(message,messageBody); 
+			}else if(action.equalsIgnoreCase("singleSMSReport")) {//documented
+				retVal=new UserOperations(bubbleDS).getSingleSMSReport(message,messageBody);
+			}else if(action.equalsIgnoreCase("deleteGroup")) {//documented
+				//retVal=new UserOperations().getSingleSMSReport(message,messageBody);
+				retVal=new UserOperations(bubbleDS).deleteGroup(message,messageBody);
+			}else if(action.equalsIgnoreCase("getActivePackage")) {//documented	
+				retVal=new UserOperations(bubbleDS).getPackageList(message,messageBody); 
+			}else if(action.equalsIgnoreCase("initiatePackagePurchase")) {//documented	
+				retVal=new UserOperations(bubbleDS).packagePurchaseRequester(message,messageBody); 
+			}else if(action.equalsIgnoreCase("setPaymentResponse")) {//documented	
+				retVal=new UserOperations(bubbleDS).paymentRecordUpdate(message,messageBody); 
+			}else if(action.equalsIgnoreCase("lowBalanceBulkSMSResend")) {
+				retVal=new UserOperations(bubbleDS).lowBalanceBulkSMSResend(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getPaymentReports")) {//documented
+				retVal=new UserOperations(bubbleDS).getPaymentLog(message,messageBody);
+			}else if(action.equalsIgnoreCase("requestSingleSMSReport")) {//documented	
+				retVal=new UserOperations(bubbleDS).reportDownloadSinglesms(message,messageBody); 
+			}else if(action.equalsIgnoreCase("requestBulkSMSSummaryReport")) {//documented
+				retVal=new UserOperations(bubbleDS).getBulkReportSummary(message,messageBody);
+			}else if(action.equalsIgnoreCase("downloadReports")) {//documented
+				retVal=new UserOperations(bubbleDS).getReportInfo(message,messageBody);
+			}else if(action.equalsIgnoreCase("getGeoLocation")) {//documented	
+				retVal=new UserOperations(bubbleDS).getGeoList(message,messageBody); 
+			}else if(action.equalsIgnoreCase("requestSMSReport")) {//documented	
+				retVal=new UserOperations(bubbleDS).reportRequestSMS(message,messageBody); 
+			}else if(action.equalsIgnoreCase("targetBasedSMSRequest")) {//TODO change t
+				retVal=new UserOperations(bubbleDS).sentTargetBasedSMS(message,messageBody); 			
+			}else if(action.equalsIgnoreCase("targetBasedSMSRequestV2")) {
+				LogWriter.LOGGER.info("targetBasedSMSRequestV2");
+				retVal=new UserOperations(bubbleDS).requestTargetBasedSMS(message,messageBody); 
+				LogWriter.LOGGER.info("targetBasedSMSRequestV2");
+			}
+
+			//SMS inbound
+			else if(action.equalsIgnoreCase("getInbox")) {
+				retVal=new UserOperations(bubbleDS).getInbox(message,messageBody); 			
+			}
+
+			//Get district and upazillas
+			else if(action.equalsIgnoreCase("getGeoLocation2")) {//documented	
+				retVal=new UserOperations(bubbleDS).getGeoLocation(message,messageBody); 
+			}
+			//APIs for sms Sending through API
+
+			else if(action.equalsIgnoreCase("sendSMSapi")) {//documented			
+				retVal=new SMSProcessor(bubbleDS).processSendSMSapi(message,messageBody);
+			}else if(action.equalsIgnoreCase("CheckloginAPI")) {
+				retVal=new LoginProcessor(bubbleDS).processLoginAPI(message,messageBody);
+			}
+			//Delete user
+			/*else if(action.equalsIgnoreCase("getStudentList")) {//documented
 			if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("parentId")))
 				retVal=new UserOperations().getStudentListForParent(msg.getString("parentId"));
 			else if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("schoolId")))
@@ -261,7 +261,7 @@ public class RequestHandler implements RequestHandlerLocal {
 		}else if(action.equalsIgnoreCase("logSMS")) {
 			retVal=new UserOperations().logSMS(message,messageBody);
 		}/**/
-		/*
+			/*
 		feesFileInsert 
 		getUploadStatus 
 		getFileList 
@@ -269,15 +269,26 @@ public class RequestHandler implements RequestHandlerLocal {
 		deleteStudent 
 		logTransaction
 		logSMS
-		*/
-		/*
-		 * TODO ApplicationLog
-		 */
-		else retVal="I:Invalid action";
+			 */
+			/*
+			 * TODO ApplicationLog
+			 */
+			else retVal="I:Invalid action";
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				//this.logWriter.flush(bubbleDS);
+				try {
+					bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+
 		LogWriter.LOGGER.info("retVal: "+retVal);
 		return retVal;
 	}
-	
+
 	/**
 	 * Gets the date today T + i days
 	 * @param tPlusD

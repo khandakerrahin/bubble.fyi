@@ -1,7 +1,7 @@
 
 package org.bubble.fyi.DBOperations;
 
-import java.io.UnsupportedEncodingException;
+//import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Engine.JsonDecoder;
@@ -16,8 +16,8 @@ public class SMSSender {
 	/**
 	 * 
 	 */
-	public SMSSender() {
-		bubbleDS = new BubbleFyiDS();
+	public SMSSender(BubbleFyiDS bubbleDS) {
+		this.bubbleDS = bubbleDS;
 	}
 	/**
 	 * If msisdn starts with 0, prepends 88.
@@ -265,7 +265,7 @@ public class SMSSender {
 			if(bubbleDS.getConnection() != null){
 				try {
 					bubbleDS.closePreparedStatement();
-					bubbleDS.getConnection().close();
+				//	bubbleDS.getConnection().close();
 				} catch (SQLException e) {
 					errorCode="-4";
 					LogWriter.LOGGER.severe(e.getMessage());
@@ -390,7 +390,7 @@ public class SMSSender {
 			}
 		}catch(Exception e){
 			e.printStackTrace();
-		}finally{
+		}/*finally{
 			if(bubbleDS.getConnection() != null){
 				try {
 					bubbleDS.getConnection().close();
@@ -400,7 +400,7 @@ public class SMSSender {
 				}
 			}  
 
-		}
+		}/**/
 		return errorCode;
 	}
 }
