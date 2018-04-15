@@ -4024,7 +4024,6 @@ function msisdnMakeFormate($msisdn){
 	public String getInbox(String userId, long lastIndex, boolean isDescending) {
 		String retval="";
 		String errorCode="-1";
-		//		String sql="select i.id,sender,OriginTime,text,BPLNumber as inbox_number from inbound_sms i,tbl_users u where u.id=? and u.inbox_msisdn like concat_ws('%',i.BPLNumber,'%') and i.id <condition> ? order by i.OriginTime <order>,i.id <order> limit 100";
 		String sql="select i.id, sender,OriginTime,text,BPLNumber as inbox_number from inbound_sms i,inbox_numbers n where n.user_id=? and n.inbox_msisdn = i.BPLNumber and i.id <condition> ? order by i.OriginTime <order>,i.id <order> limit 100";
 		if(isDescending) {
 			sql=sql.replaceAll("<order>", "desc");
