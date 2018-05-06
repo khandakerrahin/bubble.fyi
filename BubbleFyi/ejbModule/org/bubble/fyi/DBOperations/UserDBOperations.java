@@ -247,7 +247,13 @@ public class UserDBOperations {
 		jsonEncoder.buildJsonObject();
 		return jsonEncoder;
 	}
-
+/**
+ * 
+ * @param userId 
+ * @param customerId
+ * @param Status
+ * @return
+ */
 	public String modifyCustomerStatus(String userId, String customerId, String Status) {
 		String retval="-1";	
 		try {
@@ -275,22 +281,18 @@ public class UserDBOperations {
 		}catch(Exception e) {
 			e.printStackTrace();
 			LogWriter.LOGGER.info("Exception bubble.fyi.UserDBOperation.modifyCustomerStatus.");
-		}
-		/*finally{
-			if(bubbleDS.getConnection() != null){
-				try {
-					//bubbleDS.getConnection().close();
-				} catch (SQLException e) {
-					retval="-4:connection close Exception";
-					e.printStackTrace();
-					LogWriter.LOGGER.severe(e.getMessage());
-				}
-			}      
-		}/**/
+		}		
 		return retval;
 	}
-
-	public String modifyBulksmsPStatus(String userId, String customerId,String groupId, String Status) {
+/**
+ * 
+ * @param userId
+ * @param customerId
+ * @param groupId
+ * @param Status
+ * @return
+ */
+	public String modifyBulksmsPStatus(String userId, String customerId,String groupId, String Status){
 		double smsPrice=0.25;
 		String retval="-1";	
 		try {
@@ -318,7 +320,7 @@ public class UserDBOperations {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-			/*finally{
+		/*finally{
 		}
 			if(bubbleDS.getConnection() != null){
 				try {
@@ -329,6 +331,218 @@ public class UserDBOperations {
 				}
 			}      
 		}/**/
+		return retval;
+	}
+	/**
+	 * 
+	 * @param userId
+	 * @param recordId
+	 * @param Status
+	 * @param totalCost
+	 * @param totalReach
+	 * @return json ErrorCode:<code>, ErrorResponce:<Responce> 0 means successfully updated -ve failed 
+	 */
+	public JsonEncoder modifyTargetsmsPStatus(String userId, String recordId, String status,String totalCost,String totalReach) {
+		String errorCode="-1";	
+		String errorRes="Customer Status Update failed";
+		JsonEncoder jsonEncoder=new JsonEncoder();
+
+		try {
+			if(getUserTypeCustomerList(userId).equals("5") ) {
+				if(setNewTragetsmsPStatus(userId,recordId,status,totalCost,totalReach)) {
+					errorCode="0";
+					errorRes="Customer Status Updated";
+				}else {
+					errorCode="3";
+					errorRes="Error encountered while Updating Status";
+					LogWriter.LOGGER.info("Error encountered while updating Customer Status.");
+				}				
+			}else {
+				if(errorCode.startsWith("-1")) {
+					errorCode="-7";
+					errorRes="User not Authorized to perform this action";
+				}
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}	
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponce", errorRes);
+		jsonEncoder.buildJsonObject();
+		return jsonEncoder;
+	}
+
+
+	public JsonEncoder modifyTargetsmsPStatusCustomer(String userId, String recordId, String status) {
+		String errorCode="-1";	
+		String errorRes="Customer Status Update failed";
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		String oldstatus="1";
+		if(status.equalsIgnoreCase("2")) {
+			//Check balance deduct balance 					
+			double customerbalance=getCustomerBalance(userId);
+			double targetSMSCost=getTargetSMSCost(recordId);
+			if(customerbalance>=targetSMSCost) {							
+				if(updateBalanceBulkSMS(userId,(int)targetSMSCost,1)) {					
+					if(setNewTragetsmsPStatusCustomer(userId,recordId,status,oldstatus)) {
+						errorCode="0";
+						errorRes="Customer Status Updated";
+					}else {
+						updateBalanceBulkSMS(userId,(int)targetSMSCost,-1);
+						errorCode="3";
+						errorRes="target SMS request update failed";
+					}
+				}else {
+					errorCode="-3";
+					errorRes="Customer balance deduction failed";
+				}
+			}else {
+				double temp=targetSMSCost-customerbalance;
+				errorCode="6";
+				errorRes="low balance to send this SMS Broadcast. Please recharge " +temp+" or more and try again";
+			}
+
+		}else {
+			try {
+				if(setNewTragetsmsPStatusCustomer(userId,recordId,status,oldstatus)) {
+					errorCode="0";
+					errorRes="Customer Status Updated";
+				}else {
+					errorCode="3";
+					errorRes="target SMS request update failed";
+					LogWriter.LOGGER.info("Error encountered while updating Customer Status. bubblefyi.UserDBOperation.modifyTargetsmsPStatusCustomer");
+				}				
+
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponce", errorRes);
+		jsonEncoder.buildJsonObject();
+		return jsonEncoder;
+	}
+
+
+	public String getTargetSMSPList(String id){
+		String retval="";
+		String errorCode="-1";
+		String userFlag="-1";
+		try {
+			userFlag=getUserTypeCustomerList(id);
+			//TODO needs to change to some other flag for sales rep now admin
+			if(userFlag.equals("5")) {
+				//String sql="SELECT t.user_id,t.group_id,u.custodian_name,u.organization_name, t.`aparty`,(select COUNT(gsi.msisdn) from groupsms_sender gsi where  t.group_id=gsi.group_id) as msCount, t.`insert_date`, t.`scheduled_date`,t.`flag`, t.`message`, t.`sms_count` FROM `groupsms_sender_info` t, tbl_users u WHERE t.user_id=u.id and t.`flag`=? order by t.`scheduled_date` asc";
+				String sql="SELECT t.id,u.custodian_name,u.organization_name,geo_target,demography_target,psychographic_target,behavioural_target,message,sms_count,budget,target_msisdn_count,DATE_FORMAT(t.schedule_date, \"%d-%m-%Y %H:%i\") as schedule_date FROM smsdb.targetSMS t,smsdb.tbl_users u WHERE t.user_id=u.id and t.flag=? order by t.id desc limit 0,20";
+				try {
+					bubbleDS.prepareStatement(sql);
+
+					bubbleDS.getPreparedStatement().setInt(1, 0);	
+					//TODO
+					//LogWriter.LOGGER.severe(" after prepared Statement");
+					ResultSet rs = bubbleDS.executeQuery();
+					while (rs.next()) {
+
+						//tmpMsisdnCount=getMsisdnCountInGroup(rs.getString("group_id"));
+						retval+="\""+rs.getString("id")+"\""+",";
+						retval+="\""+rs.getString("custodian_name")+"\""+",";						
+						retval+="\""+rs.getString("organization_name")+"\""+",";
+						retval+="\""+rs.getString("geo_target")+"\""+",";
+						retval+="\""+rs.getString("demography_target")+"\""+",";
+						retval+="\""+rs.getString("psychographic_target")+"\""+",";
+						retval+="\""+rs.getString("behavioural_target")+"\""+",";
+						retval+="\""+rs.getString("message")+"\""+",";
+						retval+="\""+rs.getString("sms_count")+"\""+",";
+						retval+="\""+rs.getString("budget")+"\""+",";
+						retval+=rs.getString("target_msisdn_count")+",";
+						retval+="\""+rs.getString("schedule_date")+"\""+",";
+						retval+="|";		
+					}
+					bubbleDS.closeResultSet();
+					bubbleDS.closePreparedStatement();
+					if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+					int lio=retval.lastIndexOf("|");
+					if(lio>0) retval=retval.substring(0,lio);
+					errorCode="0";
+					LogWriter.LOGGER.info("MapList : "+retval);
+				}catch(SQLException e){
+					errorCode= "-2";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}catch(Exception e){
+					errorCode= "-3";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}else {
+				errorCode="-7: User not Authorized to perform this action";
+			}
+			if(!errorCode.startsWith("0")) {
+				retval=errorCode;
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return retval;
+	}
+
+	public String getTargetSMSPListCustomer(String id){
+		String retval="";
+		String errorCode="-1";
+		String userFlag="-1";
+		try {
+			userFlag=getUserTypeCustomerList(id);
+			//TODO needs to change to some other flag for sales rep now admin
+			String sql="SELECT id,geo_target,demography_target,psychographic_target,behavioural_target,message,sms_count,budget,target_msisdn_count,DATE_FORMAT(t.schedule_date, \"%d-%m-%Y %H:%i\") as schedule_date,actualCost,actualReach,flag FROM smsdb.targetSMS t WHERE t.user_id=? order by id desc limit 0,5";
+			try {
+				bubbleDS.prepareStatement(sql);
+
+				bubbleDS.getPreparedStatement().setString(1, id);	
+				//TODO
+				//LogWriter.LOGGER.severe(" after prepared Statement");
+				ResultSet rs = bubbleDS.executeQuery();
+				while (rs.next()) {
+
+					//tmpMsisdnCount=getMsisdnCountInGroup(rs.getString("group_id"));
+					retval+="\""+rs.getString("id")+"\""+",";
+					retval+="\""+rs.getString("geo_target")+"\""+",";
+					retval+="\""+rs.getString("demography_target")+"\""+",";
+					retval+="\""+rs.getString("psychographic_target")+"\""+",";
+					retval+="\""+rs.getString("behavioural_target")+"\""+",";
+					retval+="\""+rs.getString("message")+"\""+",";
+					retval+="\""+rs.getString("sms_count")+"\""+",";
+					retval+="\""+rs.getString("budget")+"\""+",";
+					retval+="\""+rs.getString("target_msisdn_count")+"\""+",";
+					retval+="\""+rs.getString("schedule_date")+"\""+",";
+					retval+="\""+rs.getString("actualCost")+"\""+",";
+					retval+="\""+rs.getString("actualReach")+"\""+",";
+					retval+="\""+rs.getString("flag")+"\"";
+					retval+="|";		
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+				int lio=retval.lastIndexOf("|");
+				if(lio>0) retval=retval.substring(0,lio);
+				errorCode="0";
+				LogWriter.LOGGER.info("MapList : "+retval);
+			}catch(SQLException e){
+				errorCode= "-2";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe(e.getMessage());
+			}catch(Exception e){
+				errorCode= "-3";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe(e.getMessage());
+			}
+
+			if(!errorCode.startsWith("0")) {
+				retval=errorCode;
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 		return retval;
 	}
 
@@ -367,7 +581,7 @@ public class UserDBOperations {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-			/*finally{
+		/*finally{
 		}
 			if(bubbleDS.getConnection() != null){
 				try {
@@ -665,7 +879,7 @@ public class UserDBOperations {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		/*finally{
 			if(bubbleDS.getConnection() != null){
 				try {
@@ -917,10 +1131,11 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder=new JsonEncoder();
 		String allSMSCount =getTotalSMSCount(id);
 		String sTotalCount = getTotalSuccessCount(id);
-		String customerbalance=getCustomersRemainingBalance(id);
+		String smsRemaining=getCustomersRemainingBalance(id);
 		String sLast7daysCount = "-1";//getLast7DaysSMSCount(id);
 		String sLast30daysCount = "-1";//getLast30DaysSMSCount(id);
 		String sTodaysSMSCount ="-1";//getTodaysSMSCount(id);
+		String customerbalance=""+getCustomerBalance(id);
 
 		String todayAllSMSCount= getTodayAllSMSCount(id);
 
@@ -932,7 +1147,8 @@ public class UserDBOperations {
 			jsonEncoder.addElement("todaySuccessSMSCount", sTodaysSMSCount);
 			jsonEncoder.addElement("last7daysCount", sLast7daysCount);
 			jsonEncoder.addElement("last30daysCount", sLast30daysCount);
-			jsonEncoder.addElement("smsRemaining", customerbalance);
+			jsonEncoder.addElement("smsRemaining", smsRemaining);
+			jsonEncoder.addElement("customerBalance", customerbalance);
 			errorCode="0";
 		}catch(Exception e){
 			errorCode= "-3";
@@ -970,9 +1186,9 @@ public class UserDBOperations {
 				"ifnull(sum(p.counter),0) as sumC from \r\n" + 
 				"(select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n" + 
 				"where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s;";/**/
-		
-		
-		String sql="select ifnull(sum(s.sumC+r.sumBulk),0) as sumAll from \r\n" + 
+
+
+		String sql="select ifnull(sum(s.sumC+r.sumBulk+sdump.sumCdump),0) as sumAll from \r\n" + 
 				"(select \r\n" + 
 				"ifnull(sum(q.bulkCounter),0) as sumBulk from\r\n" + 
 				"(SELECT p.msisdn_count*p.sms_count as bulkCounter FROM smsdb.groupsms_sender_info p where p.user_id=? and p.flag=1\r\n" + 
@@ -980,15 +1196,15 @@ public class UserDBOperations {
 				"(select \r\n" + 
 				"ifnull(sum(p.counter),0) as sumC from \r\n" + 
 				"(select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n" + 
-				"where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s \r\n"+
+				"where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s, \r\n"+
 				"(select ifnull(sum(q.counter),0) as sumCdump from \r\n "+
-				"select count(*)*t.sms_count as counter  from smsdb.smsinfo_dump t \r\n" + 
+				"(select count(*)*t.sms_count as counter  from smsdb.smsinfo_dump t \r\n" + 
 				"where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) q \r\n" + 
 				" ) sdump;";
-		
-		
-		
-		
+
+
+
+
 		//TODO need to add smsinfo_dump
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -1347,6 +1563,30 @@ public class UserDBOperations {
 		return retval;
 	}
 
+	public double getTargetSMSCost(String recordId) {
+		//TODO needs to update with price
+		double retval=-1;
+		String sql="SELECT actualCost FROM smsdb.targetSMS where id=?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, recordId);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				retval=bubbleDS.getResultSet().getDouble(1);
+			}else {
+				retval=-2;
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			retval=-3;
+			LogWriter.LOGGER.severe("getUserType(): "+e.getMessage());
+		}
+
+		return retval;
+	}
+
+
 
 	private boolean updateBalanceBulkSMS(String userId,int val,double smsPrice) {
 		//TODO needs to update with cost
@@ -1418,7 +1658,7 @@ public class UserDBOperations {
 									bubbleDS.getPreparedStatement().setInt(3,smsCount);
 									bubbleDS.getPreparedStatement().setInt(4,statusFlag);
 									bubbleDS.getPreparedStatement().setInt(5,listMsCount);
-                                    bubbleDS.execute();
+									bubbleDS.execute();
 
 									String groupid=getNewGroupId();
 									if(insertToGroupSMSSenderFromList(listId,groupid)) {
@@ -1471,7 +1711,7 @@ public class UserDBOperations {
 									bubbleDS.getPreparedStatement().setInt(4,smsCount);
 									bubbleDS.getPreparedStatement().setInt(5,statusFlag);
 									bubbleDS.getPreparedStatement().setInt(6,listMsCount);
-                                    bubbleDS.execute();
+									bubbleDS.execute();
 
 									String groupid=getNewGroupId();
 									if(insertToGroupSMSSenderFromList(listId,groupid)) {
@@ -1518,9 +1758,9 @@ public class UserDBOperations {
 			}else {
 				errorCode="9";
 			}
-	}catch (Exception e) {
-		e.printStackTrace();
-	}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
 		/*finally{
 			if(bubbleDS.getConnection() != null){
 				try {
@@ -1538,53 +1778,56 @@ public class UserDBOperations {
 		return jsonEncoder;
 	}
 
-	
-	public JsonEncoder requestTargetBasedSMS(String userId,String targetGroup,String sch_date,String message,String budget,String targetCount) {
+
+	public JsonEncoder requestTargetBasedSMS(String userId,String geotarget,String demotarget,String psychotarget,String behaviourTarget,String sch_date,String message,String budget,String targetCount) {
 		String errorCode="-1";
 		String errorResponse="";
 		JsonEncoder jsonEncoder=new JsonEncoder();
 		//TODO userID check with listID in group_list table
 		try {
 			int smsCount=getSMSSize(message);
-				String sql="INSERT INTO target_based_sms_v2 (user_id,schedule_date,message,target_group,budget,target_msisdn_count,sms_count) VALUES (?,?,?,?,?,?,?)";
+			String sql="INSERT INTO targetSMS (user_id,schedule_date,message,geo_target,demography_target,psychographic_target,behavioural_target,budget,target_msisdn_count,sms_count) VALUES (?,?,?,?,?,?,?,?,?,?)";
 
 
-					try {
-						bubbleDS.prepareStatement(sql,true);			
-						bubbleDS.getPreparedStatement().setString(1,userId);
-						bubbleDS.getPreparedStatement().setString(2,sch_date);
-						bubbleDS.getPreparedStatement().setString(3,message);
-						bubbleDS.getPreparedStatement().setString(4,targetGroup);
-						bubbleDS.getPreparedStatement().setString(5,budget);
-						bubbleDS.getPreparedStatement().setString(6,targetCount);
-						bubbleDS.getPreparedStatement().setInt(7,smsCount);
-						bubbleDS.execute();
-						errorCode="0";
-						errorResponse="Successfully insterted";
-					}catch(SQLException e) {
-						errorCode="11";
-						errorResponse="SQL Exception";
-						//updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
-						e.printStackTrace();
-						LogWriter.LOGGER.severe("SQLException"+e.getMessage());
-					}catch(Exception e) {
-						e.printStackTrace();
-						//updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
-						errorCode="10";
-						errorResponse="General Exception";
-						e.printStackTrace();
-					}
-					try {
-						bubbleDS.closePreparedStatement();
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}						
+			try {
+				bubbleDS.prepareStatement(sql,true);			
+				bubbleDS.getPreparedStatement().setString(1,userId);
+				bubbleDS.getPreparedStatement().setString(2,sch_date);
+				bubbleDS.getPreparedStatement().setString(3,message);
+				bubbleDS.getPreparedStatement().setString(4,geotarget);
+				bubbleDS.getPreparedStatement().setString(5,demotarget);
+				bubbleDS.getPreparedStatement().setString(6,psychotarget);
+				bubbleDS.getPreparedStatement().setString(7,behaviourTarget);	
+				bubbleDS.getPreparedStatement().setString(8,budget);
+				bubbleDS.getPreparedStatement().setString(9,targetCount);
+				bubbleDS.getPreparedStatement().setInt(10,smsCount);
+				bubbleDS.execute();
+				errorCode="0";
+				errorResponse="Successfully insterted";
+			}catch(SQLException e) {
+				errorCode="11";
+				errorResponse="SQL Exception";
+				//updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException"+e.getMessage());
+			}catch(Exception e) {
+				e.printStackTrace();
+				//updateBalanceBulkSMS(userId,(-1)*totalBudget.intValue(),1.0);
+				errorCode="10";
+				errorResponse="General Exception";
+				e.printStackTrace();
+			}
+			try {
+				bubbleDS.closePreparedStatement();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}						
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-			/*finally{
-		
+		/*finally{
+
 			if(bubbleDS.getConnection() != null){
 				try {
 					bubbleDS.getConnection().close();
@@ -1602,7 +1845,7 @@ public class UserDBOperations {
 		jsonEncoder.buildJsonObject();
 		return jsonEncoder;
 	}
-	
+
 
 	public JsonEncoder sendSMStargetBased(String userId,String targetDiv,String targetDis,String targetTUpazila, String sch_date,String message,String amount) {
 		String errorCode="-1";
@@ -1671,8 +1914,8 @@ public class UserDBOperations {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-			/*finally{
-		
+		/*finally{
+
 			if(bubbleDS.getConnection() != null){
 				try {
 					bubbleDS.getConnection().close();
@@ -2275,6 +2518,66 @@ public class UserDBOperations {
 	}
 
 
+	private boolean setNewTragetsmsPStatus(String userID,String recordId,String status,String cost,String reach) {
+		boolean retval=false;
+		//String sqlUpdateUser="UPDATE `groupsms_sender_info` t SET `flag`= ? WHERE t.flag=? and t.`group_id`=? and t.`user_id`=?";
+		String sqlUpdate="update targetSMS  set  actualCost=?, actualReach=?, approvedBy=?, approvedAt=CURRENT_TIMESTAMP,flag=? where id=? and flag=0";
+		try {
+			bubbleDS.prepareStatement(sqlUpdate);
+			bubbleDS.getPreparedStatement().setString(1, cost);
+			bubbleDS.getPreparedStatement().setString(2, reach);
+			bubbleDS.getPreparedStatement().setString(3, userID);
+			bubbleDS.getPreparedStatement().setString(4, status);
+			bubbleDS.getPreparedStatement().setString(5, recordId);
+			long recordCount=bubbleDS.executeUpdate();
+			if(recordCount>0)
+				retval=true;
+		} catch (SQLException e) {
+			LogWriter.LOGGER.severe("setNewStatus(): "+e.getMessage());
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.closePreparedStatement();
+				} catch (SQLException e) {
+					retval=false;
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+
+		return retval;
+	}
+
+	private boolean setNewTragetsmsPStatusCustomer(String userID,String recordId,String status,String oldStatus) {
+		boolean retval=false;
+		//String sqlUpdateUser="UPDATE `groupsms_sender_info` t SET `flag`= ? WHERE t.flag=? and t.`group_id`=? and t.`user_id`=?";
+		String sqlUpdate="update targetSMS  set  flag=? where id=? and user_id=? and flag =?";
+		try {
+			bubbleDS.prepareStatement(sqlUpdate);
+			bubbleDS.getPreparedStatement().setString(1, status);
+			bubbleDS.getPreparedStatement().setString(2, recordId);
+			bubbleDS.getPreparedStatement().setString(3, userID);
+			bubbleDS.getPreparedStatement().setString(4, oldStatus);
+			long recordCount=bubbleDS.executeUpdate();
+			if(recordCount>0)
+				retval=true;
+		} catch (SQLException e) {
+			LogWriter.LOGGER.severe("setNewTragetsmsPStatusCustomer(): "+e.getMessage());
+		}finally{
+			if(bubbleDS.getConnection() != null){
+				try {
+					bubbleDS.closePreparedStatement();
+				} catch (SQLException e) {
+					retval=false;
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}      
+		}
+
+		return retval;
+	}
+
+
 	private String updateProfile(String userId, String city,String postCode,String address,String custodianName,String logoFile) {
 		String retval="-1";
 
@@ -2327,7 +2630,7 @@ public class UserDBOperations {
 		}/**/
 		return retval;
 	}
-	
+
 
 	public String getUserTypeCustomerList(String userId) {
 
@@ -2609,7 +2912,7 @@ public class UserDBOperations {
 
 	}
 
-	
+
 	public String getListV2(String id,String userType,String msidn){
 		msidn=msisdnNormalize(msidn);
 		//TODO
@@ -2691,9 +2994,15 @@ public class UserDBOperations {
 		//getUserTypeCustomerList(id);
 		String retval="";
 		String errorCode="-1";
+	
 		String sql="SELECT group_id, message, sms_count,flag,DATE_FORMAT(scheduled_date, \"%d-%m-%Y %H:%i\") as scheduled_date,ifnull(DATE_FORMAT(done_date, \"%d-%m-%Y %H:%i\"),\"Processing\") done_date,  (select count(*) from groupsms_sender t where t.group_id=u.group_id) msisdnCount\r\n" + 
 				" FROM groupsms_sender_info  u \r\n" + 
-				" where user_id = ? ORDER BY group_id desc";
+				" where user_id = ? ORDER BY group_id desc";/**/
+		/*
+		String sql="SELECT group_id, CONVERT(message USING utf8) as message, sms_count,flag,DATE_FORMAT(scheduled_date, \"%d-%m-%Y %H:%i\") as scheduled_date,ifnull(DATE_FORMAT(done_date, \"%d-%m-%Y %H:%i\"),\"Processing\") done_date,  (select count(*) from groupsms_sender t where t.group_id=u.group_id) msisdnCount\r\n" + 
+				" FROM groupsms_sender_info  u \r\n" + 
+				" where user_id = ? ORDER BY group_id desc";/**/
+		//CONVERT(message USING utf8) as message
 		try {
 
 			bubbleDS.prepareStatement(sql);
@@ -2705,7 +3014,7 @@ public class UserDBOperations {
 				//  String tempListId=rs.getString("list_id");
 				//  String msisdnCount=rs.getString("msisdnCount");
 				retval+=rs.getString("group_id")+",";
-				retval+="\""+rs.getString("message")+"\""+",";	
+				retval+="\""+rs.getString("message")+"\""+",";
 				retval+=rs.getString("flag")+",";
 				retval+="\""+rs.getString("scheduled_date")+"\""+",";				
 				retval+="\""+rs.getString("done_date")+"\""+",";					
@@ -2748,7 +3057,7 @@ public class UserDBOperations {
 		String errorCode="-1";
 		String sql="SELECT list_id, list_name, created,status, (select count(*) from group_msisdn_list t where t.list_id=u.list_id) msisdnCount\r\n" + 
 				" FROM group_list  u \r\n" + 
-				" where user_id = ? ORDER BY list_id asc";
+				" where user_id = ? ORDER BY list_id desc limit 0,25";
 		try {
 
 			bubbleDS.prepareStatement(sql);
@@ -3432,7 +3741,7 @@ public class UserDBOperations {
 		rs.close();
 		return retval;
 	}
-	
+
 
 	/**
 	 * 
@@ -3581,7 +3890,7 @@ public class UserDBOperations {
 		}/**/	
 		return errorCode;
 	}
-	
+
 	/**
 	 * 
 	 * @param message
@@ -3641,7 +3950,7 @@ public class UserDBOperations {
 		System.out.println("Length of TEXT : "+text.length());
 		return text.length();
 	}
-	
+
 	/**
 	 * 
 	 * @param userId

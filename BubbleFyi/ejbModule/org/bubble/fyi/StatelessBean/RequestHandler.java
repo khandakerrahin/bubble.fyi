@@ -191,9 +191,15 @@ public class RequestHandler implements RequestHandlerLocal {
 			}else if(action.equalsIgnoreCase("targetBasedSMSRequest")) {//TODO change t
 				retVal=new UserOperations(bubbleDS).sentTargetBasedSMS(message,messageBody); 			
 			}else if(action.equalsIgnoreCase("targetBasedSMSRequestV2")) {
-				LogWriter.LOGGER.info("targetBasedSMSRequestV2");
 				retVal=new UserOperations(bubbleDS).requestTargetBasedSMS(message,messageBody); 
-				LogWriter.LOGGER.info("targetBasedSMSRequestV2");
+			}else if(action.equalsIgnoreCase("getTargetSMSPendingList")) {
+				retVal=new UserOperations(bubbleDS).targetSMSPendingList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("updateTargetSMSList")) {
+				retVal=new UserOperations(bubbleDS).modifyTargetsmsStatus(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getTargetPendingListCustomer")) {
+				retVal=new UserOperations(bubbleDS).targetSMSPendingListCustomer(message,messageBody);	
+			}else if(action.equalsIgnoreCase("updateTargetSMSListCustomer")) {
+				retVal=new UserOperations(bubbleDS).modifyTargetsmsStatusCustomer(message,messageBody);			
 			}
 
 			//SMS inbound

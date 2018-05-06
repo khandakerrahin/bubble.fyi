@@ -115,10 +115,24 @@ public class UserOperations {
 	
 	public String updateCustomerStatus(String id, String customerid, String status) {
 		return new UserDBOperations(bubbleDS).modifyCustomerStatus(id, customerid, status);
-	}
-	
+	}	
 	public String updateBulksmsStatus(String id, String customerid,String groupId, String status) {
 		return new UserDBOperations(bubbleDS).modifyBulksmsPStatus(id, customerid,groupId, status);
+	}
+	public String updateTargetsmsStatus(String userId, String recordId,String status, String totalCost,String totalReach) {
+		return new UserDBOperations(bubbleDS).modifyTargetsmsPStatus(userId, recordId,status, totalCost,totalReach).getJsonObject().toString();
+	}
+	public String updateTargetsmsStatusCustomer(String userId, String recordId,String status) {
+		return new UserDBOperations(bubbleDS).modifyTargetsmsPStatusCustomer(userId, recordId,status).getJsonObject().toString();
+	}
+	public String updateTargetsmsStatus(String id, String customerid,String groupId, String status) {
+		return new UserDBOperations(bubbleDS).modifyBulksmsPStatus(id, customerid,groupId, status);
+	}
+	public String getTargetSMSPendingList(String id) {
+		return new UserDBOperations(bubbleDS).getTargetSMSPList(id);
+	}
+	public String getTargetSMSPendingListCustomer(String id) {
+		return new UserDBOperations(bubbleDS).getTargetSMSPListCustomer(id);
 	}
 	public String retryBulksmsLowBalanceStatus( String customerid,String groupId) {
 		return new UserDBOperations(bubbleDS).BulksmsLowBalanceStatusChange(customerid,groupId).getJsonObject().toString();
@@ -151,8 +165,8 @@ public class UserOperations {
 		return new UserDBOperations(bubbleDS).sendSMStargetBased(id,targetDV,targetDis,targetUpz, sch_date,message,amount).getJsonObject().toString();
 	}
 	
-	public String RequestTargetBasedSMSDB(String id, String targetGroup,String sch_date,String message,String budget,String targetCount) {
-		return new UserDBOperations(bubbleDS).requestTargetBasedSMS(id,targetGroup, sch_date,message,budget,targetCount).getJsonObject().toString();
+	public String RequestTargetBasedSMSDB(String id, String geoTarget,String demographyTarget,String psychographyTarget,String behaviourTarget,String sch_date,String message,String budget,String targetCount) {
+		return new UserDBOperations(bubbleDS).requestTargetBasedSMS(id,geoTarget,demographyTarget,psychographyTarget,behaviourTarget,sch_date,message,budget,targetCount).getJsonObject().toString();
 	}
 	
 	/**
@@ -274,6 +288,73 @@ public class UserOperations {
 		}
 		if(credentials.getErrorCode().equals("0")) {
 			retval=updateBulksmsStatus(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("customerId"),credentials.getJsonObject().getString("groupId"),credentials.getJsonObject().getString("status"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String modifyTargetsmsStatus(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=updateTargetsmsStatus(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("status"),credentials.getJsonObject().getString("totalCost"),credentials.getJsonObject().getString("totalReach"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String modifyTargetsmsStatusCustomer(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=updateTargetsmsStatusCustomer(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("status"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String targetSMSPendingList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			retval=getTargetSMSPendingList(credentials.getJsonObject().getString("id"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String targetSMSPendingListCustomer(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder credentials;
+		if(messageBody.isEmpty()) {
+			credentials=new JsonDecoder(message);
+		}else{
+			credentials=new JsonDecoder(messageBody);
+		}
+		if(credentials.getErrorCode().equals("0")) {
+			//retval=getTargetSMSPendingList(credentials.getJsonObject().getString("id"));
+			retval=getTargetSMSPendingListCustomer(credentials.getJsonObject().getString("id"));
+			
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -461,7 +542,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=RequestTargetBasedSMSDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("targetGroup"),json.getJsonObject().getString("scheduleDate"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("budget"),json.getJsonObject().getString("targetCount"));
+				retval=RequestTargetBasedSMSDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("geoTarget"),json.getJsonObject().getString("demographyTarget"),json.getJsonObject().getString("psychographyTarget"),json.getJsonObject().getString("behaviourTarget"),json.getJsonObject().getString("scheduleDate"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("budget"),json.getJsonObject().getString("targetCount"));
 			
 		}else{
 			retval="E:JSON string invalid";

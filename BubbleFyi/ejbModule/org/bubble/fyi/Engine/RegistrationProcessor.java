@@ -44,9 +44,9 @@ public class RegistrationProcessor {
 		}else {
 			registrationInfo=new JsonDecoder(messageBody);
 		}
-		UserRegistration register=new UserRegistration(bubbleDS);
+		UserRegistration register=new UserRegistration(this.bubbleDS);
 		if(registrationInfo.getErrorCode().equals("0")) {
-			retval=register.registerNewUser(registrationInfo);
+			retval= register.registerNewUser(registrationInfo);
 		}else{
 			//error decoding json
 			retval="E:JSON string invalid";

@@ -135,6 +135,55 @@ public class SMSSender {
 		LogWriter.LOGGER.info("customer Balance(): "+retval);
 		return retval;
 	}
+	/**
+	 * 
+	 * @param userId
+	 * @param chargeFor 1= regular Charge (non masking), 2= masking charge, 3= targetBased charge less than 3selection
+	 * 4= targetBased charge more than 3 selection 5= inbox change 6=custom charge
+	 * @return customer charged value for respected selection 
+	 */
+	public double getCustomerChargingDetail(String userId,int chargeFor) {
+		// 1= regular Charge (non masking), 2= masking charge, 3= targetBased charge less than 3selection
+		// 4= targetBased charge more than 3 selection 5= inbox change 6=custom charge
+		double retval=-1;
+		double regular_charge=-1;
+		double masking=-1;
+		double targetBased_3=-1;
+		double targetBased_5=-1;
+		double inbox=-1;		
+		double custom=-1;
+
+		String sql="SELECT regular_charge,masking,targetBased_3,targetBased_5,inbox,custom FROM tbl_charging where user_id=?";
+
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				regular_charge=bubbleDS.getResultSet().getDouble(1);
+				masking=bubbleDS.getResultSet().getDouble(2);
+				targetBased_3=bubbleDS.getResultSet().getDouble(3);
+				targetBased_5=bubbleDS.getResultSet().getDouble(4);
+				inbox=bubbleDS.getResultSet().getDouble(5);
+				custom=bubbleDS.getResultSet().getDouble(6);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			retval=-3;
+			LogWriter.LOGGER.severe("getUserType(): "+e.getMessage());
+		}
+		if(chargeFor == 1) retval=regular_charge;
+		else if(chargeFor == 2) retval=masking;
+		else if(chargeFor == 3) retval=targetBased_3;
+		else if(chargeFor == 4) retval=targetBased_5;		
+		else if(chargeFor == 5) retval=inbox;
+		else if(chargeFor == 6) retval=custom;
+		else retval=regular_charge;
+
+		LogWriter.LOGGER.info("customer Charge: "+retval);
+		return retval;
+	}
 
 	private boolean updateBalanceSingleSMS(String userId,int val,double smsPrice) {
 		//TODO needs to update with cost
@@ -177,13 +226,18 @@ public class SMSSender {
 	 * <br>-2:SQLException
 	 * <br>-3:General Exception
 	 * <br>-4:SQLException while closing connection
+	 * <br>-9:Customer Charging not Configured
+	 * <br>-16: Payment Deduction Failed
+	 * <br>5:low Balance
 	 */
 	public String insertToSender(JsonDecoder jsonDecoder) {
-		String errorCode="-1";//default errorCode		
-		double smsPrice=0.25;
+		String errorCode="-1";//default errorCode
 		String userID=jsonDecoder.getJsonObject().getString("id"); 
-		String message=jsonDecoder.getJsonObject().getString("smsText");
-		/*
+		//double smsPrice=0.25;
+		double smsPrice=getCustomerChargingDetail(userID,1);//1=regular non masking charge
+		if(smsPrice>0.0) {		
+			String message=jsonDecoder.getJsonObject().getString("smsText");
+			/*
 		String s1 = message;
 		try {
 			byte[] bytes = s1.getBytes("UTF-8");
@@ -192,91 +246,90 @@ public class SMSSender {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}/**/
-		LogWriter.LOGGER.info(" ----message----:"+message);
-		
-		try {
-			String userStatus=getUserType(userID);
-			String aparty=getAparty(userID);
-			
-			
-			int smsCount=getSMSSize(message);
-			//TODO if aparty null check 
-			//if(userStatus.equals("1") || userStatus.equals("5")) { 
-			//1=active customer 5=admin 10=high value customer
-			if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
-				//TODO checkBalance(userID) returns available balance
-				String sqlInsert="INSERT INTO smsinfo"
-						+ " (userid,message,bparty,source,aparty) "
-						+ "VALUES (?, ?, ?,'bubble',?)";
-				if(getCustomerBalance(userID)>=smsPrice) {
-					try {
-						if(updateBalanceSingleSMS(userID,smsCount,smsPrice)) {
-							try {
+			LogWriter.LOGGER.info(" ----message----:"+message);
 
-								//TODO charge customer boolean updateBalanceSingleSMS(userID)
-								bubbleDS.prepareStatement(sqlInsert);
-								//	(custodian_name,organisation_name,username,password,email,phone, address,postcode,city);
-								bubbleDS.getPreparedStatement().setString(1, userID);					
-								bubbleDS.getPreparedStatement().setString(2,message );
-								bubbleDS.getPreparedStatement().setString(3, this.msisdnNormalize(jsonDecoder.getEString("msisdn")));
-								bubbleDS.getPreparedStatement().setString(4, aparty);
-								bubbleDS.execute();
-								errorCode="0:Successfully Inserted";								
-								bubbleDS.closePreparedStatement();
-							}catch(SQLException e) {
-								updateBalanceSingleSMS(userID,(-1)*smsCount,smsPrice);
-								//TODO update balance add 
-								errorCode="11:Inserting credentials failed";
-								e.printStackTrace();
-								LogWriter.LOGGER.severe(e.getMessage());
-								bubbleDS.closePreparedStatement();
-								//new UserDBOperations().deleteUsersEntry(userId); //only deletes from users table
-							}catch(Exception de) {
-								//TODO update balance add 
-								updateBalanceSingleSMS(userID,(-1)*smsCount,smsPrice);
-								errorCode="-10: other exception";
-								bubbleDS.closePreparedStatement();
-								LogWriter.LOGGER.severe(de.getMessage());
-								//de.printStackTrace();
-								LogWriter.LOGGER.info("other Exception:"+de.getMessage());
+			try {
+				String userStatus=getUserType(userID);
+				String aparty=getAparty(userID);
+
+				int smsCount=getSMSSize(message);
+				//TODO if aparty null check 
+				//if(userStatus.equals("1") || userStatus.equals("5")) { 
+				//1=active customer 5=admin 10=high value customer
+				if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
+					//TODO checkBalance(userID) returns available balance
+					String sqlInsert="INSERT INTO smsinfo"
+							+ " (userid,message,bparty,source,aparty) "
+							+ "VALUES (?, ?, ?,'bubble',?)";
+					if(getCustomerBalance(userID)>=smsPrice) {
+						try {
+							if(updateBalanceSingleSMS(userID,smsCount,smsPrice)) {
+								try {
+									//TODO charge customer boolean updateBalanceSingleSMS(userID)
+									bubbleDS.prepareStatement(sqlInsert);
+									bubbleDS.getPreparedStatement().setString(1, userID);					
+									bubbleDS.getPreparedStatement().setString(2, message);
+									bubbleDS.getPreparedStatement().setString(3, this.msisdnNormalize(jsonDecoder.getEString("msisdn")));
+									bubbleDS.getPreparedStatement().setString(4, aparty);
+									bubbleDS.execute();
+									errorCode="0:Successfully Inserted";								
+									bubbleDS.closePreparedStatement();
+								}catch(SQLException e) {
+									updateBalanceSingleSMS(userID,(-1)*smsCount,smsPrice);
+									//TODO update balance add 
+									errorCode="11:Inserting credentials failed";
+									e.printStackTrace();
+									LogWriter.LOGGER.severe(e.getMessage());
+									bubbleDS.closePreparedStatement();
+									//new UserDBOperations().deleteUsersEntry(userId); //only deletes from users table
+								}catch(Exception de) {
+									//TODO update balance add 
+									updateBalanceSingleSMS(userID,(-1)*smsCount,smsPrice);
+									errorCode="-10: other exception";
+									bubbleDS.closePreparedStatement();
+									LogWriter.LOGGER.info("other Exception:"+de.getMessage());
+								}
+							}else {
+								errorCode="-16: Payment Deduction Failed";
 							}
-						}else {
-							errorCode="-16: Payment Deduction Failed";
+						}catch(SQLException e){
+							errorCode= "-2";
+							LogWriter.LOGGER.severe(e.getMessage());
+						}catch(Exception e){
+							errorCode= "-3";
+							LogWriter.LOGGER.severe(e.getMessage());
+							e.printStackTrace();
 						}
-
-
-					}catch(SQLException e){
-						errorCode= "-2";
-						LogWriter.LOGGER.severe(e.getMessage());
-					}catch(Exception e){
-						errorCode= "-3";
-						LogWriter.LOGGER.severe(e.getMessage());
-						e.printStackTrace();
+					}else {
+						errorCode="5:low Balance";
 					}
 				}else {
-					errorCode="5:low Balance";
+					errorCode="-6:Sent sms not allowed";
 				}
-			}else {
-				errorCode="-6:Sent sms not allowed";
+			}catch(Exception e){
+				e.printStackTrace();
+			}finally{
+				if(bubbleDS.getConnection() != null){
+					try {
+						bubbleDS.closePreparedStatement();
+						//	bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						errorCode="-4";
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}  
 			}
-		}catch(Exception e){
-			e.printStackTrace();
-		}finally{
-			if(bubbleDS.getConnection() != null){
-				try {
-					bubbleDS.closePreparedStatement();
-				//	bubbleDS.getConnection().close();
-				} catch (SQLException e) {
-					errorCode="-4";
-					LogWriter.LOGGER.severe(e.getMessage());
-				}
-			}  
-
+		}else {
+			errorCode="-9:Customer Charging not Configured";
 		}
 		return errorCode;
 	}
-	
 
+/**
+ * 
+ * @param String message
+ * @return int number of sms count
+ */
 	public int getSMSSize(String message) {
 		int retval=1;
 		int tempSize= smsLength(message);
@@ -295,6 +348,11 @@ public class SMSSender {
 		}
 		return retval;
 	}
+/**
+ * 	
+ * @param text
+ * @return boolean isUnicode
+ */
 	public boolean isUnicode(String text) {
 		boolean RETVAL =false;
 		for(int i = 0; i < text.length() ; i++) {

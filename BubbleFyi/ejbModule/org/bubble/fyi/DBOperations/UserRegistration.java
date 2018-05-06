@@ -21,7 +21,7 @@ public class UserRegistration {
 	 * 
 	 */
 	public UserRegistration(BubbleFyiDS bubbleDS) {
-		bubbleDS = this.bubbleDS;
+		this.bubbleDS = bubbleDS;
 	}
 	/**
 	 * If msisdn starts with 0, prepends 88.
@@ -56,11 +56,11 @@ public class UserRegistration {
 			bubbleDS.prepareStatement(sql,true);
 			bubbleDS.getPreparedStatement().setString(1, userId);
 			bubbleDS.getPreparedStatement().setDouble(2, balance);
-		
+
 			retval="0:Successfully Inserted";
-				bubbleDS.execute();
-	    }catch(Exception e) {				
-				e.printStackTrace();
+			bubbleDS.execute();
+		}catch(Exception e) {				
+			e.printStackTrace();
 		}finally {
 			try {
 				bubbleDS.closePreparedStatement();
@@ -71,7 +71,7 @@ public class UserRegistration {
 		}			
 		return retval;		
 	}
-	
+
 	/**
 	 * 
 	 * @param userId
@@ -87,11 +87,11 @@ public class UserRegistration {
 		try {
 			bubbleDS.prepareStatement(sql,true);
 			bubbleDS.getPreparedStatement().setString(1, userId);
-		
+
 			retval="0:Successfully Inserted";
-				bubbleDS.execute();
-	    }catch(Exception e) {				
-				e.printStackTrace();
+			bubbleDS.execute();
+		}catch(Exception e) {				
+			e.printStackTrace();
 		}finally {
 			try {
 				bubbleDS.closePreparedStatement();
@@ -117,7 +117,7 @@ public class UserRegistration {
 	 * <br>-4:SQLException while closing connection
 	 * insert to customer balance table and TODO tbl_charging table 
 	 */
-	
+
 	public String registerNewUser(JsonDecoder jsonDecoder) {
 		String errorCode="-1";//default errorCode
 		/*
@@ -128,27 +128,25 @@ public class UserRegistration {
 		String sqlInsertCustomer="INSERT INTO tbl_users"
 				+ "(custodian_name,organization_name,username,password,email,phone, address,postcode,city)"
 				+ "VALUES ("
-				+ "?, ?, ?,?, ?, ?, ?, ?,?)";
+				+ "?, ?, ?,?, ?, ?, ?,?,?)";
 		String sqlInsertAdmin="INSERT INTO tbl_users"
 				+ " (username, email, password, phone,flag) "
 				+ "VALUES ("
 				+ "?, ?, ?, ?,5)";
 
 		String userId="-1";
-      try {
-		String userType= jsonDecoder.getJsonObject().getString("userType");
-		LogWriter.LOGGER.severe("userType:"+userType);
-		if(userType.equals("Admin")) {
-			try {
-				//json: name,email,phone,password
-				bubbleDS.prepareStatement(sqlInsertAdmin,true);
-				bubbleDS.getPreparedStatement().setString(1, jsonDecoder.getJsonObject().getString("name"));
-				bubbleDS.getPreparedStatement().setString(2, jsonDecoder.getJsonObject().getString("email"));
-				bubbleDS.getPreparedStatement().setString(3, jsonDecoder.getJsonObject().getString("password"));
-				bubbleDS.getPreparedStatement().setString(4, this.msisdnNormalize(jsonDecoder.getJsonObject().getString("phone")));
-				
-				errorCode="0:Successfully Inserted";
-
+		try {
+			String userType= jsonDecoder.getJsonObject().getString("userType");
+			LogWriter.LOGGER.info("userType: "+userType);
+			if(userType.equals("Admin")) {
+				try {
+					//json: name,email,phone,password
+					bubbleDS.prepareStatement(sqlInsertAdmin,true);
+					bubbleDS.getPreparedStatement().setString(1, jsonDecoder.getJsonObject().getString("name"));
+					bubbleDS.getPreparedStatement().setString(2, jsonDecoder.getJsonObject().getString("email"));
+					bubbleDS.getPreparedStatement().setString(3, jsonDecoder.getJsonObject().getString("password"));
+					bubbleDS.getPreparedStatement().setString(4, this.msisdnNormalize(jsonDecoder.getJsonObject().getString("phone")));			
+					errorCode="0:Successfully Inserted";
 					bubbleDS.execute(); 
 					userId=getUserId();
 				}catch(SQLIntegrityConstraintViolationException de) {
@@ -156,57 +154,58 @@ public class UserRegistration {
 					LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:"+de.getMessage());
 				}catch(SQLException e) {
 					errorCode="11:Inserting user credentials failed";
-					LogWriter.LOGGER.severe("SQLException"+e.getMessage());
+					LogWriter.LOGGER.severe("SQLException"+e.getMessage());					
 				}catch(Exception e) {
 					errorCode="75:other Exception";
 					e.printStackTrace();
 				}
-			
-				//LogWriter.LOGGER.info("UserID:"+userId);
-				bubbleDS.closePreparedStatement();
-			
-		}else {
+				bubbleDS.closePreparedStatement();		
+			}else {
+				try {
+					this.bubbleDS.prepareStatement(sqlInsertCustomer,true);
+					
+					bubbleDS.getPreparedStatement().setString(1, jsonDecoder.getJsonObject().getString("custodian_name"));					
+					bubbleDS.getPreparedStatement().setString(2, jsonDecoder.getJsonObject().getString("organisation_name"));
+					bubbleDS.getPreparedStatement().setString(3, jsonDecoder.getJsonObject().getString("username"));
+					bubbleDS.getPreparedStatement().setString(4, jsonDecoder.getJsonObject().getString("password"));
+					bubbleDS.getPreparedStatement().setString(5, jsonDecoder.getJsonObject().getString("email"));
+					bubbleDS.getPreparedStatement().setString(6, this.msisdnNormalize(jsonDecoder.getEString("phone")));
+					bubbleDS.getPreparedStatement().setString(7, jsonDecoder.getJsonObject().getString("address"));
+					bubbleDS.getPreparedStatement().setString(8, jsonDecoder.getJsonObject().getString("postcode"));
+					bubbleDS.getPreparedStatement().setString(9, jsonDecoder.getJsonObject().getString("city"));
+					
+					bubbleDS.execute();
+					userId=getUserId();
+					errorCode="0:Successfully Inserted";
+				}catch(SQLIntegrityConstraintViolationException de) {
+					errorCode="1:User with the email address or phone number exists";
+					LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:"+de.getMessage());
+					
+				}catch(SQLException e) {
+					errorCode="11:Inserting user credentials failed";
+					LogWriter.LOGGER.severe("userRegistration Customer SQl exception : "+e.getMessage());
+					
 
-			try {
-				bubbleDS.prepareStatement(sqlInsertCustomer,true);
-				//	(custodian_name,organisation_name,username,password,email,phone, address,postcode,city);
-				bubbleDS.getPreparedStatement().setString(1, jsonDecoder.getJsonObject().getString("custodian_name"));					
-				bubbleDS.getPreparedStatement().setString(2, jsonDecoder.getJsonObject().getString("organisation_name"));
-				bubbleDS.getPreparedStatement().setString(3, jsonDecoder.getJsonObject().getString("username"));
-				bubbleDS.getPreparedStatement().setString(4, jsonDecoder.getJsonObject().getString("password"));
-				bubbleDS.getPreparedStatement().setString(5, jsonDecoder.getJsonObject().getString("email"));
-				bubbleDS.getPreparedStatement().setString(6, this.msisdnNormalize(jsonDecoder.getEString("phone")));
-				bubbleDS.getPreparedStatement().setString(7, jsonDecoder.getJsonObject().getString("address"));
-				bubbleDS.getPreparedStatement().setString(8, jsonDecoder.getJsonObject().getString("postcode"));
-                bubbleDS.getPreparedStatement().setString(9, jsonDecoder.getJsonObject().getString("city"));
-				bubbleDS.execute();
-				userId=getUserId();
-				errorCode="0:Successfully Inserted";
-			}catch(SQLIntegrityConstraintViolationException de) {
-				errorCode="1:User with the email address or phone number exists";
-				LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:"+de.getMessage());
-			}catch(SQLException e) {
-				errorCode="11:Inserting user credentials failed";
-				LogWriter.LOGGER.severe(e.getMessage());
-				bubbleDS.closePreparedStatement();
-				//new UserDBOperations().deleteUsersEntry(userId); //only deletes from users table
+					//new UserDBOperations().deleteUsersEntry(userId); //only deletes from users table
+				}finally {
+					if(bubbleDS.getConnection() != null) bubbleDS.closePreparedStatement();
+				}
 			}
-			if(bubbleDS.getConnection() != null) bubbleDS.closePreparedStatement();
-		 }
 
 		}
-      catch(SQLException e){
+		catch(SQLException e){
 			errorCode= "-2";
-			LogWriter.LOGGER.severe(e.getMessage());
+			LogWriter.LOGGER.severe("Error code: -2: "+e.getMessage());		
 		}catch(Exception e){
 			errorCode= "-3";
-			LogWriter.LOGGER.severe(e.getMessage());
-			e.printStackTrace();
+			LogWriter.LOGGER.severe("Error code: -3: "+e.getMessage());			
 		}finally{
 			//insert to customer balance table
-			if(!userId.equalsIgnoreCase("-1")) {
+			if(!userId.equalsIgnoreCase("-1")) { //not -1 means user created successfully
 				insertToCustomerBalanceTable(userId);
 				insertToTblChargingTable(userId);
+			}else {
+				LogWriter.LOGGER.info("user insert/create failed");
 			}
 			/*
 			if(bubbleDS.getConnection() != null){
@@ -218,25 +217,25 @@ public class UserRegistration {
 				}
 			} /**/     
 		}
-      LogWriter.LOGGER.info("userID: "+userId);
-	
-	return errorCode;
-}
-/**
- * 
- * @return
- * @throws SQLException
- */
-private String getUserId() throws SQLException {
-	String retval="-1";
-	ResultSet rs=bubbleDS.getGeneratedKeys();
-	if(rs.next()) {
-		retval=rs.getString(1);
-	}
-	return retval;
-}
+		LogWriter.LOGGER.info("userID: "+userId);
 
-/*
+		return errorCode;
+	}
+	/**
+	 * 
+	 * @return
+	 * @throws SQLException
+	 */
+	private String getUserId() throws SQLException {
+		String retval="-1";
+		ResultSet rs=bubbleDS.getGeneratedKeys();
+		if(rs.next()) {
+			retval=rs.getString(1);
+		}
+		return retval;
+	}
+
+	/*
 @SuppressWarnings("unused")
 private String getUserIdFromSequence(BubbleFyiDS bubbleDS) throws SQLException {
 	String retval="-1";
