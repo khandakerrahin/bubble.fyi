@@ -1,11 +1,14 @@
 
 package org.bubble.fyi.DBOperations;
 
+import java.sql.ResultSet;
 //import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Engine.JsonDecoder;
+import org.bubble.fyi.Engine.JsonEncoder;
 import org.bubble.fyi.Logs.LogWriter;
+import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 
 /**
  * @author hafiz
@@ -86,19 +89,42 @@ public class SMSSender {
 		} catch (SQLException e) {
 			retval="-2";
 			LogWriter.LOGGER.info("getAparty(): "+e.getMessage());
-		}
-		/*
-		finally{
-				if(bubbleDS.getConnection() != null){
-					try {
-						bubbleDS.getConnection().close();
-					} catch (SQLException e) {
-						retval="-3";
-						LogWriter.LOGGER.severe(e.getMessage());
-					}
-				}      
-			}/**/
+		}		
 		LogWriter.LOGGER.info("getAparty(): "+retval);
+		return retval;
+	}
+	/**
+	 * 
+	 * @param aparty
+	 * @return String telco name based on sender prefix RT BP
+	 */
+	//public String getTelcoDetail(String userId,String aparty) {
+	public String getTelcoDetail(String aparty) {
+		String retval="-1"; //TODO needs to change after mobile number portability comes
+		if(aparty.startsWith("035") || aparty.startsWith("88035") || aparty.startsWith("+88035")) {
+			retval= "BP";
+		}else if(aparty.startsWith("+880444") || aparty.startsWith("880444") ) {
+			retval= "RT";
+		}else {
+			retval= "RT";
+		}
+		/**
+		String sql="select telco from customer_balance where user_id=?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				retval=bubbleDS.getResultSet().getString(1);
+				//retval+=""+bubbleDS.getResultSet().getString(2);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			retval="-2";
+			LogWriter.LOGGER.info("getTelcoDetail(): "+e.getMessage());
+		}		
+		LogWriter.LOGGER.info("getAparty(): "+retval);/**/
 		return retval;
 	}
 
@@ -234,6 +260,7 @@ public class SMSSender {
 		String errorCode="-1";//default errorCode
 		String userID=jsonDecoder.getJsonObject().getString("id"); 
 		//double smsPrice=0.25;
+		Double smsCost=-1.00;
 		double smsPrice=getCustomerChargingDetail(userID,1);//1=regular non masking charge
 		if(smsPrice>0.0) {		
 			String message=jsonDecoder.getJsonObject().getString("smsText");
@@ -251,15 +278,16 @@ public class SMSSender {
 			try {
 				String userStatus=getUserType(userID);
 				String aparty=getAparty(userID);
-
+				String telco =getTelcoDetail(aparty);
 				int smsCount=getSMSSize(message);
 				//TODO if aparty null check 
 				//if(userStatus.equals("1") || userStatus.equals("5")) { 
 				//1=active customer 5=admin 10=high value customer
 				if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
 					//TODO checkBalance(userID) returns available balance
+					smsCost=smsPrice*smsCount;
 					String sqlInsert="INSERT INTO smsinfo"
-							+ " (userid,message,bparty,source,aparty) "
+							+ " (userid,message,bparty,source,aparty,telco_partner,cost) "
 							+ "VALUES (?, ?, ?,'bubble',?)";
 					if(getCustomerBalance(userID)>=smsPrice) {
 						try {
@@ -270,7 +298,9 @@ public class SMSSender {
 									bubbleDS.getPreparedStatement().setString(1, userID);					
 									bubbleDS.getPreparedStatement().setString(2, message);
 									bubbleDS.getPreparedStatement().setString(3, this.msisdnNormalize(jsonDecoder.getEString("msisdn")));
-									bubbleDS.getPreparedStatement().setString(4, aparty);
+									bubbleDS.getPreparedStatement().setString(5, aparty);
+									bubbleDS.getPreparedStatement().setString(6, telco); //telco_partner									
+									bubbleDS.getPreparedStatement().setDouble(7, smsCost);
 									bubbleDS.execute();
 									errorCode="0:Successfully Inserted";								
 									bubbleDS.closePreparedStatement();
@@ -325,11 +355,11 @@ public class SMSSender {
 		return errorCode;
 	}
 
-/**
- * 
- * @param String message
- * @return int number of sms count
- */
+	/**
+	 * 
+	 * @param String message
+	 * @return int number of sms count
+	 */
 	public int getSMSSize(String message) {
 		int retval=1;
 		int tempSize= smsLength(message);
@@ -348,11 +378,11 @@ public class SMSSender {
 		}
 		return retval;
 	}
-/**
- * 	
- * @param text
- * @return boolean isUnicode
- */
+	/**
+	 * 	
+	 * @param text
+	 * @return boolean isUnicode
+	 */
 	public boolean isUnicode(String text) {
 		boolean RETVAL =false;
 		for(int i = 0; i < text.length() ; i++) {
@@ -390,77 +420,110 @@ public class SMSSender {
 		return text.length();
 	}
 
-	public String insertToSenderAPI(JsonDecoder jsonDecoder) {
-		String errorCode="-1";//default errorCode	
-		//TODO check if eligible to send sms. 
-		String userID=jsonDecoder.getJsonObject().getString("id"); 
-		//String aparty=getAparty(userID);
-		//TODO insert aparty 
-		try {
-			String userStatus=getUserType(userID);
-			if(userStatus.equals("1") || userStatus.equals("5")) {
+	public JsonEncoder insertToSenderAPI(JsonDecoder jsonDecoder,String id) {
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		String messageId="-1";
+		Double smsCost=-1.00;
+		String errorCode="0005";//default errorCode
+		//String userID=jsonDecoder.getJsonObject().getString("id"); 
+		String userID=id;
+		double smsPrice=getCustomerChargingDetail(userID,1);//1=regular non masking charge
+		if(smsPrice>0.0) {		
+			String message=jsonDecoder.getJsonObject().getString("smsText");
 
-				String sqlInsert="INSERT INTO smsinfo"
-						+ " (userid,message,bparty) "
-						+ "VALUES (?, ?, ?)";
+			LogWriter.LOGGER.info("message: "+message);
 
-				try {
-					try {
-						bubbleDS.prepareStatement(sqlInsert);
-						//	(custodian_name,organisation_name,username,password,email,phone, address,postcode,city);
-						bubbleDS.getPreparedStatement().setString(1, userID);					
-						bubbleDS.getPreparedStatement().setString(2, jsonDecoder.getJsonObject().getString("smsText"));
-						bubbleDS.getPreparedStatement().setString(3, this.msisdnNormalize(jsonDecoder.getEString("msisdn")));
-						bubbleDS.execute();
-						errorCode="0:Successfully Inserted";
-					}catch(SQLException e) {
-						errorCode="11:Inserting  credentials failed";
-						e.printStackTrace();
-						LogWriter.LOGGER.severe(e.getMessage());
-						bubbleDS.closePreparedStatement();
-						//new UserDBOperations().deleteUsersEntry(userId); //only deletes from users table
-					}catch(Exception de) {
-						errorCode="-10: other exception";
-						LogWriter.LOGGER.severe(de.getMessage());
-						//de.printStackTrace();
-						LogWriter.LOGGER.info("other Exception:"+de.getMessage());
+			try {
+				String userStatus=getUserType(userID);
+				String aparty=getAparty(userID);
+				int smsCount=getSMSSize(message);
+				String telco =getTelcoDetail(aparty);
+				//1=active customer 5=admin 10=high value customer
+				if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
+					smsCost=smsPrice*smsCount;
+					//TODO checkBalance(userID) returns available balance
+					String sqlInsert="INSERT INTO smsinfo"
+							+ " (userid,message,bparty,source,source_id,aparty,telco_partner,cost) "
+							+ "VALUES (?, ?, ?,'API',? ,?,?,?)";
+					if(getCustomerBalance(userID)>=smsPrice) {
+						try {
+							if(updateBalanceSingleSMS(userID,smsCount,smsPrice)) {
+								try {
+									bubbleDS.prepareStatement(sqlInsert,true);
+									bubbleDS.getPreparedStatement().setString(1, userID);					
+									bubbleDS.getPreparedStatement().setString(2, message);
+									bubbleDS.getPreparedStatement().setString(3, this.msisdnNormalize(jsonDecoder.getEString("msisdn")));
+									bubbleDS.getPreparedStatement().setString(5, NullPointerExceptionHandler.isNullOrEmpty(jsonDecoder.getJsonObject().getString("sourceId"))?"":jsonDecoder.getJsonObject().getString("sourceId"));
+									bubbleDS.getPreparedStatement().setString(6, aparty);
+									bubbleDS.getPreparedStatement().setString(7, telco); //telco_partner									
+									bubbleDS.getPreparedStatement().setDouble(8, smsCost);
+									bubbleDS.execute();
+									messageId=getMessageId();									
+									errorCode="0000";					
+									bubbleDS.closePreparedStatement();
+								}catch(Exception e) {
+									updateBalanceSingleSMS(userID,(-1)*smsCount,smsPrice);
+									//errorCode="11:Inserting credentials failed";
+									errorCode="0014";
+									e.printStackTrace();
+									LogWriter.LOGGER.severe(e.getMessage());
+									bubbleDS.closePreparedStatement();
+								}
+							}else {
+								//errorCode="-16: Payment Deduction Failed";
+								errorCode="0011";
+							}
+						}catch(Exception e){
+							errorCode="0005";
+							LogWriter.LOGGER.severe(e.getMessage());
+							e.printStackTrace();
+						}
+					}else {
+						//errorCode="5:low Balance";
+						errorCode="0013";
 					}
-					if(bubbleDS.getConnection() != null) bubbleDS.closePreparedStatement();
-
-				}catch(SQLException e){
-					errorCode= "-2";
-					LogWriter.LOGGER.severe(e.getMessage());
-				}catch(Exception e){
-					errorCode= "-3";
-					LogWriter.LOGGER.severe(e.getMessage());
-					e.printStackTrace();
-				}finally {
+				}else {
+					errorCode="0012";
+					//errorCode="-6:Sent sms not allowed";
+				}
+			}catch(Exception e){
+				e.printStackTrace();
+				errorCode="0005";
+			}finally{
+				if(bubbleDS.getConnection() != null){
 					try {
 						bubbleDS.closePreparedStatement();
 					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						errorCode="-4";
-						e.printStackTrace();
+						LogWriter.LOGGER.severe(e.getMessage());
 					}
-				}
-			}else {
-				errorCode="-6:Sent sms not allowed";
+				}  
 			}
-		}catch(Exception e){
-			e.printStackTrace();
-		}/*finally{
-			if(bubbleDS.getConnection() != null){
-				try {
-					bubbleDS.getConnection().close();
-				} catch (SQLException e) {
-					errorCode="-4";
-					LogWriter.LOGGER.severe(e.getMessage());
-				}
-			}  
-
-		}/**/
-		return errorCode;
+		}else {
+			//errorCode="-9:Customer Charging not Configured";
+			errorCode="0015";
+		}
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		if(messageId !="-1")
+			jsonEncoder.addElement("messageId", messageId);
+		jsonEncoder.buildJsonObject();
+		return jsonEncoder;
+	}
+	/**
+	 * 
+	 * @return messageID for last inserted request 
+	 * @throws SQLException
+	 */
+	private String getMessageId() throws SQLException {
+		String retval="-1";
+		ResultSet rs=bubbleDS.getGeneratedKeys();
+		if(rs.next()) {
+			retval=rs.getString(1);
+		}
+		rs.close();
+		return retval;
 	}
 }
+
+
 
 

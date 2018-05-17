@@ -48,10 +48,10 @@ public class Login {
 	public String compareCredentialsInDB(String loginCredential, String password, int mode) {
 		String retval="-2";
 		String sql="select count(*) as counter from tbl_users where <mode>=? and password=? and flag in (0,1,5,10)";
-		if(mode==1) { //email
+		if(mode==1) { //phone
 			sql=sql.replace("<mode>", "phone");
 			loginCredential=this.msisdnNormalize(loginCredential);
-		}else if(mode==2) { //phone
+		}else if(mode==2) { // email
 			sql=sql.replace("<mode>", "email");			
 		}else{
 			sql=sql.replace("<mode>", "username");

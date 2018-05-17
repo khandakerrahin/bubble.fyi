@@ -18,18 +18,18 @@ import java.util.logging.Logger;;
  */
 public class LoginProcessor {
 	//Login loginDBOperations;
-	
+
 	BubbleFyiDS bubbleDS;
 	LogWriter logWriter;
 	/**
 	 * 
 	 */
-	
+
 	public LoginProcessor(BubbleFyiDS bubbleDS) {
 		//loginDBOperations = new Login();
 		this.bubbleDS=bubbleDS;
 	}
-	
+
 	/**
 	 * @json { "username":"t1@sp.com", "password":"specialt1pass", "mode":"1"} <br>mode 1:email, 2:phone
 	 * @action login
@@ -54,7 +54,7 @@ public class LoginProcessor {
 		JsonDecoder loginCredentials;
 		if(messageBody.isEmpty()) {
 			loginCredentials=new JsonDecoder(message);
-			
+
 		}else {
 			loginCredentials=new JsonDecoder(messageBody);
 		}
@@ -71,27 +71,44 @@ public class LoginProcessor {
 		}
 		return retval;
 	}
-	
-	public String processLoginAPI(String message, String messageBody) {
+
+	public String authenticateUser(String message, String messageBody) {
 		String retval="E";
+		String respCode="0005";
 		JsonDecoder loginCredentials;
 		if(messageBody.isEmpty()) {
-			loginCredentials=new JsonDecoder(message);
-			
+			loginCredentials=new JsonDecoder(message);			
 		}else {
 			loginCredentials=new JsonDecoder(messageBody);
 		}
-		//LoginProcessor loginProcessor=new LoginProcessor();
 		if(loginCredentials.getErrorCode().equals("0")) {
 			retval=this.checkCredentials(loginCredentials);
 		}else{
-			retval="E:JSON string invalid";
+			respCode="0009";
 		}
 		if(retval.equals("1")) {
-			retval=fetchUserInfo(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode"));
-		}else {
-			retval="-6:Error in user Credentials";
+			respCode="0000";
+			//retval=fetchUserInfo(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode"));
+			retval=new UserInfo(bubbleDS).fetchUserInfoApi(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode")).getJsonObject().toString();
+			//new UserInfo(bubbleDS).fetchUserInfo(id, mode).getJsonObject().toString();
+		}else{
+			//retval="-6:Error in user Credentials";
+			respCode="0010";			
 		}
+		
+		if(!respCode.equals("0000")) {
+			JsonEncoder jsonEncoder=new JsonEncoder();
+			jsonEncoder.addElement("ErrorCode", respCode);
+			jsonEncoder.buildJsonObject();
+			retval=jsonEncoder.getJsonObject().toString();
+		}
+		
+		return retval;
+	}
+	
+	public String cleanExpiredRecords() {
+		String retval="-1";
+		retval=new UserInfo(bubbleDS).expirehashRecordCleaner();
 		return retval;
 	}
 	/**
@@ -133,5 +150,5 @@ public class LoginProcessor {
 	public String checkCredentials(String loginCredential, String password, int mode){
 		return new Login().compareCredentialsInDB(loginCredential,password,mode);
 	}
-	
+
 }

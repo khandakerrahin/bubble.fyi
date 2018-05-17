@@ -134,9 +134,9 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).uploadStatusGetter(message,messageBody);
 			}else if(action.equalsIgnoreCase("getFileList")) {
 				retVal=new UserOperations(bubbleDS).uploadFileListGetter(message,messageBody);
-			}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both instant sms and scheduled sms
+			}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both instant sms and scheduled sms //TODO
 				retVal=new UserOperations(bubbleDS).instantGroupSMSDetail(message,messageBody); 
-			}else if(action.equalsIgnoreCase("sendScheduledSMS")) {
+			}else if(action.equalsIgnoreCase("sendScheduledSMS")) { //TODO
 				retVal=new UserOperations(bubbleDS).sentSMSScheduled(message,messageBody); 	
 
 			}else if(action.equalsIgnoreCase("getTotalSMSCount")) {
@@ -147,7 +147,7 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).getPendingBulksmsList(message,messageBody);
 			}else if(action.equalsIgnoreCase("updatePendingBulksmsList")) {
 				retVal=new UserOperations(bubbleDS).modifyBulksmsPendingStatus(message,messageBody);			
-			}else if(action.equalsIgnoreCase("sendBulksmsFromList")) {
+			}else if(action.equalsIgnoreCase("sendBulksmsFromList")) { //TODO
 				retVal=new UserOperations(bubbleDS).sentSMSFromList(message,messageBody); 			
 			}else if(action.equalsIgnoreCase("getBulksmsDetail")) {//documented	
 				retVal=new UserOperations(bubbleDS).getBulksmsDetailC(message,messageBody); 
@@ -212,12 +212,15 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).getGeoLocation(message,messageBody); 
 			}
 			//APIs for sms Sending through API
-
-			else if(action.equalsIgnoreCase("sendSMSapi")) {//documented			
+			else if(action.equalsIgnoreCase("authenticate")) {
+				retVal=new LoginProcessor(bubbleDS).authenticateUser(message,messageBody);
+			}else if(action.equalsIgnoreCase("sendSMSApi")) {//documented			
 				retVal=new SMSProcessor(bubbleDS).processSendSMSapi(message,messageBody);
-			}else if(action.equalsIgnoreCase("CheckloginAPI")) {
+			}else if(action.equalsIgnoreCase("cleanExpiredRecords")) {//documented			
+				retVal=new LoginProcessor(bubbleDS).cleanExpiredRecords();
+			}/*else if(action.equalsIgnoreCase("CheckloginAPI")) {
 				retVal=new LoginProcessor(bubbleDS).processLoginAPI(message,messageBody);
-			}
+			}/**/
 			//Delete user
 			/*else if(action.equalsIgnoreCase("getStudentList")) {//documented
 			if(!NullPointerExceptionHandler.isNullOrEmpty(msg.getString("parentId")))

@@ -2,12 +2,30 @@ package org.bubble.fyi.Initializations;
 
 import java.util.HashMap;
 
+import org.bubble.fyi.Api.AuthenticationToken;
+
 
 
 public class LoadConfigurations {
 
 	replyMessageLoader replySMSLoader = new replyMessageLoader();
 	HashMap<String, String> DBResponseCode = new HashMap<String,String>();
+    public static HashMap<String, AuthenticationToken> authenticationTokenHM = new HashMap<String,AuthenticationToken>();
+    public static HashMap<String, String> checkValidUserToken = new HashMap<String,String>();
+	
+	public HashMap<String, AuthenticationToken> getAuthenticationTokenHM() {
+		return authenticationTokenHM;
+	}
+	
+	public static String generateNewTokenId(String userID) {
+		String retval=null;
+		AuthenticationToken at= new AuthenticationToken();
+		String tokenId=at.generateNewTokenId(userID);
+		authenticationTokenHM.put(tokenId, at);
+		retval=tokenId;
+		return retval;
+	}
+
 	public LoadConfigurations() {
 		// TODO Auto-generated constructor stub
 	}
@@ -25,19 +43,6 @@ public class LoadConfigurations {
 		return  this.replySMSLoader.replyMessage;
 	} 
 	
-
-	/**
-	 * @return HashMap<String,String> DBResponseCode
-	 */
-	public HashMap<String,String> getOpenCodeResponseCodeMapp(){
-
-		DBResponseCode.put("0", "Success");    	
-		DBResponseCode.put("1", "Already subscribed");
-		DBResponseCode.put("2", "Not subscribed");
-		DBResponseCode.put("3", "No permission");	
-		DBResponseCode.put("4", "4");
-
-		return  this.DBResponseCode;
-	}   
+ 
 }
 

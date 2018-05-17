@@ -1233,23 +1233,30 @@ public class UserDBOperations {
 		}
 		return count;
 	}
-
+/**
+ * 
+ * @param userid
+ * @return remaining sms count 
+ */
 	public String getCustomersRemainingBalance(String userid) {
 		String count="-1";
-		String sql="SELECT balance/0.25 FROM `customer_balance` where user_id=?";		
+		String balance="-1";
+		
+		double smsPrice=getCustomerChargingDetailUDB(userid,1);
+		String sql="SELECT balance FROM `customer_balance` where user_id=?";		
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userid);
 			ResultSet rs = bubbleDS.executeQuery();
 			if (rs.next()) {
-				count= rs.getString(1);				
+				balance= rs.getString(1);				
 			}
 			rs.close();	
 		}catch(SQLException e){
-			count= "-2";
+			balance= "-2";
 			LogWriter.LOGGER.severe(e.getMessage());
 		}catch(Exception e){
-			count= "-3";
+			balance= "-3";
 			LogWriter.LOGGER.severe(e.getMessage());
 			e.printStackTrace();
 		}finally {
@@ -1260,6 +1267,15 @@ public class UserDBOperations {
 				e.printStackTrace();
 			}
 		}
+		try {
+			double value = Double.parseDouble(balance);
+			double countt=value/smsPrice;
+			count=countt+"";
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return count;				
 	}
 
@@ -1617,15 +1633,75 @@ public class UserDBOperations {
 		}/**/
 		return retval;
 	}
+	
+	/**
+	 * 
+	 * @param userId
+	 * @param chargeFor 1= regular Charge (non masking), 2= masking charge, 3= targetBased charge less than 3selection
+	 * 4= targetBased charge more than 3 selection 5= inbox change 6=custom charge
+	 * @return customer charged value for respected selection 
+	 */
+	public double getCustomerChargingDetailUDB(String userId,int chargeFor) {
+		// 1= regular Charge (non masking), 2= masking charge, 3= targetBased charge less than 3selection
+		// 4= targetBased charge more than 3 selection 5= inbox change 6=custom charge
+		double retval=-1;
+		double regular_charge=-1;
+		double masking=-1;
+		double targetBased_3=-1;
+		double targetBased_5=-1;
+		double inbox=-1;		
+		double custom=-1;
+
+		String sql="SELECT regular_charge,masking,targetBased_3,targetBased_5,inbox,custom FROM tbl_charging where user_id=?";
+
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				regular_charge=bubbleDS.getResultSet().getDouble(1);
+				masking=bubbleDS.getResultSet().getDouble(2);
+				targetBased_3=bubbleDS.getResultSet().getDouble(3);
+				targetBased_5=bubbleDS.getResultSet().getDouble(4);
+				inbox=bubbleDS.getResultSet().getDouble(5);
+				custom=bubbleDS.getResultSet().getDouble(6);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			retval=-3;
+			LogWriter.LOGGER.severe("getUserType(): "+e.getMessage());
+		}
+		if(chargeFor == 1) retval=regular_charge;
+		else if(chargeFor == 2) retval=masking;
+		else if(chargeFor == 3) retval=targetBased_3;
+		else if(chargeFor == 4) retval=targetBased_5;		
+		else if(chargeFor == 5) retval=inbox;
+		else if(chargeFor == 6) retval=custom;
+		else retval=regular_charge;
+
+		LogWriter.LOGGER.info("customer Charge: "+retval);
+		return retval;
+	}
 
 	public JsonEncoder sendSMSFromList(String userId, String sch_date,String message,String listId) {
 		String errorCode="-1";
 		String userFlag="-1";
-		double smsPrice=0.25;
+		String aparty="";
+		String telcoDetail="";
+		//double smsPrice=0.25;
+		double smsPrice=getCustomerChargingDetailUDB(userId,1);
+
 		int statusFlag=-1;
 		JsonEncoder jsonEncoder=new JsonEncoder();
 		//TODO userID check with listID in group_list table
 		userFlag=getUserTypeCustomerList(userId);
+		
+		SMSSender ss=new SMSSender(bubbleDS);
+		aparty=ss.getAparty(userId);
+		if(!aparty.isEmpty())
+			telcoDetail=ss.getTelcoDetail(aparty);
+		/**/
 		try {
 			String tempUid=isListTaggedUid_v2(listId);
 
@@ -1647,7 +1723,7 @@ public class UserDBOperations {
 							if(sch_date.isEmpty()) {	
 
 								String sql="INSERT INTO groupsms_sender_info"
-										+ " (user_id,message,sms_count,flag,msisdn_count) "
+										+ " (user_id,message,sms_count,flag,msisdn_count,telco_partner,aparty) "
 										+ "VALUES (?,?,?,?,?)";						
 
 								try {
@@ -1658,6 +1734,8 @@ public class UserDBOperations {
 									bubbleDS.getPreparedStatement().setInt(3,smsCount);
 									bubbleDS.getPreparedStatement().setInt(4,statusFlag);
 									bubbleDS.getPreparedStatement().setInt(5,listMsCount);
+									bubbleDS.getPreparedStatement().setString(6,telcoDetail);
+									bubbleDS.getPreparedStatement().setString(7,aparty);
 									bubbleDS.execute();
 
 									String groupid=getNewGroupId();
@@ -1695,7 +1773,7 @@ public class UserDBOperations {
 
 							}else {
 								String sql="INSERT INTO groupsms_sender_info"
-										+ " (user_id,scheduled_date,message,sms_count,flag,msisdn_count) "
+										+ " (user_id,scheduled_date,message,sms_count,flag,msisdn_count,telco_partner,aparty) "
 										+ "VALUES (?,?,?,?,?,?)";
 
 								//SELECT `group_id`, `user_id`, `aparty`, `msisdn_count`, `insert_date`, `scheduled_date`, `flag`, `message`, `sms_count`, `done_date` FROM `groupsms_sender_info` WHERE 1
@@ -1711,6 +1789,8 @@ public class UserDBOperations {
 									bubbleDS.getPreparedStatement().setInt(4,smsCount);
 									bubbleDS.getPreparedStatement().setInt(5,statusFlag);
 									bubbleDS.getPreparedStatement().setInt(6,listMsCount);
+									bubbleDS.getPreparedStatement().setString(7,telcoDetail);
+									bubbleDS.getPreparedStatement().setString(8,aparty);
 									bubbleDS.execute();
 
 									String groupid=getNewGroupId();
@@ -1956,18 +2036,42 @@ public class UserDBOperations {
 		return retval;
 	}
 
-
+	/**
+	 * 
+	 * @param aparty
+	 * @return String telco name based on sender prefix RT BP
+	 */
+	//public String getTelcoDetail(String userId,String aparty) {
+	/*public String getTelcoDetail(String aparty) {
+		String retval="-1"; //TODO needs to change after mobile number portability comes
+		if(aparty.startsWith("035") || aparty.startsWith("88035") || aparty.startsWith("+88035")) {
+			retval= "BP";
+		}else if(aparty.startsWith("+880444") || aparty.startsWith("880444") ) {
+			retval= "RT";
+		}else {
+			retval= "RT";
+		}
+		return retval;
+	}/**/
+		
 	public JsonEncoder createGroupSMSInfo(String userId, String sch_date,String message,String filename) {				
 		JsonEncoder jsonEncoder=new JsonEncoder();
 		String errorCode="-1";	
 		int smsCount=-1;
 		smsCount=getSMSSize(message);
+		String aparty="";
+		String telcoDetail="";
+		
+		SMSSender ss=new SMSSender(bubbleDS);
+		aparty=ss.getAparty(userId);
+		if(!aparty.isEmpty())
+			telcoDetail=ss.getTelcoDetail(aparty);
 		try {
 			if(sch_date.isEmpty()) {
 
 				String sql="INSERT INTO groupsms_sender_info"
-						+ " (user_id,message,sms_count) "
-						+ "VALUES (?,?,?)";
+						+ " (user_id,message,sms_count,telco_partner,aparty) "
+						+ "VALUES (?,?,?,?,?)";
 
 				try {
 					//json: name,email,phone,password
@@ -1975,6 +2079,8 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setString(1,userId);
 					bubbleDS.getPreparedStatement().setString(2,message);
 					bubbleDS.getPreparedStatement().setInt(3,smsCount);
+					bubbleDS.getPreparedStatement().setString(4,telcoDetail);
+					bubbleDS.getPreparedStatement().setString(5,aparty);
 					errorCode="0";//:Successfully Inserted
 					boolean insertSuccess=false;
 
@@ -2004,8 +2110,8 @@ public class UserDBOperations {
 				}
 			}else {
 				String sql="INSERT INTO groupsms_sender_info"
-						+ " (user_id,scheduled_date,message,sms_count) "
-						+ "VALUES (?,?,?,?)";
+						+ " (user_id,scheduled_date,message,sms_count,telco_partner,aparty) "
+						+ "VALUES (?,?,?,?,?,?)";
 
 				//SELECT `group_id`, `user_id`, `aparty`, `msisdn_count`, `insert_date`, `scheduled_date`, `flag`, `message`, `sms_count`, `done_date` FROM `groupsms_sender_info` WHERE 1
 				//TODO get group id max of the table 
@@ -2015,6 +2121,8 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setString(2,sch_date);
 					bubbleDS.getPreparedStatement().setString(3,message);
 					bubbleDS.getPreparedStatement().setInt(4,smsCount);
+					bubbleDS.getPreparedStatement().setString(5,telcoDetail);
+					bubbleDS.getPreparedStatement().setString(6,aparty);
 
 					errorCode="0";//:Successfully Inserted
 					boolean insertSuccess=false;
@@ -3167,6 +3275,7 @@ public class UserDBOperations {
 		String errorCode="-1";
 		String packUserGroup="0";
 		String status="1";
+		double smsPrice=getCustomerChargingDetailUDB(id,1);
 		if(usertype.equalsIgnoreCase("10") || usertype.equalsIgnoreCase("5")) {//HV user
 			packUserGroup="\"0\",\"1\"";
 		}
@@ -3196,7 +3305,19 @@ public class UserDBOperations {
 				retval+=rs.getString("id")+",";
 				retval+="\""+rs.getString("package_name")+"\""+",";				
 				retval+=rs.getString("price")+",";
-				retval+=rs.getString("volume")+",";	
+				
+				String count="0";
+				try {
+					double value = Double.parseDouble(rs.getString("price"));
+					double countt= Math.floor(value/smsPrice);
+					count = countt+"";
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				retval+=count+",";	
+				
 				retval+=rs.getString("validity")+",";
 				retval+=rs.getString("status");
 				retval+="|";		

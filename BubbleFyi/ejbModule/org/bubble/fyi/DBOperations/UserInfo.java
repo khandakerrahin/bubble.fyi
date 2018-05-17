@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Engine.JsonEncoder;
+import org.bubble.fyi.Initializations.LoadConfigurations;
 import org.bubble.fyi.Logs.LogWriter;
+import org.bubble.fyi.Api.AuthenticationToken;
 
 /**
  * @author hafiz
@@ -117,6 +119,82 @@ public class UserInfo {
 		jsonEncoder.addElement("ErrorCode", errorCode);
 		jsonEncoder.buildJsonObject();
 		return jsonEncoder;
+	}
+	
+	
+	public JsonEncoder fetchUserInfoApi(String id, String mode) {
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		String userID="-1";
+		String errorCode="-1";//default errorCode
+		String sql="SELECT u.id,c.balance "
+				+ "FROM tbl_users u,customer_balance c where  u.<mode>=? and u.id=c.user_id";		
+		if(mode.equals("2")) { //email
+			sql=sql.replace("<mode>", "email");
+		}else if(mode.equals("1")) { //phone
+			sql=sql.replace("<mode>", "phone");
+			id=msisdnNormalize(id);
+		}else {
+			sql=sql.replace("<mode>", "username");//username
+		}
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, id);
+			ResultSet rs = bubbleDS.executeQuery();
+			if (rs.next()) {
+				userID=rs.getString("id");
+				//jsonEncoder.addElement("id", userID);
+				jsonEncoder.addElement("balance", rs.getString("balance"));			
+				errorCode="0000";
+			}else {
+				errorCode="0020";
+			}
+			rs.close();
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		}catch(Exception e){
+			errorCode= "0020";
+			LogWriter.LOGGER.severe(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		if(LoadConfigurations.checkValidUserToken.containsKey(userID)) {
+			String oldToken=LoadConfigurations.checkValidUserToken.get(userID);
+			LoadConfigurations.checkValidUserToken.remove(userID);
+			
+			if(LoadConfigurations.authenticationTokenHM.containsKey(oldToken)) 
+			LoadConfigurations.authenticationTokenHM.remove(oldToken);
+			
+			//LogWriter.LOGGER.info("inside validity check after " + oldToken);
+		}
+		
+		if(errorCode.equals("0000")) {
+			// add token
+			//AuthenticationToken at= new AuthenticationToken();
+			//String tokenId=at.generateNewTokenId(userID);
+			//TODO check if it always returns token or not 
+			String tokenn=LoadConfigurations.generateNewTokenId(userID);
+			LoadConfigurations.checkValidUserToken.put(userID, tokenn);
+			jsonEncoder.addElement("token", tokenn);
+		}
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.buildJsonObject();
+		return jsonEncoder;
+	}
+	
+	public String expirehashRecordCleaner() {
+		String retval="0";
+		//TODO 
+		/*
+		if(LoadConfigurations.checkValidUserToken.containsKey(userID)) {
+			String oldToken=LoadConfigurations.checkValidUserToken.get(userID);
+			LoadConfigurations.checkValidUserToken.remove(userID);
+			
+			if(LoadConfigurations.authenticationTokenHM.containsKey(oldToken)) 
+			LoadConfigurations.authenticationTokenHM.remove(oldToken);
+			
+			LogWriter.LOGGER.info("inside validity check after " + oldToken);
+		}/**/
+		return retval;
 	}
 
 }

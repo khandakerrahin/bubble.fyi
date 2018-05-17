@@ -25,7 +25,7 @@ public class replyMessageLoader  /*implements  InhouseDataFiller<DataContainerRe
 		while (rs.next()) {		 
 			DataContainerReplyMessage temp = new DataContainerReplyMessage();
 			temp.id 				= rs.getInt("id");
-			temp.reply_text 			  	    = rs.getString("reply_text");			 		 
+			temp.reply_text  = rs.getString("reply_text");			 		 
 			ds.add(temp);
 		}
 		return ds;
