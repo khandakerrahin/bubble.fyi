@@ -60,7 +60,7 @@ public class UserInfo {
 		//TODO
 		/*String sql="SELECT u.id, u.custodian_name,u.address, u.organization_name, u.username,u.email, if(u.flag=5,'Admin','Customer') as user_type,u.flag, u.phone, u.postcode,u.city,ifnull(u.logo_file,\"\") as logofile,cb.balance/0.25 as smsCount "
 				+ "FROM tbl_users u,customer_balance cb where u.id=cb.user_id and u.<mode>=?";*/
-		String sql="SELECT u.id, u.custodian_name,u.address, u.organization_name, u.username,u.email, if(u.flag=5,'Admin','Customer') as user_type,u.flag, u.phone, u.postcode,u.city,ifnull(u.logo_file,\"\") as logofile "
+		String sql="SELECT u.id, u.custodian_name,u.address, u.organization_name, u.username,u.email, if(u.flag=5,'Admin','Customer') as user_type,u.flag, u.phone, u.postcode,u.city,ifnull(u.logo_file,\"\") as logofile,u.feature_list "
 				+ "FROM tbl_users u where  u.<mode>=?";		
 		if(mode.equals("2")) { //email
 			sql=sql.replace("<mode>", "email");
@@ -82,7 +82,29 @@ public class UserInfo {
 				jsonEncoder.addElement("userType", rs.getString("user_type"));
 				jsonEncoder.addElement("status", rs.getString("flag"));
 				jsonEncoder.addElement("logoFileName", rs.getString("logofile"));
-				//jsonEncoder.addElement("smsRemaining", rs.getString("smsCount"));				
+				
+				String featureList= rs.getString("feature_list");
+				if(featureList.length()>=5) {
+				jsonEncoder.addElement("geographicTarget", ""+featureList.charAt(0));
+				jsonEncoder.addElement("demographicTarget", ""+featureList.charAt(1));
+				jsonEncoder.addElement("behavioralTarget", ""+featureList.charAt(2));
+				jsonEncoder.addElement("psychographicTarget", ""+featureList.charAt(3));
+				jsonEncoder.addElement("masking", ""+featureList.charAt(4));
+				
+				}
+				else {
+					jsonEncoder.addElement("geographicTarget", "0");
+					jsonEncoder.addElement("demographicTarget", "0");
+					jsonEncoder.addElement("behavioralTarget", "0");
+					jsonEncoder.addElement("psychographicTarget", "0");
+					jsonEncoder.addElement("masking", "0");
+				}
+				if(featureList.contains("00000") || featureList.contains("00001") ) {
+					jsonEncoder.addElement("targetSMS", "0");
+				}else {
+					jsonEncoder.addElement("targetSMS", "1");
+				}
+				//jsonEncoder.addElement("smsRemaining", rs.getString("smsCount"));	
 				if(!rs.getString("user_type").equals("Admin")) {
 				jsonEncoder.addElement("custodian_name", rs.getString("custodian_name"));
 				jsonEncoder.addElement("address", rs.getString("address"));
