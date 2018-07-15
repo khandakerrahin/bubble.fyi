@@ -1597,7 +1597,9 @@ public class UserDBOperations {
 		//TODO needs to update with cost
 		boolean retval=false;
 		//TODO needs to change for variable price
-		double amount=smsPrice*val;
+		double tmpAmount=smsPrice*val;
+		double amount=(double)Math.round(tmpAmount * 100d) / 100d;
+		
 		LogWriter.LOGGER.info("amount(): "+amount);
 		String sqlUpdateUser="UPDATE `customer_balance` SET balance = balance-(?) WHERE user_id=?";
 		try {
@@ -1690,7 +1692,9 @@ public class UserDBOperations {
 				if(listMsCount>0) {
 					int smsCount=getSMSSize(message);
 					double customerBalance=getCustomerBalance(userId);
-					double smsCost=listMsCount*smsPrice*smsCount;
+					double tmpSMSCost=listMsCount*smsPrice*smsCount;
+					double smsCost = (double)Math.round(tmpSMSCost * 100d) / 100d;
+					
 					if(customerBalance>=(smsCost)) {
 						if(updateBalanceBulkSMS(userId,listMsCount*smsCount,smsPrice)) {	
 

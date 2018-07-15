@@ -211,12 +211,19 @@ public class SMSSender {
 		LogWriter.LOGGER.info("customer Charge: "+retval);
 		return retval;
 	}/**/
-
+/**
+ * 
+ * @param String userId
+ * @param int smsCount
+ * @param double smsPrice
+ * @return boolean true if balance update successfull
+ */
 	private boolean updateBalanceSingleSMS(String userId,int smsCount,double smsPrice) {
 		//TODO needs to update with cost
 		boolean retval=false;
 		//TODO needs to change for variable price
-		double amount=smsPrice*smsCount;
+		double tmpAmount=smsPrice*smsCount;
+		double amount= (double)Math.round(tmpAmount * 100d) / 100d; // 4.80000001 -> 4.8000001*10=48.00001.round 48 -> 48/10=4.8
 		String sqlUpdateUser="UPDATE `customer_balance` SET balance = balance-? WHERE user_id=?";
 		try {
 			bubbleDS.prepareStatement(sqlUpdateUser);
@@ -268,7 +275,8 @@ public class SMSSender {
 				//1=active customer 5=admin 10=high value customer
 				if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
 					//TODO checkBalance(userID) returns available balance
-					smsCost=smsPrice*smsCount;
+					double tmpSMSCost=smsPrice*smsCount;
+					smsCost=(double)Math.round(tmpSMSCost * 100d) / 100d;
 					LogWriter.LOGGER.info("smsCost:"+smsCost+" smsPrice:"+smsPrice+" smsCount:"+smsCount);
 					String sqlInsert="INSERT INTO smsinfo"
 							+ " (userid,message,bparty,source,aparty,telco_partner,cost,sms_count) "
@@ -427,7 +435,10 @@ public class SMSSender {
 				String telco =getTelcoDetail(aparty);
 				//1=active customer 5=admin 10=high value customer
 				if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
-					smsCost=smsPrice*smsCount;
+					
+					double tmpSMSCost=smsPrice*smsCount;
+					smsCost=(double)Math.round(tmpSMSCost * 100d) / 100d;
+					
 					//TODO checkBalance(userID) returns available balance
 					String sqlInsert="INSERT INTO smsinfo"
 							+ " (userid,message,bparty,source,source_id,aparty,telco_partner,cost,sms_count) "
