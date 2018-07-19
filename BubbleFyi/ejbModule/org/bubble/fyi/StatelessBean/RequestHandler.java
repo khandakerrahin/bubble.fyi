@@ -159,6 +159,7 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).sentSMSScheduled(message,messageBody); 	
 			}/**/
 			else if(action.equalsIgnoreCase("getTotalSMSCount")) {
+				
 				//retVal=new LoginProcessor().processLogin(message,messageBody);
 				retVal=new UserOperations(bubbleDS).TotalSMSCounter(message,messageBody); 
 				//TODO Changed on 20180312
