@@ -161,6 +161,10 @@ public class UserOperations {
 	public String SendSMSFromListDB(String id, String sch_date,String message,String listId) {
 		return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date,message,listId).getJsonObject().toString();
 	}
+	public String smsDistributionPreProcessor(String id,String groupId) {
+		return new UserDBOperations(bubbleDS).smsDistributionProcessor(id, groupId);
+	}
+	
 	public String SendSMStargetBasedDB(String id, String targetDV,String targetDis,String targetUpz,String sch_date,String message,String amount) {
 		return new UserDBOperations(bubbleDS).sendSMStargetBased(id,targetDV,targetDis,targetUpz, sch_date,message,amount).getJsonObject().toString();
 	}
@@ -509,6 +513,23 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 				retval=SendSMSFromListDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("listId"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String smsDistributionInitiator(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+				retval=smsDistributionPreProcessor(json.getJsonObject().getString("id"),json.getJsonObject().getString("groupId"));
 			
 		}else{
 			retval="E:JSON string invalid";
