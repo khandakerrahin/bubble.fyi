@@ -2792,6 +2792,28 @@ public class UserDBOperations {
 		}
 		return retval;
 	}
+	
+	private String updateSMSApprovalStatus(String userID, String textID,String flag) {
+		String retval="-1";
+		String sqlUpdateUser="UPDATE tbl_preapproved_texts t SET t.flag=?,t.approved_by=?, t.approval_time=current_timestamp WHERE t.id =?";
+		try {
+			bubbleDS.prepareStatement(sqlUpdateUser);
+			bubbleDS.getPreparedStatement().setString(1, flag);
+			bubbleDS.getPreparedStatement().setString(2, userID);
+			bubbleDS.getPreparedStatement().setString(3, textID);
+			bubbleDS.execute();
+			bubbleDS.closePreparedStatement();
+			retval="0";;
+		}catch(SQLIntegrityConstraintViolationException de) {
+			retval="-1";
+			LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:"+de.getMessage());
+
+		} catch (SQLException e) {
+			retval="-2";
+			LogWriter.LOGGER.severe("Approval Status Update error general: "+e.getMessage());
+		}
+		return retval;
+	}
 
 	private boolean setNewPassword(String userId,String newPass) {
 		boolean retval=false;
@@ -3144,7 +3166,70 @@ public class UserDBOperations {
 		return retval;
 	}
 
+	public String getTexts(String id,String userType,String msidn){
+		msidn=msisdnNormalize(msidn);
+		//TODO
+		LogWriter.LOGGER.info(" going to get list --> getList id:userType ::"+id+":"+userType);
+		String retval="";
+		String errorCode="-1";
+		//String sql="SELECT u.user_id, u.user_name, u.user_email, u.phone, u.user_type, u.status, o.organization_name,o.custodian_name, o.custodian_email,o.custodian_phone,o.organization_type,o.city,o.postcode,o.address FROM users u left join organizations o on u.user_id=o.user_id where user_type=? order by user_id asc";
+		String sqlAdmin="SELECT t.aparty,t.bparty,SUBSTRING(t.message, 1, 100) as msg,t.sms_count,t.insert_date,t.flag,t.userid,t.exec_date,t.responseCode,t.source_id FROM smsinfo t where t.bparty=? ORDER BY `ID` desc limit 0,100";
+		String sql="SELECT t.aparty,t.bparty,SUBSTRING(t.message, 1, 100) as msg,t.sms_count,t.insert_date,t.flag,t.userid,t.exec_date,t.responseCode,t.source_id FROM smsinfo t where t.bparty=? and t.userid=? ORDER BY `ID` desc limit 0,100";
+		try {
+			if(userType.equals("Admin")) {
+				bubbleDS.prepareStatement(sqlAdmin,true);
+				bubbleDS.getPreparedStatement().setString(1, msidn);
+				//ResultSet rs = bubbleDS.executeQuery();
+			}else {
+				bubbleDS.prepareStatement(sql,true);
+				bubbleDS.getPreparedStatement().setString(1, msidn);
+				bubbleDS.getPreparedStatement().setString(2, id);
+			}
 
+			ResultSet rs = bubbleDS.executeQuery();
+			LogWriter.LOGGER.info("executed");
+			while (rs.next()) {
+
+				if(userType.equalsIgnoreCase("Admin")) {
+
+					//retval+="\""+rs.getString("organization_name")+"\""+",";
+					retval+=rs.getString("userid")+",";
+				}		
+				retval+=rs.getString("aparty")+",";
+				retval+=rs.getString("bparty")+",";
+				retval+="\""+rs.getString("msg")+"\""+",";
+
+				//retval+="\""+""+"\""+",";
+				retval+="\""+rs.getString("insert_date")+"\""+",";
+				retval+=rs.getString("sms_count")+",";
+				retval+="\""+rs.getString("exec_date")+"\""+",";
+				retval+=rs.getString("flag")+",";
+				retval+=rs.getString("source_id")+",";
+				retval+=rs.getString("responseCode");			
+				retval+="|";		
+			}
+			LogWriter.LOGGER.info("after execution ");
+			rs.close();
+			//bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+			if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+			int lio=retval.lastIndexOf("|");
+			if(lio>0) retval=retval.substring(0,lio);
+			errorCode="0";
+			LogWriter.LOGGER.info("MapList : "+retval);
+		}catch(SQLException e){
+			errorCode= "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}catch(Exception e){
+			errorCode= "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}
+		if(!errorCode.startsWith("0")) {
+			retval=errorCode;
+		}
+		LogWriter.LOGGER.severe(" return from  get list --> "+retval);
+		return retval;
+	}
 
 	public String getBulkSMSDetailOfCustomer(String id){
 		// if ever Admin list needs to be added
@@ -3536,6 +3621,333 @@ public class UserDBOperations {
 		return retval;
 	}
 
+	
+	// NiharekahS
+	/**
+	 * 
+	 * @param id of user
+	 * @param smsText
+	 * @return action status
+	 */
+	public String requestApproval(String id, String smsText) 
+	{
+		String errorCode="-1";//default errorCode
+		String errorRes="Request for approval Failed";
+		String sqlTextCheck = "SELECT id FROM tbl_preapproved_texts where userID=? and smsText=? limit 1";
+		String sqlInsert="INSERT INTO tbl_preapproved_texts("+ "userID,smsText,request_time"+ ") VALUES"+ "(?,?,current_timestamp)";
+		ResultSet rs=null;
+		try {
+			bubbleDS.prepareStatement(sqlTextCheck);
+			bubbleDS.getPreparedStatement().setString(1, id);
+			bubbleDS.getPreparedStatement().setString(2, smsText);
+			rs = bubbleDS.executeQuery();
+			if(rs.next()) 
+			{
+				// entry exists
+				if(errorCode.equals("-1")) errorCode="20"; 
+				errorRes = "Text already submitted for approval.";
+			}
+			else {
+				bubbleDS.prepareStatement(sqlInsert);
+				bubbleDS.getPreparedStatement().setString(1, id);
+				bubbleDS.getPreparedStatement().setString(2, smsText);
+				try{ 
+					bubbleDS.execute();
+					errorCode="0";
+					errorRes = "Successfully sent for approval.";
+				}catch(SQLIntegrityConstraintViolationException de) {
+					errorCode="-1";
+					errorRes = "Request for approval Failed";
+					LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:"+de.getMessage());
+				}catch(SQLException e) {
+					errorCode="-2";
+					errorRes = "SQLException";
+					LogWriter.LOGGER.severe("SQLException"+e.getMessage());
+				}
+				if(bubbleDS.getConnection() != null) bubbleDS.closePreparedStatement();
+				if(errorCode.equals("-1")) errorCode="0";
+				
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		}
+		catch(SQLException e){
+			errorCode= "-2";
+			errorRes = "SQLException";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}catch(Exception e){
+			errorCode= "-3";
+			errorRes = "General Exception";
+			LogWriter.LOGGER.severe(e.getMessage());
+			e.printStackTrace();
+		}
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponce", errorRes);
+		jsonEncoder.buildJsonObject();
+		errorCode=jsonEncoder.getJsonObject().toString();
+	
+		return errorCode;
+	}
+	
+	/**
+	 * 
+	 * @param id of admin
+	 * @return all the pending SMS for approval list
+	 */
+	public String getAllPendingSMSApproval(String id) 
+	{
+		String retval="";
+		String errorCode="-1";
+		String errorRes="Fetching allPendingSMSApproval Failed";
+		String userFlag="-1";
+		try {
+			userFlag=getUserTypeCustomerList(id);
+			//String userFlag="5";
+			if(userFlag.equals("5")) {
+				String sql="SELECT t.id AS textID,u.id,u.username,t.smsText,u.organization_name,DATE_FORMAT(t.request_time, \"%d-%m-%Y %H:%i\") as request_time,t.flag FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.flag =-1";
+				try {
+					bubbleDS.prepareStatement(sql);
+
+					//bubbleDS.getPreparedStatement().setString(1, userFlag);
+					//bubbleDS.getPreparedStatement().setString(1, userFlag);	
+					//TODO
+					//LogWriter.LOGGER.severe(" after prepared Statement");
+					ResultSet rs = bubbleDS.executeQuery();
+					while (rs.next()) {
+						retval+=rs.getString("textID")+",";
+						retval+=rs.getString("id")+",";
+						retval+="\""+rs.getString("username")+"\""+",";
+						retval+="\""+rs.getString("organization_name")+"\""+",";
+						retval+="\""+rs.getString("request_time")+"\""+",";
+						retval+="\""+rs.getString("smsText")+"\""+",";
+						retval+=rs.getString("flag");
+						retval+="|";		
+					}
+					bubbleDS.closeResultSet();
+					bubbleDS.closePreparedStatement();
+					if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+					int lio=retval.lastIndexOf("|");
+					if(lio>0) retval=retval.substring(0,lio);
+					errorCode="0";
+					errorRes = "Successfully Fetched All Pending SMS Approval";
+					LogWriter.LOGGER.info("MapList : "+retval);
+				}catch(SQLException e){
+					errorCode= "-2";
+					errorRes = "SQLException";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}catch(Exception e){
+					errorCode= "-3";
+					errorRes = "General Exception";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}else {
+				errorCode="-7";
+				errorRes = "User not Authorized to perform this action";
+			}
+		}catch(Exception e) {
+			errorCode= "-3";
+			errorRes = "General Exception";
+			e.printStackTrace();
+			LogWriter.LOGGER.severe(e.getMessage());
+			e.printStackTrace();
+		}
+		LogWriter.LOGGER.info(" return from  get All Pending SMS Approval --> userFlag : "+userFlag+":"+retval);
+		if(!errorCode.startsWith("0")) {
+			JsonEncoder jsonEncoder=new JsonEncoder();
+			jsonEncoder.addElement("ErrorCode", errorCode);
+			jsonEncoder.addElement("ErrorResponce", errorRes);
+			jsonEncoder.buildJsonObject();
+			errorCode=jsonEncoder.getJsonObject().toString();
+			retval=errorCode;
+		}
+		return retval;
+	}
+	
+	/**
+	 * 
+	 * @param userID of Admin
+	 * @param textID for the Target SMS
+	 * @param flag for approval Status
+	 * @return action status
+	 */
+	public String updatePendingApprovalList(String userID,String textID,String flag) 
+	{
+		String errorCode="-1";
+		String errorRes="Updating pendingApprovalList Failed";
+		String userFlag="-1";
+		try {
+			userFlag=getUserTypeCustomerList(userID);
+			//String userFlag="5";
+			if(userFlag.equals("5")) {
+				errorCode = updateSMSApprovalStatus(userID,textID,flag);
+			}else {
+				errorCode="-7";
+				errorRes = "User not Authorized to perform this action";
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		LogWriter.LOGGER.info(" return from  Update Pending SMS Approval --> userFlag : "+userFlag+":"+errorCode);
+		if(errorCode.startsWith("0")) {
+			errorRes = "Successfully Updated Pending Approval List";
+		}
+		else if(errorCode.startsWith("-1")) {
+			errorRes = "Updating Pending Approval List Failed";
+		}
+		else if(errorCode.startsWith("-2")) {
+			errorRes = "SQLException";
+		}
+		else if(errorCode.startsWith("-3")) {
+			errorRes = "General Exception";
+		}
+		JsonEncoder jsonEncoder=new JsonEncoder();
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponce", errorRes);
+		jsonEncoder.buildJsonObject();
+		errorCode=jsonEncoder.getJsonObject().toString();
+		
+		return errorCode;
+	}
+	
+	/**
+	 * 
+	 * @param id of user
+	 * @return status of all the requests made by the user
+	 */
+	public String getUserSMSApprovalStatus(String id) 
+	{
+		String retval="";
+		String errorCode="-1";
+		String errorRes="Fetching userSMSApprovalStatus Failed";
+		String userFlag="-1";
+		try {
+			userFlag=getUserTypeCustomerList(id);
+			
+			String sql="SELECT t.id,t.smsText,DATE_FORMAT(t.request_time, \"%d-%m-%Y %H:%i\") as request_time,t.flag FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.userID=?";
+			try {
+				bubbleDS.prepareStatement(sql);
+
+				bubbleDS.getPreparedStatement().setString(1, id);
+				//bubbleDS.getPreparedStatement().setString(1, userFlag);	
+				//TODO
+				//LogWriter.LOGGER.severe(" after prepared Statement");
+				ResultSet rs = bubbleDS.executeQuery();
+				while (rs.next()) {
+					retval+=rs.getString("id")+",";
+					retval+="\""+rs.getString("request_time")+"\""+",";
+					retval+="\""+rs.getString("smsText")+"\""+",";
+					retval+=rs.getString("flag");
+					retval+="|";		
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+				int lio=retval.lastIndexOf("|");
+				if(lio>0) retval=retval.substring(0,lio);
+				errorCode="0";
+				LogWriter.LOGGER.info("MapList : "+retval);
+			}catch(SQLException e){
+				errorCode= "-2";
+				errorRes = "SQLException";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe(e.getMessage());
+			}catch(Exception e){
+				errorCode= "-3";
+				errorRes = "General Exception";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe(e.getMessage());
+			}
+		}catch(Exception e) {
+			errorCode= "-3";
+			errorRes = "General Exception";
+			e.printStackTrace();
+			LogWriter.LOGGER.severe(e.getMessage());
+		}
+		LogWriter.LOGGER.info(" return from get User SMS Approval Status --> userFlag : "+userFlag+":"+retval);
+		if(!errorCode.startsWith("0")) {
+			JsonEncoder jsonEncoder=new JsonEncoder();
+			jsonEncoder.addElement("ErrorCode", errorCode);
+			jsonEncoder.addElement("ErrorResponce", errorRes);
+			jsonEncoder.buildJsonObject();
+			errorCode=jsonEncoder.getJsonObject().toString();
+			retval=errorCode;
+		}
+		return retval;
+	}
+	
+
+	/**
+	 * 
+	 * @param id of user
+	 * @return all the approved requests made by the user
+	 */
+	public String getAllApprovedSMS(String id) 
+	{
+		String retval="";
+		String errorCode="-1";
+		String errorRes="Fetching approvedUserSMS Failed";
+		String userFlag="-1";
+		try {
+			userFlag=getUserTypeCustomerList(id);
+			
+			String sql="SELECT t.id,t.smsText FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.userID=? and t.flag=0 ORDER BY approval_time DESC limit 10";
+			try {
+				bubbleDS.prepareStatement(sql);
+
+				bubbleDS.getPreparedStatement().setString(1, id);
+				//bubbleDS.getPreparedStatement().setString(1, userFlag);	
+				//TODO
+				//LogWriter.LOGGER.severe(" after prepared Statement");
+				ResultSet rs = bubbleDS.executeQuery();
+				while (rs.next()) {
+					retval+=rs.getString("id")+",";
+					retval+="\""+rs.getString("smsText")+"\"";
+					retval+="|";		
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				if(NullPointerExceptionHandler.isNullOrEmpty(retval)) retval="0";
+				int lio=retval.lastIndexOf("|");
+				if(lio>0) retval=retval.substring(0,lio);
+				errorCode="0";
+				LogWriter.LOGGER.info("MapList : "+retval);
+			}catch(SQLException e){
+				errorCode= "-2";
+				errorRes = "SQLException";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe(e.getMessage());
+			}catch(Exception e){
+				errorCode= "-3";
+				errorRes = "General Exception";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe(e.getMessage());
+			}
+		}catch(Exception e) {
+			errorCode= "-3";
+			errorRes = "General Exception";
+			e.printStackTrace();
+			LogWriter.LOGGER.severe(e.getMessage());
+		}
+		LogWriter.LOGGER.info(" return from  get All Approved SMS --> userFlag : "+userFlag+":"+retval);
+		if(!errorCode.startsWith("0")) {
+			JsonEncoder jsonEncoder=new JsonEncoder();
+			jsonEncoder.addElement("ErrorCode", errorCode);
+			jsonEncoder.addElement("ErrorResponce", errorRes);
+			jsonEncoder.buildJsonObject();
+			errorCode=jsonEncoder.getJsonObject().toString();
+			retval=errorCode;
+		}
+		return retval;
+	}
+	// NiharekahS END
+	
+	
+	
+	
+	
 
 	public String getPendingBulksmsList(String id){
 		String retval="";

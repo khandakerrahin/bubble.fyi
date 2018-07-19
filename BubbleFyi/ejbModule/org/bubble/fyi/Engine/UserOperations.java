@@ -745,6 +745,18 @@ public class UserOperations {
 		return retval;
 	}
 	
+	public String getPreApprovedText(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations(bubbleDS).getTexts(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"),Credentials.getJsonObject().getString("msisdn"));		
+		return retval;
+	}
+	
 	public String getGroupList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder Credentials;
@@ -890,6 +902,89 @@ public class UserOperations {
 		retval=new UserDBOperations(bubbleDS).getAllCustomerList(Credentials.getJsonObject().getString("id"));		
 		return retval;
 	}
+	
+	
+	
+	// NiharekahS
+	public String requestSMSApproval(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).requestApproval(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"));		
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	public String getPendingSMSApprovalList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).getAllPendingSMSApproval(json.getJsonObject().getString("id"));		
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	public String updatePendingSMSApprovalList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).updatePendingApprovalList(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("flag"));		
+		}else{
+			retval="E:JSON string invalid";
+		}		
+		return retval;
+	}
+	public String getSMSApprovalRequestStatus(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).getUserSMSApprovalStatus(json.getJsonObject().getString("id"));		
+		}else{
+			retval="E:JSON string invalid";
+		}		
+		return retval;
+	}
+	public String getApprovedSMSList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).getAllApprovedSMS(json.getJsonObject().getString("id"));		
+		}else{
+			retval="E:JSON string invalid";
+		}		
+		return retval;
+	}
+	// NiharekahS end
+	
+	
+	
 	
 	public String getPendingBulksmsList(String message, String messageBody) {
 		String retval="E";

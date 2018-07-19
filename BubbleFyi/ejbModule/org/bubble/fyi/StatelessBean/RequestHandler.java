@@ -137,6 +137,23 @@ public class RequestHandler implements RequestHandlerLocal {
 			}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both group instant sms and group scheduled sms //TODO
 				retVal=new UserOperations(bubbleDS).instantGroupSMSDetail(message,messageBody); 
 			}
+			
+			// NiharekahS
+			else if(action.equalsIgnoreCase("requestSMSApproval")) {
+				retVal=new UserOperations(bubbleDS).requestSMSApproval(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getPendingSMSApprovalList")) {
+				retVal=new UserOperations(bubbleDS).getPendingSMSApprovalList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("updatePendingSMSApprovalList")) {
+				retVal=new UserOperations(bubbleDS).updatePendingSMSApprovalList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getSMSApprovalRequestStatus")) {
+				retVal=new UserOperations(bubbleDS).getSMSApprovalRequestStatus(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getApprovedSMSList")) {
+				retVal=new UserOperations(bubbleDS).getApprovedSMSList(message,messageBody);			
+			}
+			
+			// NiharekahS end
+			
+			
 			/*
 			else if(action.equalsIgnoreCase("sendScheduledSMS")) { //TODO Not in Use old version used Scheduled for bulk sms redundant;
 				retVal=new UserOperations(bubbleDS).sentSMSScheduled(message,messageBody); 	
