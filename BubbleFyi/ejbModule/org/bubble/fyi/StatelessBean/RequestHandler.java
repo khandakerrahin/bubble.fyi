@@ -243,9 +243,10 @@ public class RequestHandler implements RequestHandlerLocal {
 				//TODO Pending
 				retVal=new LoginProcessor(bubbleDS).cleanExpiredRecords();
 			}/** API used by bulk sms Distributer Application **/
+			/*
 			else if(action.equalsIgnoreCase("smsDistributer")) { // both group sms scheduled or not scheduled
 				retVal=new UserOperations(bubbleDS).smsDistributionInitiator(message,messageBody); 			
-			}
+			}/**/
 			/*else if(action.equalsIgnoreCase("CheckloginAPI")) {
 				retVal=new LoginProcessor(bubbleDS).processLoginAPI(message,messageBody);
 			}/**/
