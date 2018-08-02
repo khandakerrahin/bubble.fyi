@@ -921,6 +921,7 @@ public class UserOperations {
 		}
 		return retval;
 	}
+	
 	public String getPendingSMSApprovalList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
@@ -936,6 +937,7 @@ public class UserOperations {
 		}
 		return retval;
 	}
+	
 	public String updatePendingSMSApprovalList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
@@ -951,6 +953,7 @@ public class UserOperations {
 		}		
 		return retval;
 	}
+	
 	public String getSMSApprovalRequestStatus(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
@@ -966,6 +969,7 @@ public class UserOperations {
 		}		
 		return retval;
 	}
+	
 	public String getApprovedSMSList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
@@ -976,6 +980,54 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 			retval=new UserDBOperations(bubbleDS).getAllApprovedSMS(json.getJsonObject().getString("id"));		
+		}else{
+			retval="E:JSON string invalid";
+		}		
+		return retval;
+	}
+	
+	public String matchFormulaText(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).checkFormulaText(json.getJsonObject().getString("id"),json.getJsonObject().getString("textFormula"),json.getJsonObject().getString("smsText"));		
+		}else{
+			retval="E:JSON string invalid";
+		}		
+		return retval;
+	}
+	
+	public String matchFormulaTextFromDBbyText(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyText(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"));		
+		}else{
+			retval="E:JSON string invalid";
+		}		
+		return retval;
+	}
+	
+	public String matchFormulaTextFromDBbyID(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyID(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("smsText"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		

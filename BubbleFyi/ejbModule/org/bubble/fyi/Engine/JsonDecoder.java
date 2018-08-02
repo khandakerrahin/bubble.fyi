@@ -41,6 +41,7 @@ public class JsonDecoder {
 		try {
 			LogWriter.LOGGER.info("Decoding : "+ this.inputJSONString);
 			if(!jsonString.isEmpty()) {
+
 				is = new ByteArrayInputStream(jsonString.getBytes("UTF-8")); //jsonString.getBytes("UTF-8")
 				JsonReader jsonReader = Json.createReader(is);
 				jsonObject = jsonReader.readObject();
@@ -53,10 +54,15 @@ public class JsonDecoder {
 			}
 		} catch (UnsupportedEncodingException e) {
 			errorCode="2"; this.errorMessage=e.getMessage();
+
+			LogWriter.LOGGER.info("Decoding ERROR: UnsupportedEncodingException " +e);
 		} catch (IOException e) {
 			errorCode="3"; this.errorMessage=e.getMessage();
+			LogWriter.LOGGER.info("Decoding ERROR: 1  "+e);
+			e.printStackTrace();
 		} catch (Exception e) {
 			errorCode="4"; this.errorMessage=e.getMessage();
+			LogWriter.LOGGER.info("Decoding ERROR: 2 "+e);e.printStackTrace();
 		}
 	}
 	/**

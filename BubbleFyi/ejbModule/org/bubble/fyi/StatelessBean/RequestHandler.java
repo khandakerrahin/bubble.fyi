@@ -149,6 +149,12 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).getSMSApprovalRequestStatus(message,messageBody);			
 			}else if(action.equalsIgnoreCase("getApprovedSMSList")) {
 				retVal=new UserOperations(bubbleDS).getApprovedSMSList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("matchFormulaText")) {
+				retVal=new UserOperations(bubbleDS).matchFormulaText(message,messageBody);			
+			}else if(action.equalsIgnoreCase("matchFormulaTextFromDBbyText")) {
+				retVal=new UserOperations(bubbleDS).matchFormulaTextFromDBbyText(message,messageBody);			
+			}else if(action.equalsIgnoreCase("matchFormulaTextFromDBbyID")) {
+				retVal=new UserOperations(bubbleDS).matchFormulaTextFromDBbyID(message,messageBody);			
 			}
 			
 			// NiharekahS end
