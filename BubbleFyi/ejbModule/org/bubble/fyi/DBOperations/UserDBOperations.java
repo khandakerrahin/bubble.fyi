@@ -1580,22 +1580,28 @@ public class UserDBOperations {
 		return retval;
 	}
 
-	public String getGroupSMSText(String userId, String groupId) {
-		// TODO needs to update with price
-		String retval = "";
-		String sql = "SELECT message FROM smsdb.groupsms_sender_info where user_id=? and group_id=?";
+	/**
+	 * 
+	 * @param String userId
+	 * @param String groupId
+	 * @return String SMS text for group sms
+	 */
+	public String getGroupSMSText(String userId,String groupId) {
+		//TODO needs to update with price
+		String retval="";
+		String sql="SELECT message FROM smsdb.groupsms_sender_info where user_id=? and group_id=?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userId);
 			bubbleDS.getPreparedStatement().setString(1, groupId);
 			bubbleDS.executeQuery();
-			if (bubbleDS.getResultSet().next()) {
-				retval = bubbleDS.getResultSet().getString(1);
+			if(bubbleDS.getResultSet().next()) {
+				retval=bubbleDS.getResultSet().getString(1);
 			}
 			bubbleDS.closeResultSet();
 			bubbleDS.closePreparedStatement();
-		} catch (SQLException e) {
-			LogWriter.LOGGER.severe("getGroupSMSText(): " + e.getMessage());
+		} catch (SQLException e) {			
+			LogWriter.LOGGER.severe("getGroupSMSText(): "+e.getMessage());
 		}
 		return retval;
 	}
