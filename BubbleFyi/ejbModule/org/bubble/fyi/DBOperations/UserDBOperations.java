@@ -19,6 +19,7 @@ import org.bubble.fyi.Initializations.SecretKey;
 import org.bubble.fyi.Logs.LogWriter;
 import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 import org.bubble.fyi.Utilities.RandomStringGenerator;
+import org.bubble.fyi.DBOperations.EmailSender;
 
 
 /**
@@ -1604,7 +1605,12 @@ public class UserDBOperations {
 
 		return retval;
 	}
-	
+	/**
+	 * 
+	 * @param String userId
+	 * @param String groupId
+	 * @return String SMS text for group sms
+	 */
 	public String getGroupSMSText(String userId,String groupId) {
 		//TODO needs to update with price
 		String retval="";
@@ -1731,6 +1737,37 @@ public class UserDBOperations {
 		LogWriter.LOGGER.info("customer Charge: "+retval);
 		return retval;
 	}
+	/**
+	 * 
+	 * @param userId
+	 * @return String organization attached with the user id
+	 * if organization not found it returns custodian name
+	 */
+	public String getOrganizationName(String userId) {
+        String organization="";
+	    String custodian="";
+		String retval="";
+		String sql="SELECT custodian_name,organization_name FROM smsdb.tbl_users where id =?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				custodian=bubbleDS.getResultSet().getString(1);
+				organization=bubbleDS.getResultSet().getString(2);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {			
+			LogWriter.LOGGER.severe("getGroupSMSText(): "+e.getMessage());
+		}
+		if(organization.isEmpty()) {
+			retval=custodian;
+		}else {
+		   retval=organization;
+		}
+		return retval;
+	}
 
 	public JsonEncoder sendSMSFromList(String userId, String sch_date,String message,String listId) {
 		String errorCode="-1";
@@ -1739,6 +1776,7 @@ public class UserDBOperations {
 		String telcoDetail="";
 		String updated_by="-1";
 		double smsPrice=getCustomerChargingDetailUDB(userId,1);
+		String organization=getOrganizationName(userId);
 		
 
 		int statusFlag=-1;
@@ -1757,6 +1795,8 @@ public class UserDBOperations {
 		}
 		SMSSender ss=new SMSSender(bubbleDS);
 		aparty=ss.getAparty(userId);
+		if(sch_date.isEmpty())
+			
 		if(!aparty.isEmpty())
 			telcoDetail=ss.getTelcoDetail(aparty);
 		/**/
@@ -1767,6 +1807,9 @@ public class UserDBOperations {
 				int listMsCount=getListMsisdnCount(listId);
 
 				if(listMsCount>0) {
+					String emailSubject="BulkSMS Broadcast Request Approval Pending";
+					
+					//String mailBody="just a test email";
 					int smsCount=getSMSSize(message);
 					double customerBalance=getCustomerBalance(userId);
 					double tmpSMSCost=listMsCount*smsPrice*smsCount;
@@ -1777,6 +1820,9 @@ public class UserDBOperations {
 							//TODO count LIST maisdn, check with balance then deduct 
 							
 							if(sch_date.isEmpty()) { //INSTANT SMS	
+								String mailBody="SMS Broadcast Request is pending for approval.\n"
+										+ "\n Company name: "+organization+" \n Scheduled Date: instant SMS(approve now) \n Message text: "+message+" \n"
+												+ " Number of Recipient:"+listMsCount;
 								String sql="INSERT INTO groupsms_sender_info"
 										+ " (user_id,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,updated_by) "
 										+ "VALUES (?,?,?,?,?,?,?,?,?)";						
@@ -1799,6 +1845,8 @@ public class UserDBOperations {
 
 										errorCode="0";
 										transaction_logger(userId,smsCost,1,1,"listId:"+listId);
+										
+										new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);																			
 									}else {
 										updateBalanceBulkSMS(userId,(-1)*listMsCount*smsCount,smsPrice);
 									}
@@ -1827,6 +1875,9 @@ public class UserDBOperations {
 									e.printStackTrace();
 								}
 							}else { //SCHEDULED SMS
+								String mailBody="SMS Broadcast Request is pending for approval.\n"
+										+ "\n Company name: "+organization+" \n Scheduled Date:"+sch_date+" \n  Message text: "+message+" \n"
+												+ " Number of Recipient:"+listMsCount;
 								String sql="INSERT INTO groupsms_sender_info"
 										+ " (user_id,scheduled_date,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,updated_by) "
 										+ "VALUES (?,?,?,?,?,?,?,?,?,?)";
@@ -1855,11 +1906,12 @@ public class UserDBOperations {
 
 										errorCode="0";
 										transaction_logger(userId,smsCost,1,1,"listId:"+listId);
+										new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);	
 									}else {
 										updateBalanceBulkSMS(userId,(-1)*listMsCount*smsCount,smsPrice);
 									}
 									jsonEncoder.addElement("listId", groupid);
-
+									
 
 								}catch(SQLIntegrityConstraintViolationException de) {
 									errorCode="1";
