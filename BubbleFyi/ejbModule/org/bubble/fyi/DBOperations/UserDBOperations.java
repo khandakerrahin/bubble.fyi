@@ -1545,6 +1545,29 @@ public class UserDBOperations {
 		}
 		return retval;
 	}
+	/*
+	public String getEmailSubject(String id,String subject_id ) {
+		//TODO needs to update with price
+		String retval="";
+		//double retval=-1;
+		String sql="SELECT subject1 FROM smsdb.emailSenderDetail where id=?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, id);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				retval=bubbleDS.getResultSet().getString(1);
+			}else {
+				retval=-2;
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			retval=-3;
+			LogWriter.LOGGER.severe("getUserType(): "+e.getMessage());
+		}
+		return retval;
+	}/**/
 
 	
 
@@ -2693,6 +2716,9 @@ public class UserDBOperations {
 			bubbleDS.getPreparedStatement().setString(5, customerId);		
 			bubbleDS.execute();
 			retval=true;
+			//groupId send email 
+			//TODO
+			
 		} catch (SQLException e) {
 			LogWriter.LOGGER.severe("setNewStatus(): "+e.getMessage());
 		}finally{
