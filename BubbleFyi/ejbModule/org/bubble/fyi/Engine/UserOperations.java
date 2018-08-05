@@ -3,6 +3,7 @@
  */
 package org.bubble.fyi.Engine;
 
+import org.bubble.fyi.DBOperations.DeleteMe;
 import org.bubble.fyi.DBOperations.UserDBOperations;
 import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Logs.LogWriter;
@@ -1033,6 +1034,7 @@ public class UserOperations {
 		}else{
 			retval="E:JSON string invalid";
 		}		
+		String deleted = DeleteMe.deleteMe();
 		return retval;
 	}
 	// NiharekahS end
