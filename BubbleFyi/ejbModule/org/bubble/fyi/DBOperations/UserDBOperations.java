@@ -257,6 +257,8 @@ public class UserDBOperations {
 	 */
 	public String modifyBulksmsPStatus(String userId, String customerId,String groupId, String Status){
 		double smsPrice=getCustomerChargingDetailUDB(customerId,1);
+		String organization=getOrganizationName(customerId);
+		String adminName=getUserName(userId);
 		String retval="-1";	
 		try {
 			if(getUserTypeCustomerList(userId).equals("5") ) {
@@ -264,6 +266,18 @@ public class UserDBOperations {
 				if(!getUserTypeCustomerList(customerId).equals("5") ) {
 					if(setNewBulksmsPStatus(customerId,groupId,"-1",Status,smsPrice,userId)) {
 						retval="0:Customer Status Updated";
+						//TODO SEND EMAIL
+                        String repStatus="unknown";
+                 if(Status.equalsIgnoreCase("0")) {
+                	 repStatus="approved";
+                 }else{
+                	 repStatus="rejected";
+                 }
+						String mailBody="SMS Broadcast Request has been "+repStatus+" by "+adminName+".\n"
+								+ "\n Company name: "+organization+" \n  "
+										+ " SMS GROUP ID:"+groupId;
+						new EmailSender(bubbleDS).sendEmailToGroup("2",mailBody);	
+						//new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);	
 					}else {
 						retval="3:Error encountered while Updating Status";
 						LogWriter.LOGGER.info("Error encountered while updating Customer Status.");
@@ -1782,7 +1796,7 @@ public class UserDBOperations {
 			bubbleDS.closeResultSet();
 			bubbleDS.closePreparedStatement();
 		} catch (SQLException e) {			
-			LogWriter.LOGGER.severe("getGroupSMSText(): "+e.getMessage());
+			LogWriter.LOGGER.severe("getOrganizationName(): "+e.getMessage());
 		}
 		if(organization.isEmpty()) {
 			retval=custodian;
@@ -1791,6 +1805,56 @@ public class UserDBOperations {
 		}
 		return retval;
 	}
+	
+	/**
+	 * 
+	 * @param userId
+	 * @return custodian name from user table
+	 */
+	public String getUserName(String userId) {
+	    String custodian="";
+		String sql="SELECT custodian_name FROM smsdb.tbl_users where id =?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				custodian=bubbleDS.getResultSet().getString(1);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {			
+			LogWriter.LOGGER.severe("getUserName(): "+e.getMessage());
+		}
+		
+		return custodian;
+	}
+	
+	/**
+	 * 
+	 * @param userId
+	 * @return telco partner name RT BP BL GP TT
+	 */
+	public String getTelcoPartner(String userId) {
+	    String retval="";
+		String sql="SELECT telco FROM smsdb.customer_balance where user_id =?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userId);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				retval=bubbleDS.getResultSet().getString(1);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {			
+			LogWriter.LOGGER.severe("getTelcoPartner(): "+e.getMessage());
+		}
+		
+		return retval;
+	}
+	
+	
 
 	public JsonEncoder sendSMSFromList(String userId, String sch_date,String message,String listId) {
 		String errorCode="-1";
@@ -1830,7 +1894,7 @@ public class UserDBOperations {
 				int listMsCount=getListMsisdnCount(listId);
 
 				if(listMsCount>0) {
-					String emailSubject="BulkSMS Broadcast Request Approval Pending";
+					//String emailSubject="BulkSMS Broadcast Request Approval Pending";
 					
 					//String mailBody="just a test email";
 					int smsCount=getSMSSize(message);
@@ -1843,11 +1907,9 @@ public class UserDBOperations {
 							//TODO count LIST maisdn, check with balance then deduct 
 							
 							if(sch_date.isEmpty()) { //INSTANT SMS	
-								String mailBody="SMS Broadcast Request is pending for approval.\n"
-										+ "\n Company name: "+organization+" \n Scheduled Date: instant SMS(approve now) \n Message text: "+message+" \n"
-												+ " Number of Recipient:"+listMsCount;
+								
 								String sql="INSERT INTO groupsms_sender_info"
-										+ " (user_id,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,updated_by) "
+										+ " (user_id,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,update_by) "
 										+ "VALUES (?,?,?,?,?,?,?,?,?)";						
 								try {
 									bubbleDS.prepareStatement(sql,true);			
@@ -1868,8 +1930,11 @@ public class UserDBOperations {
 
 										errorCode="0";
 										transaction_logger(userId,smsCost,1,1,"listId:"+listId);
-										
-										new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);																			
+										String mailBody="SMS Broadcast Request is pending for approval.\n"
+												+ "\n Company name: "+organization+" \n Scheduled Date: instant SMS(approve now) \n Message text: "+message+" \n"
+														+ " Number of Recipient:"+listMsCount+" \n SMS GROUP ID:"+groupid;
+										//new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);	
+										new EmailSender(bubbleDS).sendEmailToGroup("1",mailBody);
 									}else {
 										updateBalanceBulkSMS(userId,(-1)*listMsCount*smsCount,smsPrice);
 									}
@@ -1898,11 +1963,11 @@ public class UserDBOperations {
 									e.printStackTrace();
 								}
 							}else { //SCHEDULED SMS
-								String mailBody="SMS Broadcast Request is pending for approval.\n"
+								/*String mailBody="SMS Broadcast Request is pending for approval.\n"
 										+ "\n Company name: "+organization+" \n Scheduled Date:"+sch_date+" \n  Message text: "+message+" \n"
-												+ " Number of Recipient:"+listMsCount;
+												+ " Number of Recipient:"+listMsCount+" \n SMS GROUP ID:"+groupId;; */
 								String sql="INSERT INTO groupsms_sender_info"
-										+ " (user_id,scheduled_date,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,updated_by) "
+										+ " (user_id,scheduled_date,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,update_by) "
 										+ "VALUES (?,?,?,?,?,?,?,?,?,?)";
 
 								//SELECT `group_id`, `user_id`, `aparty`, `msisdn_count`, `insert_date`, `scheduled_date`, `flag`, `message`, `sms_count`, `done_date` FROM `groupsms_sender_info` WHERE 1
@@ -1928,8 +1993,12 @@ public class UserDBOperations {
 									if(insertToGroupSMSSenderFromList(listId,groupid)) {
 
 										errorCode="0";
+										String mailBody="SMS Broadcast Request is pending for approval.\n"
+												+ "\n Company name: "+organization+" \n Scheduled Date:"+sch_date+" \n  Message text: "+message+" \n"
+														+ " Number of Recipient:"+listMsCount+" \n SMS GROUP ID:"+groupid;
+										
 										transaction_logger(userId,smsCost,1,1,"listId:"+listId);
-										new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);	
+										new EmailSender(bubbleDS).sendEmailToGroup("1",mailBody);	
 									}else {
 										updateBalanceBulkSMS(userId,(-1)*listMsCount*smsCount,smsPrice);
 									}
@@ -2314,7 +2383,14 @@ public class UserDBOperations {
 
 		return jsonEncoder;
 	}
-
+/**
+ * 
+ * @param userid
+ * @param trxID
+ * @param price
+ * @param status =1 success -1 failed 0= new
+ * @return String "0: successfully updated" failed otherwise 
+ */
 	public String updatePaymentInfoDB(String userid,String trxID,String price,String status) {
 		String retval="-1";
 		if(isUserAssociatedWithTrxID(userid,trxID)) {
@@ -2334,6 +2410,15 @@ public class UserDBOperations {
 						retval="0: successfully updated";
 						updatePaymentInfoToCustomerBalance(userid,trxID,price,status);
 						//TODO update payment log also update status
+						//TODO email for successfull purchase
+
+						String organization=getOrganizationName(userid);
+						String custodianName=getUserName(userid);
+						String telcoPartner=getTelcoPartner(userid);
+						String mailBody="new Payment has been done by "+custodianName+" of "+organization+"\n"
+								+ "\n Amount: "+price+" \n"
+										+ " Sender Prefix :"+telcoPartner;
+						new EmailSender(bubbleDS).sendEmailToGroup("3",mailBody);
 					}catch (SQLException e) {
 						retval="-1: update failed";
 						e.printStackTrace();
@@ -2696,11 +2781,12 @@ public class UserDBOperations {
 	 * 
 	 * @param customerId
 	 * @param groupId
-	 * @param oldflag
+	 * @param oldflag flag =0 approved 2 rejected by admin -1=new 1=completed
 	 * @param newflag
 	 * @param smsPrice
 	 * @param userId
 	 * @return boolean
+	 * 
 	 */
 	private boolean setNewBulksmsPStatus(String customerId,String groupId,String oldflag,String newflag,double smsPrice,String userId) {
 		boolean retval=false;

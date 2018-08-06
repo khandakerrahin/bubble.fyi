@@ -136,30 +136,14 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).uploadFileListGetter(message,messageBody);
 			}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both group instant sms and group scheduled sms //TODO
 				retVal=new UserOperations(bubbleDS).instantGroupSMSDetail(message,messageBody); 
-			}
-			
-			// NiharekahS
-			else if(action.equalsIgnoreCase("requestSMSApproval")) {
-				retVal=new UserOperations(bubbleDS).requestSMSApproval(message,messageBody);			
-			}else if(action.equalsIgnoreCase("getPendingSMSApprovalList")) {
-				retVal=new UserOperations(bubbleDS).getPendingSMSApprovalList(message,messageBody);			
-			}else if(action.equalsIgnoreCase("updatePendingSMSApprovalList")) {
-				retVal=new UserOperations(bubbleDS).updatePendingSMSApprovalList(message,messageBody);			
-			}else if(action.equalsIgnoreCase("getSMSApprovalRequestStatus")) {
-				retVal=new UserOperations(bubbleDS).getSMSApprovalRequestStatus(message,messageBody);			
-			}else if(action.equalsIgnoreCase("getApprovedSMSList")) {
-				retVal=new UserOperations(bubbleDS).getApprovedSMSList(message,messageBody);			
-			}
-			
-			// NiharekahS end
-			
-			
+			}		
+
 			/*
 			else if(action.equalsIgnoreCase("sendScheduledSMS")) { //TODO Not in Use old version used Scheduled for bulk sms redundant;
 				retVal=new UserOperations(bubbleDS).sentSMSScheduled(message,messageBody); 	
 			}/**/
 			else if(action.equalsIgnoreCase("getTotalSMSCount")) {
-				
+
 				//retVal=new LoginProcessor().processLogin(message,messageBody);
 				retVal=new UserOperations(bubbleDS).TotalSMSCounter(message,messageBody); 
 				//TODO Changed on 20180312
@@ -243,14 +227,30 @@ public class RequestHandler implements RequestHandlerLocal {
 				//TODO Pending
 				retVal=new LoginProcessor(bubbleDS).cleanExpiredRecords();
 			}/** API used by bulk sms Distributer Application **/
-			
+
 			else if(action.equalsIgnoreCase("smsDistributer")) { // both group sms scheduled or not scheduled
 				retVal=new UserOperations(bubbleDS).smsDistributionInitiator(message,messageBody); 			
 			}
+
+			// NiharekahS
+			else if(action.equalsIgnoreCase("requestSMSApproval")) {
+				retVal=new UserOperations(bubbleDS).requestSMSApproval(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getPendingSMSApprovalList")) {
+				retVal=new UserOperations(bubbleDS).getPendingSMSApprovalList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("updatePendingSMSApprovalList")) {
+				retVal=new UserOperations(bubbleDS).updatePendingSMSApprovalList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getSMSApprovalRequestStatus")) {
+				retVal=new UserOperations(bubbleDS).getSMSApprovalRequestStatus(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getApprovedSMSList")) {
+				retVal=new UserOperations(bubbleDS).getApprovedSMSList(message,messageBody);			
+			}
+
+			// NiharekahS end
+
 			/*else if(action.equalsIgnoreCase("CheckloginAPI")) {
 				retVal=new LoginProcessor(bubbleDS).processLoginAPI(message,messageBody);
 			}/**/
-			
+
 			else retVal="I:Invalid action";
 		}finally{
 			if(bubbleDS.getConnection() != null){
