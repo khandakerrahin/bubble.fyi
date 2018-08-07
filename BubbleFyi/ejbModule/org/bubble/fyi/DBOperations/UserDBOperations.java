@@ -269,13 +269,14 @@ public class UserDBOperations {
 						//TODO SEND EMAIL
                         String repStatus="unknown";
                  if(Status.equalsIgnoreCase("0")) {
-                	 repStatus="approved";
+                	 repStatus="Approved";
                  }else{
-                	 repStatus="rejected";
+                	 repStatus="Rejected";
                  }
-						String mailBody="SMS Broadcast Request has been "+repStatus+" by "+adminName+".\n"
-								+ "\n Company name: "+organization+" \n  "
-										+ " SMS GROUP ID:"+groupId;
+						String mailBody=repStatus+" by "+adminName+".\n"
+								+ " Broadcast ID:"+groupId
+								+ " \n  Company name: "+organization+".";
+										
 						new EmailSender(bubbleDS).sendEmailToGroup("2",mailBody);	
 						//new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);	
 					}else {
@@ -1930,9 +1931,9 @@ public class UserDBOperations {
 
 										errorCode="0";
 										transaction_logger(userId,smsCost,1,1,"listId:"+listId);
-										String mailBody="SMS Broadcast Request is pending for approval.\n"
+										String mailBody="Approval Pending."+" \n Broadcast ID:"+groupid
 												+ "\n Company name: "+organization+" \n Scheduled Date: instant SMS(approve now) \n Message text: "+message+" \n"
-														+ " Number of Recipient:"+listMsCount+" \n SMS GROUP ID:"+groupid;
+														+ " Number of Recipient:"+listMsCount;
 										//new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);	
 										new EmailSender(bubbleDS).sendEmailToGroup("1",mailBody);
 									}else {
@@ -1993,9 +1994,9 @@ public class UserDBOperations {
 									if(insertToGroupSMSSenderFromList(listId,groupid)) {
 
 										errorCode="0";
-										String mailBody="SMS Broadcast Request is pending for approval.\n"
+										String mailBody="Approval Pending."+" \n Broadcast ID:"+groupid
 												+ "\n Company name: "+organization+" \n Scheduled Date:"+sch_date+" \n  Message text: "+message+" \n"
-														+ " Number of Recipient:"+listMsCount+" \n SMS GROUP ID:"+groupid;
+														+ " Number of Recipient:"+listMsCount;
 										
 										transaction_logger(userId,smsCost,1,1,"listId:"+listId);
 										new EmailSender(bubbleDS).sendEmailToGroup("1",mailBody);	
