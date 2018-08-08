@@ -102,7 +102,7 @@ public class SMSSender {
 	/**
 	 * 
 	 * @param aparty
-	 * @return String telco name based on sender prefix RT BP
+	 * @return String telco name based on sender prefix RT BP BL GP TT
 	 */
 	//public String getTelcoDetail(String userId,String aparty) {
 	public String getTelcoDetail(String aparty) {
@@ -111,6 +111,12 @@ public class SMSSender {
 			retval= "BP";
 		}else if(aparty.startsWith("+880444") || aparty.startsWith("880444") ) {
 			retval= "RT";
+		}else if(aparty.startsWith("+88019") || aparty.startsWith("88019") || aparty.startsWith("019")) {
+			retval= "BL";
+		}else if(aparty.startsWith("+88017") || aparty.startsWith("88017") || aparty.startsWith("017") ) {
+			retval= "GP";
+		}else if(aparty.startsWith("+88015") || aparty.startsWith("88015") || aparty.startsWith("015")) {
+			retval= "TT";
 		}else {
 			retval= "RT";
 		}

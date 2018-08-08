@@ -68,6 +68,9 @@ public class LoginProcessor {
 			retval=fetchUserInfo(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode"));
 		}else {
 			retval="-6:Error in user Credentials";
+			JsonEncoder jsonEncoder=new JsonEncoder();
+			jsonEncoder.addElement("ErrorCode", retval);
+			retval=jsonEncoder.buildJsonObject().toString();
 		}
 		return retval;
 	}
