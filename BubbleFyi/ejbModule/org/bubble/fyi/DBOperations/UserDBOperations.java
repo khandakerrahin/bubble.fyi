@@ -277,7 +277,7 @@ public class UserDBOperations {
 								+ " Broadcast ID:"+groupId
 								+ " \n  Company name: "+organization+".";
 										
-						new EmailSender(bubbleDS).sendEmailToGroup("2",mailBody);	
+						new EmailSender(bubbleDS).sendEmailToGroup("1",mailBody);	
 						//new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);	
 					}else {
 						retval="3:Error encountered while Updating Status";
