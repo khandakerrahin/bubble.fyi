@@ -908,7 +908,7 @@ public class UserOperations {
 	
 	
 	// NiharekahS
-	public String requestSMSApproval(String message, String messageBody) {
+	public String requestFormulaTextApproval(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
 		if(messageBody.isEmpty()) {
@@ -917,14 +917,14 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).requestApproval(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"));		
+			retval=new UserDBOperations(bubbleDS).requestFormulaApproval(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"));		
 		}else{
 			retval="E:JSON string invalid";
 		}
 		return retval;
 	}
 	
-	public String getPendingSMSApprovalList(String message, String messageBody) {
+	public String getPendingFormulaTextApprovalList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
 		if(messageBody.isEmpty()) {
@@ -933,14 +933,14 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).getAllPendingSMSApproval(json.getJsonObject().getString("id"));		
+			retval=new UserDBOperations(bubbleDS).getAllPendingFormulaTextApprovalList(json.getJsonObject().getString("id"));		
 		}else{
 			retval="E:JSON string invalid";
 		}
 		return retval;
 	}
 	
-	public String updatePendingSMSApprovalList(String message, String messageBody) {
+	public String updatePendingFormulaTextApprovalList(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
 		if(messageBody.isEmpty()) {
@@ -949,30 +949,14 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).updatePendingApprovalList(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("flag"));		
-		}else{
-			retval="E:JSON string invalid";
-		}		
-		return retval;
-	}
-	
-	public String getSMSApprovalRequestStatus(String message, String messageBody) {
-		String retval="E";
-		JsonDecoder json;
-		if(messageBody.isEmpty()) {
-			json=new JsonDecoder(message);			
-		}else{
-			json=new JsonDecoder(messageBody);
-		}
-		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).getUserSMSApprovalStatus(json.getJsonObject().getString("id"));		
+			retval=new UserDBOperations(bubbleDS).updateFormulaTextApprovalList(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("flag"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
 		return retval;
 	}
 	
-	public String getApprovedSMSList(String message, String messageBody) {
+	public String getFormulaTextApprovalRequestStatus(String message, String messageBody) {
 		String retval="E";
 		JsonDecoder json;
 		if(messageBody.isEmpty()) {
@@ -981,7 +965,23 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).getAllApprovedSMS(json.getJsonObject().getString("id"));		
+			retval=new UserDBOperations(bubbleDS).getUserFormulaTextApprovalRequestStatus(json.getJsonObject().getString("id"));		
+		}else{
+			retval="E:JSON string invalid";
+		}		
+		return retval;
+	}
+	
+	public String getApprovedFormulaTextList(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);			
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			retval=new UserDBOperations(bubbleDS).getAllApprovedFormulaText(json.getJsonObject().getString("id"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
@@ -1033,7 +1033,6 @@ public class UserOperations {
 		}else{
 			retval="E:JSON string invalid";
 		}		
-		String removeMe = "remove me";
 		return retval;
 	}
 	// NiharekahS end

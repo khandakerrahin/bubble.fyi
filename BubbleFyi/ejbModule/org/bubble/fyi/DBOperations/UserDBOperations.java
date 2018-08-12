@@ -3815,7 +3815,7 @@ public class UserDBOperations {
 	 * @param smsText
 	 * @return action status
 	 */
-	public String requestApproval(String id, String smsText) {
+	public String requestFormulaApproval(String id, String smsText) {
 		String errorCode = "-1";// default errorCode
 		String errorRes = "Request for approval Failed";
 		String sqlTextCheck = "SELECT id FROM tbl_preapproved_texts where userID=? and textFormula=? limit 1";
@@ -3890,7 +3890,7 @@ public class UserDBOperations {
 	 * @param id of admin
 	 * @return all the pending SMS for approval list
 	 */
-	public String getAllPendingSMSApproval(String id) {
+	public String getAllPendingFormulaTextApprovalList(String id) {
 		String retval = "";
 		String errorCode = "-1";
 		String errorRes = "Fetching allPendingSMSApproval Failed";
@@ -3899,7 +3899,7 @@ public class UserDBOperations {
 			userFlag = getUserTypeCustomerList(id);
 			// String userFlag="5";
 			if (userFlag.equals("5")) {
-				String sql = "SELECT t.id AS textID,u.id,u.username,t.textFormula,u.organization_name,DATE_FORMAT(t.request_time, \"%d-%m-%Y %H:%i\") as request_time,t.flag FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.flag =-1";
+				String sql = "SELECT t.id AS textID,u.id,u.username,t.userInputText,u.organization_name,DATE_FORMAT(t.request_time, \"%d-%m-%Y %H:%i\") as request_time,t.flag FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.flag =-1";
 				try {
 					bubbleDS.prepareStatement(sql);
 
@@ -3914,7 +3914,7 @@ public class UserDBOperations {
 						retval += "\"" + rs.getString("username") + "\"" + ",";
 						retval += "\"" + rs.getString("organization_name") + "\"" + ",";
 						retval += "\"" + rs.getString("request_time") + "\"" + ",";
-						retval += "\"" + rs.getString("textFormula") + "\"" + ",";
+						retval += "\"" + rs.getString("userInputText") + "\"" + ",";
 						retval += rs.getString("flag");
 						retval += "|";
 					}
@@ -3976,7 +3976,7 @@ public class UserDBOperations {
 	 * @param flag   for approval Status
 	 * @return action status
 	 */
-	public String updatePendingApprovalList(String userID, String textID, String flag) {
+	public String updateFormulaTextApprovalList(String userID, String textID, String flag) {
 		String errorCode = "-1";
 		String errorRes = "Updating pendingApprovalList Failed";
 		String userFlag = "-1";
@@ -4016,7 +4016,7 @@ public class UserDBOperations {
 	 * @param id of user
 	 * @return status of all the requests made by the user
 	 */
-	public String getUserSMSApprovalStatus(String id) {
+	public String getUserFormulaTextApprovalRequestStatus(String id) {
 		String retval = "";
 		String errorCode = "-1";
 		String errorRes = "Fetching userSMSApprovalStatus Failed";
@@ -4043,7 +4043,10 @@ public class UserDBOperations {
 				bubbleDS.closeResultSet();
 				bubbleDS.closePreparedStatement();
 				if (NullPointerExceptionHandler.isNullOrEmpty(retval))
-					retval = "0";
+				{
+					retval = "null";
+					errorRes = "No Formula Text For Approval";
+				}
 				int lio = retval.lastIndexOf("|");
 				if (lio > 0)
 					retval = retval.substring(0, lio);
@@ -4083,10 +4086,10 @@ public class UserDBOperations {
 	 * @param id of user
 	 * @return all the approved requests made by the user
 	 */
-	public String getAllApprovedSMS(String id) {
+	public String getAllApprovedFormulaText(String id) {
 		String retval = "";
 		String errorCode = "-1";
-		String errorRes = "Fetching approvedUserSMS Failed";
+		String errorRes = "Fetching approvedUserFormulaText Failed";
 		String userFlag = "-1";
 		try {
 			userFlag = getUserTypeCustomerList(id);
@@ -4108,7 +4111,10 @@ public class UserDBOperations {
 				bubbleDS.closeResultSet();
 				bubbleDS.closePreparedStatement();
 				if (NullPointerExceptionHandler.isNullOrEmpty(retval))
-					retval = "0";
+				{
+					retval = "null";
+					errorRes = "No Formula Text Found";
+				}
 				int lio = retval.lastIndexOf("|");
 				if (lio > 0)
 					retval = retval.substring(0, lio);
@@ -4131,7 +4137,7 @@ public class UserDBOperations {
 			e.printStackTrace();
 			LogWriter.LOGGER.severe(e.getMessage());
 		}
-		LogWriter.LOGGER.info(" return from  get All Approved SMS --> userFlag : " + userFlag + ":" + retval);
+		LogWriter.LOGGER.info(" return from  get All Approved FormulaText --> userFlag : " + userFlag + ":" + retval);
 		if (!errorCode.startsWith("0")) {
 			JsonEncoder jsonEncoder = new JsonEncoder();
 			jsonEncoder.addElement("ErrorCode", errorCode);
