@@ -1013,7 +1013,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyText(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"));		
+			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyText(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("extendedRes"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
@@ -1029,7 +1029,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyID(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("smsText"));		
+			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyID(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("extendedRes"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		

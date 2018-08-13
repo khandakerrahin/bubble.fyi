@@ -4094,7 +4094,7 @@ public class UserDBOperations {
 		try {
 			userFlag = getUserTypeCustomerList(id);
 
-			String sql = "SELECT t.id,t.userInputText FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.userID=? and t.flag=0 ORDER BY approval_time DESC limit 10";
+			String sql = "SELECT t.id,t.userInputText FROM tbl_preapproved_texts t where t.userID=? and t.flag=0 ORDER BY approval_time DESC limit 10";
 			try {
 				bubbleDS.prepareStatement(sql);
 
@@ -4210,17 +4210,18 @@ public class UserDBOperations {
 	 * @param smsText
 	 * @return
 	 */
-	public String checkFormulaTextFromDBbyText(String id, String smsText) {
+	public String checkFormulaTextFromDBbyText(String id, String smsText, String extendedRes) {
 		String errorCode = "-1";
 		String errorRes = "checkFormulaTextFromDBbyText";
 		String userFlag = "-1";
 		String approvedTextID = "-1";
 		String textFormula = "-1";
+		String userInputText = "-1";
 		
 		boolean retVal = false;
 		try {
 			userFlag = getUserTypeCustomerList(id);
-			String sql = "SELECT t.id,t.textFormula FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.userID=? and t.flag=0 ORDER BY approval_time DESC";
+			String sql = "SELECT t.id,t.textFormula FROM tbl_preapproved_texts t where t.userID=? and t.flag=0 ORDER BY approval_time DESC";
 
 			bubbleDS.prepareStatement(sql);
 
@@ -4247,6 +4248,19 @@ public class UserDBOperations {
 				if (result) {
 					errorCode = "0";
 					errorRes = "text matched";
+					if(extendedRes.equals("1")) {
+						sql = "SELECT t.userInputText FROM tbl_preapproved_texts t where t.id=? ORDER BY approval_time DESC";
+
+						bubbleDS.prepareStatement(sql);
+
+						bubbleDS.getPreparedStatement().setString(1, approvedTextID);
+						ResultSet rs2 = bubbleDS.executeQuery();
+						if (rs2.next()) {
+							userInputText = rs2.getString("userInputText");
+						}
+						bubbleDS.closeResultSet();
+						bubbleDS.closePreparedStatement();
+					}
 					break;
 				}
 				else 
@@ -4255,6 +4269,7 @@ public class UserDBOperations {
 					errorRes = "text did not match";
 					approvedTextID = "-1";
 					textFormula = "-1";
+					userInputText = "-1";
 				}
 			}
 		} catch (SQLException e) {
@@ -4272,8 +4287,11 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		jsonEncoder.addElement("ErrorCode", errorCode);
 		jsonEncoder.addElement("ErrorResponse", errorRes);
-		jsonEncoder.addElement("approvedTextID", approvedTextID);
-		jsonEncoder.addElement("textFormula", textFormula);
+		if(extendedRes.equals("1")) {
+			jsonEncoder.addElement("textID", approvedTextID);
+			jsonEncoder.addElement("textFormula", textFormula);
+			jsonEncoder.addElement("userInputText", userInputText);
+		}
 		jsonEncoder.buildJsonObject();
 		errorCode = jsonEncoder.getJsonObject().toString();
 
@@ -4289,16 +4307,17 @@ public class UserDBOperations {
 	 * @param smsText
 	 * @return
 	 */
-	public String checkFormulaTextFromDBbyID(String id, String textID, String smsText) {
+	public String checkFormulaTextFromDBbyID(String id, String textID, String smsText, String extendedRes) {
 		String errorCode = "-1";
 		String errorRes = "checkFormulaTextFromDBbyText";
 		String userFlag = "-1";
 		String textFormula = "-1";
+		String userInputText = "-1";
 		
 		boolean retVal = false;
 		try {
 			userFlag = getUserTypeCustomerList(id);
-			String sql = "SELECT t.id,t.textFormula FROM  tbl_users u INNER JOIN tbl_preapproved_texts t ON t.userID = u.id where t.userID=? and t.flag=0 and t.id=? ORDER BY approval_time DESC";
+			String sql = "SELECT t.id,t.textFormula, t.userInputText FROM tbl_preapproved_texts t where t.userID=? and t.flag=0 and t.id=? ORDER BY approval_time DESC";
 
 			bubbleDS.prepareStatement(sql);
 
@@ -4309,6 +4328,7 @@ public class UserDBOperations {
 
 			if (rs.next()) {
 				textFormula = rs.getString("textFormula");
+				userInputText = rs.getString("userInputText");
 				result = match(textFormula, smsText);
 				LogWriter.LOGGER.info("Formula : " + textFormula);
 				LogWriter.LOGGER.info("text : " + smsText);
@@ -4348,8 +4368,11 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		jsonEncoder.addElement("ErrorCode", errorCode);
 		jsonEncoder.addElement("ErrorResponse", errorRes);
-		jsonEncoder.addElement("textID", textID);
-		jsonEncoder.addElement("textFormula", textFormula);
+		if(extendedRes.equals("1")) {
+			jsonEncoder.addElement("textID", textID);
+			jsonEncoder.addElement("textFormula", textFormula);
+			jsonEncoder.addElement("userInputText", userInputText);
+		}
 		jsonEncoder.buildJsonObject();
 		errorCode = jsonEncoder.getJsonObject().toString();
 
