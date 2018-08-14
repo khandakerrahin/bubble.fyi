@@ -75,7 +75,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=validatePassword(credentials.getJsonObject().getString("id"), credentials.getJsonObject().getString("password"), credentials.getJsonObject().getString("mode"));
+			retval=validatePassword(credentials.getNString("id"), credentials.getNString("password"), credentials.getNString("mode"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -225,7 +225,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=modifyPasswordFunc(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("oldPass"),credentials.getJsonObject().getString("newPass"));
+			retval=modifyPasswordFunc(credentials.getNString("id"),credentials.getNString("oldPass"),credentials.getNString("newPass"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -243,7 +243,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=modifyProfileFunc(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("city"),credentials.getJsonObject().getString("postCode"),credentials.getJsonObject().getString("address"),credentials.getJsonObject().getString("custodianName"),credentials.getJsonObject().getString("logoFileName"));
+			retval=modifyProfileFunc(credentials.getNString("id"),credentials.getNString("city"),credentials.getNString("postCode"),credentials.getNString("address"),credentials.getNString("custodianName"),credentials.getNString("logoFileName"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -275,7 +275,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=updateCustomerStatus(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("customerid"),credentials.getJsonObject().getString("status"));
+			retval=updateCustomerStatus(credentials.getNString("id"),credentials.getNString("customerid"),credentials.getNString("status"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -291,7 +291,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=updateBulksmsStatus(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("customerId"),credentials.getJsonObject().getString("groupId"),credentials.getJsonObject().getString("status"));
+			retval=updateBulksmsStatus(credentials.getNString("id"),credentials.getNString("customerId"),credentials.getNString("groupId"),credentials.getNString("status"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -307,7 +307,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=updateTargetsmsStatus(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("status"),credentials.getJsonObject().getString("totalCost"),credentials.getJsonObject().getString("totalReach"));
+			retval=updateTargetsmsStatus(credentials.getNString("userId"),credentials.getNString("id"),credentials.getNString("status"),credentials.getNString("totalCost"),credentials.getNString("totalReach"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -323,7 +323,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=updateTargetsmsStatusCustomer(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("status"));
+			retval=updateTargetsmsStatusCustomer(credentials.getNString("userId"),credentials.getNString("id"),credentials.getNString("status"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -339,7 +339,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=getTargetSMSPendingList(credentials.getJsonObject().getString("id"));
+			retval=getTargetSMSPendingList(credentials.getNString("id"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -356,8 +356,8 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			//retval=getTargetSMSPendingList(credentials.getJsonObject().getString("id"));
-			retval=getTargetSMSPendingListCustomer(credentials.getJsonObject().getString("id"));
+			//retval=getTargetSMSPendingList(credentials.getNString("id"));
+			retval=getTargetSMSPendingListCustomer(credentials.getNString("id"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -374,7 +374,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=retryBulksmsLowBalanceStatus(credentials.getJsonObject().getString("customerId"),credentials.getJsonObject().getString("groupId"));
+			retval=retryBulksmsLowBalanceStatus(credentials.getNString("customerId"),credentials.getNString("groupId"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -391,7 +391,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=updateGroupList(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("msisdn"),credentials.getJsonObject().getString("flag"),credentials.getJsonObject().getString("listId"));
+			retval=updateGroupList(credentials.getNString("userId"),credentials.getNString("msisdn"),credentials.getNString("flag"),credentials.getNString("listId"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -407,7 +407,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=deleteGroupList(credentials.getJsonObject().getString("userId"),credentials.getJsonObject().getString("listId"));
+			retval=deleteGroupList(credentials.getNString("userId"),credentials.getNString("listId"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -425,7 +425,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=uploadLogoFile(credentials.getJsonObject().getString("logoFile"),credentials.getJsonObject().getString("userId"));
+			retval=uploadLogoFile(credentials.getNString("logoFile"),credentials.getNString("userId"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -442,7 +442,7 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=createGroupDetailDB(credentials.getJsonObject().getString("id"),credentials.getJsonObject().getString("listName"));
+			retval=createGroupDetailDB(credentials.getNString("id"),credentials.getNString("listName"));
 		
 		}else{
 			retval="E:JSON string invalid";
@@ -459,7 +459,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=GroupSMSDetailDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("filename"));
+				retval=GroupSMSDetailDB(json.getNString("id"),json.getNString("schedule_date"),json.getNString("smsText"),json.getNString("filename"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -476,7 +476,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=RequestPackagePurchaseDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("package_name"),json.getJsonObject().getString("price"));
+				retval=RequestPackagePurchaseDB(json.getNString("id"),json.getNString("package_name"),json.getNString("price"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -493,7 +493,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=PaymentRecordUpdateDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("trxId"),json.getJsonObject().getString("price"),json.getJsonObject().getString("paymentStatus"));
+				retval=PaymentRecordUpdateDB(json.getNString("id"),json.getNString("trxId"),json.getNString("price"),json.getNString("paymentStatus"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -512,7 +512,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=SendSMSFromListDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("listId"));
+				retval=SendSMSFromListDB(json.getNString("id"),json.getNString("schedule_date"),json.getNString("smsText"),json.getNString("listId"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -529,7 +529,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=smsDistributionPreProcessor(json.getJsonObject().getString("id"),json.getJsonObject().getString("groupId"));
+				retval=smsDistributionPreProcessor(json.getNString("id"),json.getNString("groupId"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -546,7 +546,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=SendSMStargetBasedDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("targetDivision"),json.getJsonObject().getString("targetDistrict"),json.getJsonObject().getString("targetUpazila"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("amount"));
+				retval=SendSMStargetBasedDB(json.getNString("id"),json.getNString("targetDivision"),json.getNString("targetDistrict"),json.getNString("targetUpazila"),json.getNString("schedule_date"),json.getNString("smsText"),json.getNString("amount"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -563,7 +563,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-				retval=RequestTargetBasedSMSDB(json.getJsonObject().getString("id"),json.getJsonObject().getString("geoTarget"),json.getJsonObject().getString("demographyTarget"),json.getJsonObject().getString("psychographyTarget"),json.getJsonObject().getString("behaviourTarget"),json.getJsonObject().getString("scheduleDate"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("budget"),json.getJsonObject().getString("targetCount"));
+				retval=RequestTargetBasedSMSDB(json.getNString("id"),json.getNString("geoTarget"),json.getNString("demographyTarget"),json.getNString("psychographyTarget"),json.getNString("behaviourTarget"),json.getNString("scheduleDate"),json.getNString("smsText"),json.getNString("budget"),json.getNString("targetCount"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -581,7 +581,7 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 			//mode=1 list mode=2 file 
-				retval=SendScheduledSMS(json.getJsonObject().getString("id"),json.getJsonObject().getString("schedule_date"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("listFile"),json.getJsonObject().getString("mode"));
+				retval=SendScheduledSMS(json.getNString("id"),json.getNString("schedule_date"),json.getNString("smsText"),json.getNString("listFile"),json.getNString("mode"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -599,7 +599,7 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 			//mode=1 list mode=2 file 
-				retval=DownloadSingleSMSReport(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));
+				retval=DownloadSingleSMSReport(json.getNString("id"),json.getNString("startDate"),json.getNString("endDate"),json.getNString("outputType"));
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -615,14 +615,14 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			String report_Type=json.getJsonObject().getString("reportId");
+			String report_Type=json.getNString("reportId");
 			if(report_Type.equals("1")) { //Single SMS Report
 			//mode=1 list mode=2 file 
-				retval=DownloadSingleSMSReport(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));
+				retval=DownloadSingleSMSReport(json.getNString("id"),json.getNString("startDate"),json.getNString("endDate"),json.getNString("outputType"));
 			}else if(report_Type.equals("2"))  { //Bulk Summary Report
-				retval=GetBulkSMSSummary(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));	
+				retval=GetBulkSMSSummary(json.getNString("id"),json.getNString("startDate"),json.getNString("endDate"),json.getNString("outputType"));	
 			}else {
-				retval=DownloadSingleSMSReport(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));			
+				retval=DownloadSingleSMSReport(json.getNString("id"),json.getNString("startDate"),json.getNString("endDate"),json.getNString("outputType"));			
 			}
 			}else{
 			retval="E:JSON string invalid";
@@ -640,7 +640,7 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 			
-				retval=GetSMSCounterDB(json.getJsonObject().getString("id"));
+				retval=GetSMSCounterDB(json.getNString("id"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -658,7 +658,7 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 			
-				retval=GetSMSCounterBulkList(json.getJsonObject().getString("id"),json.getJsonObject().getString("listId"));
+				retval=GetSMSCounterBulkList(json.getNString("id"),json.getNString("listId"));
 			
 		}else{
 			retval="E:JSON string invalid";
@@ -693,7 +693,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getList(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"));		
+		retval=new UserDBOperations(bubbleDS).getList(Credentials.getNString("id"),Credentials.getNString("userType"));		
 		return retval;
 	}
 	
@@ -705,7 +705,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getPaymentRecords(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getPaymentRecords(Credentials.getNString("id"));		
 		return retval;
 	}
 	
@@ -717,7 +717,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getReportRecords(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getReportRecords(Credentials.getNString("id"));		
 		return retval;
 	}
 	
@@ -729,7 +729,7 @@ public class UserOperations {
 		}else{
 			json=new JsonDecoder(messageBody);
 		}
-		retval=GetBulkSMSSummary(json.getJsonObject().getString("id"),json.getJsonObject().getString("startDate"),json.getJsonObject().getString("endDate"),json.getJsonObject().getString("outputType"));	
+		retval=GetBulkSMSSummary(json.getNString("id"),json.getNString("startDate"),json.getNString("endDate"),json.getNString("outputType"));	
 		return retval;
 	}
 	
@@ -741,7 +741,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getListV2(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"),Credentials.getJsonObject().getString("msisdn"));		
+		retval=new UserDBOperations(bubbleDS).getListV2(Credentials.getNString("id"),Credentials.getNString("userType"),Credentials.getNString("msisdn"));		
 		return retval;
 	}
 	
@@ -753,7 +753,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getTexts(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("userType"),Credentials.getJsonObject().getString("msisdn"));		
+		retval=new UserDBOperations(bubbleDS).getTexts(Credentials.getNString("id"),Credentials.getNString("userType"),Credentials.getNString("msisdn"));		
 		return retval;
 	}
 	
@@ -765,7 +765,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getCustomerGroupListInfo(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getCustomerGroupListInfo(Credentials.getNString("id"));		
 		return retval;
 	}
 	
@@ -777,7 +777,7 @@ public class UserOperations {
 		}else{
 			json=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getGeoDetail(json.getJsonObject().getString("targetGroup"));		
+		retval=new UserDBOperations(bubbleDS).getGeoDetail(json.getNString("targetGroup"));		
 		return retval;
 	}
 	/**
@@ -839,7 +839,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getActivePackageList(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getActivePackageList(Credentials.getNString("id"));		
 		return retval;
 	}
 	
@@ -851,7 +851,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getBulkSMSDetailOfCustomer(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getBulkSMSDetailOfCustomer(Credentials.getNString("id"));		
 		return retval;
 	}
 	
@@ -863,7 +863,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getAddressBookInfo(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getAddressBookInfo(Credentials.getNString("id"));		
 		return retval;
 	}
 	
@@ -875,7 +875,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getAddressBookCount(Credentials.getJsonObject().getString("id")).getJsonObject().toString();;		
+		retval=new UserDBOperations(bubbleDS).getAddressBookCount(Credentials.getNString("id")).getJsonObject().toString();;		
 		return retval;
 	}
 	
@@ -887,7 +887,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getListMsisdnFunc(Credentials.getJsonObject().getString("id"),Credentials.getJsonObject().getString("listId"));		
+		retval=new UserDBOperations(bubbleDS).getListMsisdnFunc(Credentials.getNString("id"),Credentials.getNString("listId"));		
 		return retval;
 	}
 	
@@ -899,7 +899,7 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getAllCustomerList(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getAllCustomerList(Credentials.getNString("id"));		
 		return retval;
 	}
 	
@@ -917,7 +917,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).requestFormulaApproval(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"));		
+			retval=new UserDBOperations(bubbleDS).requestFormulaApproval(json.getNString("id"),json.getNString("smsText"));		
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -933,7 +933,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).getAllPendingFormulaTextApprovalList(json.getJsonObject().getString("id"));		
+			retval=new UserDBOperations(bubbleDS).getAllPendingFormulaTextApprovalList(json.getNString("id"));		
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -949,7 +949,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).updateFormulaTextApprovalList(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("flag"));		
+			retval=new UserDBOperations(bubbleDS).updateFormulaTextApprovalList(json.getNString("id"),json.getNString("textID"),json.getNString("flag"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
@@ -965,7 +965,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).getUserFormulaTextApprovalRequestStatus(json.getJsonObject().getString("id"));		
+			retval=new UserDBOperations(bubbleDS).getUserFormulaTextApprovalRequestStatus(json.getNString("id"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
@@ -981,7 +981,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).getAllApprovedFormulaText(json.getJsonObject().getString("id"));		
+			retval=new UserDBOperations(bubbleDS).getAllApprovedFormulaText(json.getNString("id"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
@@ -997,7 +997,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).checkFormulaText(json.getJsonObject().getString("id"),json.getJsonObject().getString("textFormula"),json.getJsonObject().getString("smsText"));		
+			retval=new UserDBOperations(bubbleDS).checkFormulaText(json.getNString("id"),json.getNString("textFormula"),json.getNString("smsText"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
@@ -1013,7 +1013,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyText(json.getJsonObject().getString("id"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("extendedRes"));		
+			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyText(json.getNString("id"),json.getNString("smsText"),json.getNString("extendedRes"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
@@ -1029,7 +1029,7 @@ public class UserOperations {
 			json=new JsonDecoder(messageBody);
 		}
 		if(json.getErrorCode().equals("0")) {
-			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyID(json.getJsonObject().getString("id"),json.getJsonObject().getString("textID"),json.getJsonObject().getString("smsText"),json.getJsonObject().getString("extendedRes"));		
+			retval=new UserDBOperations(bubbleDS).checkFormulaTextFromDBbyID(json.getNString("id"),json.getNString("textID"),json.getNString("smsText"),json.getNString("extendedRes"));		
 		}else{
 			retval="E:JSON string invalid";
 		}		
