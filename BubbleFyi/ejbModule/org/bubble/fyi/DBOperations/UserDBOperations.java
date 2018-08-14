@@ -3818,7 +3818,7 @@ public class UserDBOperations {
 	public String requestFormulaApproval(String id, String smsText) {
 		String errorCode = "-1";// default errorCode
 		String errorRes = "Request for approval Failed";
-		String sqlTextCheck = "SELECT id FROM tbl_preapproved_texts where userID=? and textFormula=? limit 1";
+		String sqlTextCheck = "SELECT id FROM tbl_preapproved_texts where userID=? and userInputText=? limit 1";
 		String sqlInsert = "INSERT INTO tbl_preapproved_texts(" + "userID,textFormula,userInputText,request_time" + ") VALUES"
 				+ "(?,?,?,current_timestamp)";
 		ResultSet rs = null;
@@ -3893,7 +3893,7 @@ public class UserDBOperations {
 	public String getAllPendingFormulaTextApprovalList(String id) {
 		String retval = "";
 		String errorCode = "-1";
-		String errorRes = "Fetching allPendingSMSApproval Failed";
+		String errorRes = "Fetching allPendingFormulaTextApproval Failed";
 		String userFlag = "-1";
 		try {
 			userFlag = getUserTypeCustomerList(id);
@@ -3923,11 +3923,11 @@ public class UserDBOperations {
 					if (NullPointerExceptionHandler.isNullOrEmpty(retval))
 					{
 						retval = "null";
-						errorRes = "No SMS  Pending For Approval";
+						errorRes = "No FormulaText  Pending For Approval";
 					}
 					else 
 					{
-						errorRes = "Successfully Fetched All Pending SMS Approval";
+						errorRes = "Successfully Fetched All Pending FormulaText Approval";
 					}
 					int lio = retval.lastIndexOf("|");
 					if (lio > 0)
@@ -3956,7 +3956,7 @@ public class UserDBOperations {
 			LogWriter.LOGGER.severe(e.getMessage());
 			e.printStackTrace();
 		}
-		LogWriter.LOGGER.info(" return from  get All Pending SMS Approval --> userFlag : " + userFlag + ":" + retval);
+		LogWriter.LOGGER.info(" return from  get All Pending FormulaText Approval --> userFlag : " + userFlag + ":" + retval);
 		if (retval.startsWith("null") || !errorCode.startsWith("0")) 
 		{
 			JsonEncoder jsonEncoder = new JsonEncoder();
@@ -3992,7 +3992,7 @@ public class UserDBOperations {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		LogWriter.LOGGER.info(" return from  Update Pending SMS Approval --> userFlag : " + userFlag + ":" + errorCode);
+		LogWriter.LOGGER.info(" return from  Update Pending FormulaText Approval --> userFlag : " + userFlag + ":" + errorCode);
 		if (errorCode.startsWith("0")) {
 			errorRes = "Successfully Updated Pending Approval List";
 		} else if (errorCode.startsWith("-1")) {
@@ -4019,7 +4019,7 @@ public class UserDBOperations {
 	public String getUserFormulaTextApprovalRequestStatus(String id) {
 		String retval = "";
 		String errorCode = "-1";
-		String errorRes = "Fetching userSMSApprovalStatus Failed";
+		String errorRes = "Fetching userFormulaTextApprovalStatus Failed";
 		String userFlag = "-1";
 		try {
 			userFlag = getUserTypeCustomerList(id);
@@ -4069,7 +4069,7 @@ public class UserDBOperations {
 			e.printStackTrace();
 			LogWriter.LOGGER.severe(e.getMessage());
 		}
-		LogWriter.LOGGER.info(" return from get User SMS Approval Status --> userFlag : " + userFlag + ":" + retval);
+		LogWriter.LOGGER.info(" return from get User FormulaText Approval Status --> userFlag : " + userFlag + ":" + retval);
 		if (!errorCode.startsWith("0")) {
 			JsonEncoder jsonEncoder = new JsonEncoder();
 			jsonEncoder.addElement("ErrorCode", errorCode);

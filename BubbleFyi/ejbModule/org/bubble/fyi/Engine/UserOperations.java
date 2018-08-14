@@ -1048,7 +1048,8 @@ public class UserOperations {
 		}else{
 			Credentials=new JsonDecoder(messageBody);
 		}
-		retval=new UserDBOperations(bubbleDS).getPendingBulksmsList(Credentials.getJsonObject().getString("id"));		
+		retval=new UserDBOperations(bubbleDS).getPendingBulksmsList(Credentials.getNString("id"));		
+		LogWriter.LOGGER.info("i am here . . . ");
 		return retval;
 	}
 	

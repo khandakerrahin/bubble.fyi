@@ -40,6 +40,7 @@ public class JsonDecoder {
 		jsonObjectMap=null;
 		try {
 			LogWriter.LOGGER.info("Decoding : "+ this.inputJSONString);
+			
 			if(!jsonString.isEmpty()) {
 
 				is = new ByteArrayInputStream(jsonString.getBytes("UTF-8")); //jsonString.getBytes("UTF-8")
@@ -129,6 +130,8 @@ public class JsonDecoder {
 		try{
 			return this.jsonObject.getString(s);
 		}catch(NullPointerException n) {
+			return null;
+		}catch(ClassCastException cE) {
 			return null;
 		}
 	}
