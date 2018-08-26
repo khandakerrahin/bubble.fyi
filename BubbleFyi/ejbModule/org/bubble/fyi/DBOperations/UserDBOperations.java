@@ -1682,7 +1682,8 @@ public class UserDBOperations {
 		boolean retval=false;
 		//TODO needs to change for variable price
 		double tmpAmount=smsPrice*val;
-		double amount=(double)Math.round(tmpAmount * 100d) / 100d;
+		//double amount=(double)Math.round(tmpAmount * 100d) / 100d;
+		double amount=smsCostConverionCalculator(tmpAmount);
 		
 		LogWriter.LOGGER.info("amount(): "+amount);
 		String sqlUpdateUser="UPDATE `customer_balance` SET balance = balance-(?) WHERE user_id=?";
@@ -2099,6 +2100,7 @@ public class UserDBOperations {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		LogWriter.LOGGER.info("smsCostConverionCalculator :input:output = "+tmpSMSCost+" : "+d);
 		return d;
 	}
 	
