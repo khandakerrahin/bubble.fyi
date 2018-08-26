@@ -137,7 +137,6 @@ public class RequestHandler implements RequestHandlerLocal {
 			}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both group instant sms and group scheduled sms //TODO
 				retVal=new UserOperations(bubbleDS).instantGroupSMSDetail(message,messageBody); 
 			}		
-
 			/*
 			else if(action.equalsIgnoreCase("sendScheduledSMS")) { //TODO Not in Use old version used Scheduled for bulk sms redundant;
 				retVal=new UserOperations(bubbleDS).sentSMSScheduled(message,messageBody); 	
@@ -233,19 +232,26 @@ public class RequestHandler implements RequestHandlerLocal {
 			}
 
 			// NiharekahS
-			else if(action.equalsIgnoreCase("requestSMSApproval")) {
-				retVal=new UserOperations(bubbleDS).requestSMSApproval(message,messageBody);			
-			}else if(action.equalsIgnoreCase("getPendingSMSApprovalList")) {
-				retVal=new UserOperations(bubbleDS).getPendingSMSApprovalList(message,messageBody);			
-			}else if(action.equalsIgnoreCase("updatePendingSMSApprovalList")) {
-				retVal=new UserOperations(bubbleDS).updatePendingSMSApprovalList(message,messageBody);			
-			}else if(action.equalsIgnoreCase("getSMSApprovalRequestStatus")) {
-				retVal=new UserOperations(bubbleDS).getSMSApprovalRequestStatus(message,messageBody);			
-			}else if(action.equalsIgnoreCase("getApprovedSMSList")) {
-				retVal=new UserOperations(bubbleDS).getApprovedSMSList(message,messageBody);			
+			else if(action.equalsIgnoreCase("requestFormulaTextApproval")) {
+				retVal=new UserOperations(bubbleDS).requestFormulaTextApproval(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getPendingFormulaTextApprovalList")) {
+				retVal=new UserOperations(bubbleDS).getPendingFormulaTextApprovalList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("updatePendingFormulaTextApprovalList")) {
+				retVal=new UserOperations(bubbleDS).updatePendingFormulaTextApprovalList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getFormulaTextApprovalRequestStatus")) {
+				retVal=new UserOperations(bubbleDS).getFormulaTextApprovalRequestStatus(message,messageBody);			
+			}else if(action.equalsIgnoreCase("getApprovedFormulaTextList")) {
+				retVal=new UserOperations(bubbleDS).getApprovedFormulaTextList(message,messageBody);			
+			}else if(action.equalsIgnoreCase("matchFormulaText")) {
+				retVal=new UserOperations(bubbleDS).matchFormulaText(message,messageBody);			
+			}else if(action.equalsIgnoreCase("matchFormulaTextFromDBbyText")) {
+				retVal=new UserOperations(bubbleDS).matchFormulaTextFromDBbyText(message,messageBody);			
+			}else if(action.equalsIgnoreCase("matchFormulaTextFromDBbyID")) {
+				retVal=new UserOperations(bubbleDS).matchFormulaTextFromDBbyID(message,messageBody);			
 			}
-
+			
 			// NiharekahS end
+
 
 			/*else if(action.equalsIgnoreCase("CheckloginAPI")) {
 				retVal=new LoginProcessor(bubbleDS).processLoginAPI(message,messageBody);
