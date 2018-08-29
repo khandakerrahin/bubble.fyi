@@ -228,7 +228,8 @@ public class RequestHandler implements RequestHandlerLocal {
 			}/** API used by bulk sms Distributer Application **/
 
 			else if(action.equalsIgnoreCase("smsDistributer")) { // both group sms scheduled or not scheduled
-				retVal=new UserOperations(bubbleDS).smsDistributionInitiator(message,messageBody); 			
+				retVal=new UserOperations(bubbleDS).smsDistributionInitiator(message,messageBody); 
+				
 			}
 
 			// NiharekahS
