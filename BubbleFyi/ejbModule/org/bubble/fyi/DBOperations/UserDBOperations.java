@@ -1651,7 +1651,7 @@ public class UserDBOperations {
 	 * @param smsPrice
 	 * @return boolean after updating customer balance
 	 */
-<<<<<<< HEAD
+
 	private boolean updateBalanceBulkSMS(String userId,int val,double smsPrice) {
 		//TODO needs to update with cost
 		boolean retval=false;
@@ -1662,17 +1662,7 @@ public class UserDBOperations {
 		
 		LogWriter.LOGGER.info("amount(): "+amount);
 		String sqlUpdateUser="UPDATE `customer_balance` SET balance = balance-(?) WHERE user_id=?";
-=======
-	private boolean updateBalanceBulkSMS(String userId, int val, double smsPrice) {
-		// TODO needs to update with cost
-		boolean retval = false;
-		// TODO needs to change for variable price
-		double tmpAmount = smsPrice * val;
-		double amount = (double) Math.round(tmpAmount * 100d) / 100d;
 
-		LogWriter.LOGGER.info("amount(): " + amount);
-		String sqlUpdateUser = "UPDATE `customer_balance` SET balance = balance-(?) WHERE user_id=?";
->>>>>>> branch 'shaker' of https://spiderdxb@bitbucket.org/spiderdigitalcommerce/bubble.fyi.git
 		try {
 			bubbleDS.prepareStatement(sqlUpdateUser);
 			bubbleDS.getPreparedStatement().setDouble(1, amount);
