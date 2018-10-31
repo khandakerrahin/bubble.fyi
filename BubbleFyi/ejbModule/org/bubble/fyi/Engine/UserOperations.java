@@ -398,6 +398,9 @@ public class UserOperations {
 				editedMsisdn=credentials.getNString("newMsisdn");
 				field2=credentials.getNString("field1");
 				field3=credentials.getNString("field2");
+			}else if(credentials.getNString("flag").equals("1")) {
+				field2=credentials.getNString("field1");
+				field3=credentials.getNString("field2");
 			}
 			retval=updateGroupList(credentials.getNString("userId"),credentials.getNString("msisdn"),editedMsisdn,credentials.getNString("flag"),credentials.getNString("listId"),field2,field3);			
 		}else{
