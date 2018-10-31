@@ -35,8 +35,8 @@ public class EmailSender {
 			/**
 https://120.50.5.39:8443/HttpReceiver/HttpReceiver?destinationName=spiderpostbox&destinationType=queue&clientid=spiderpostbox&target=ENGINE&LoadConf=N&reply=true&action=sendEmail
 			 */
-			this.destinationName="spiderpostbox";
-			this.clientId="spiderpostbox";
+			this.destinationName="spiderpostboxrelay";
+			this.clientId="spiderpostboxrelay";
 			this.target="ENGINE";
 			this.LoadConf="N";
 			this.reply="true";

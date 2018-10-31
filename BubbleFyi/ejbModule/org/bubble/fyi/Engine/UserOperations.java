@@ -137,8 +137,8 @@ public class UserOperations {
 	public String retryBulksmsLowBalanceStatus( String customerid,String groupId) {
 		return new UserDBOperations(bubbleDS).BulksmsLowBalanceStatusChange(customerid,groupId).getJsonObject().toString();
 	}
-	public String updateGroupList(String id, String msisdn,String flag,String listId) {
-		return new UserDBOperations(bubbleDS).modifyGrouplistDB(id, msisdn,flag,listId);
+	public String updateGroupList(String id, String msisdn,String editedMsisdn,String flag,String listId, String field2,String field3) {
+		return new UserDBOperations(bubbleDS).modifyGrouplistDB(id, msisdn,editedMsisdn,flag,listId,field2,field3);
 	}
 	public String deleteGroupList(String id,String listId) {
 		return new UserDBOperations(bubbleDS).deleteGrouplistDB(id,listId);
@@ -391,7 +391,15 @@ public class UserOperations {
 			credentials=new JsonDecoder(messageBody);
 		}
 		if(credentials.getErrorCode().equals("0")) {
-			retval=updateGroupList(credentials.getNString("userId"),credentials.getNString("msisdn"),credentials.getNString("flag"),credentials.getNString("listId"));
+			String editedMsisdn="";
+			String field2="";
+			String field3="";
+			if(credentials.getNString("flag").equals("3")) {
+				editedMsisdn=credentials.getNString("newMsisdn");
+				field2=credentials.getNString("field1");
+				field3=credentials.getNString("field2");
+			}
+			retval=updateGroupList(credentials.getNString("userId"),credentials.getNString("msisdn"),editedMsisdn,credentials.getNString("flag"),credentials.getNString("listId"),field2,field3);			
 		}else{
 			retval="E:JSON string invalid";
 		}
@@ -888,6 +896,18 @@ public class UserOperations {
 			Credentials=new JsonDecoder(messageBody);
 		}
 		retval=new UserDBOperations(bubbleDS).getListMsisdnFunc(Credentials.getNString("id"),Credentials.getNString("listId"));		
+		return retval;
+	}
+	
+	public String getListMsisdnRow(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder Credentials;
+		if(messageBody.isEmpty()) {
+			Credentials=new JsonDecoder(message);			
+		}else{
+			Credentials=new JsonDecoder(messageBody);
+		}
+		retval=new UserDBOperations(bubbleDS).getListMsisdnRowFunc(Credentials.getNString("id"),Credentials.getNString("rowId"));		
 		return retval;
 	}
 	

@@ -114,6 +114,8 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new RegistrationProcessor(bubbleDS).processCustomerRegistration(message,messageBody);
 			}else if(action.equalsIgnoreCase("sendSMS")) {//documented			
 				retVal=new SMSProcessor(bubbleDS).processSendSMS(message,messageBody);
+			}else if(action.equalsIgnoreCase("sendSMSv2")) {//documented			
+				retVal=new SMSProcessor(bubbleDS).processSendSMSv2(message,messageBody);
 			}else if(action.equalsIgnoreCase("getReports")) {//documented
 				retVal=new UserOperations(bubbleDS).getDashboard(message,messageBody);
 			}else if(action.equalsIgnoreCase("modifyPassword")) {
@@ -153,8 +155,7 @@ public class RequestHandler implements RequestHandlerLocal {
 			}
 			else if(action.equalsIgnoreCase("sendBulksmsFromList")) { // both group sms scheduled or not scheduled
 				retVal=new UserOperations(bubbleDS).sentSMSFromList(message,messageBody); 			
-			}
-			else if(action.equalsIgnoreCase("getBulksmsDetail")) {//documented	
+			}else if(action.equalsIgnoreCase("getBulksmsDetail")) {//documented	
 				retVal=new UserOperations(bubbleDS).getBulksmsDetailC(message,messageBody); 
 			}else if(action.equalsIgnoreCase("getBulkSendStatus")) {
 				retVal=new UserOperations(bubbleDS).BulkSendStatus(message,messageBody); 
@@ -162,9 +163,15 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).getAddressBook(message,messageBody); 	
 			}else if(action.equalsIgnoreCase("getListMsisdn")) {//documented	
 				retVal=new UserOperations(bubbleDS).getListMsisdn(message,messageBody); 
-			}else if(action.equalsIgnoreCase("modifyGroupList")) {
+			}
+			/**/
+			else if(action.equalsIgnoreCase("getListMsisdnRow")) {
+				retVal=new UserOperations(bubbleDS).getListMsisdnRow(message,messageBody);			
+			}
+			/**/else if(action.equalsIgnoreCase("modifyGroupList")) {
 				retVal=new UserOperations(bubbleDS).modifyGroupList(message,messageBody);			
-			}else if(action.equalsIgnoreCase("totalCountAddressBook")) {//documented	
+			}
+			else if(action.equalsIgnoreCase("totalCountAddressBook")) {//documented	
 				retVal=new UserOperations(bubbleDS).getCountAddressBook(message,messageBody); 
 			}else if(action.equalsIgnoreCase("uploadLogo")) {//documented	
 				retVal=new UserOperations(bubbleDS).uploadLogo(message,messageBody); 

@@ -55,6 +55,34 @@ public class SMSProcessor {
 		}
 		return retval;
 	}
+	
+	public String processSendSMSv2(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder SMSInfo;
+		if(messageBody.isEmpty()) {
+			SMSInfo=new JsonDecoder(message);
+		}else {
+			SMSInfo=new JsonDecoder(messageBody);
+		}
+		SMSSender sendSMS=new SMSSender(bubbleDS);
+		if(SMSInfo.getErrorCode().equals("0")) {
+			retval=sendSMS.insertToSenderV2(SMSInfo).getJsonObject().toString();
+			LogWriter.LOGGER.info("retval from insertToSenderV2 : "+retval);
+			
+		}else{
+			String errorCode="E";
+			String errorResp="JSON string invalid";
+			//error decoding json
+			//retval="E:JSON string invalid";
+			JsonEncoder jsonEncoder=new JsonEncoder();
+			jsonEncoder.addElement("ErrorCode", errorCode);
+			jsonEncoder.addElement("ErrorResponse", errorResp);
+			jsonEncoder.buildJsonObject();
+			retval=jsonEncoder.getJsonObject().toString();
+		}
+		LogWriter.LOGGER.info("retval final :"+retval);
+		return retval;
+	}
 
 	public String processSendSMSapi(String message, String messageBody) {
 		String retval="E";
