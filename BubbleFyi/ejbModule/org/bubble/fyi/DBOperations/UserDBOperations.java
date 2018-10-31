@@ -1676,7 +1676,8 @@ public class UserDBOperations {
 		double amount=smsCostConverionCalculator(tmpAmount);
 
 		LogWriter.LOGGER.info("amount(): "+amount);
-		String sqlUpdateUser="UPDATE `customer_balance` SET balance = balance-(?) WHERE user_id=?";
+		//String sqlUpdateUser="UPDATE `customer_balance` SET balance = balance-(?) WHERE user_id=?";		
+		String sqlUpdateUser="UPDATE `customer_balance` SET balance = ((balance * 10000) - (? * 10000)) / 10000 WHERE user_id=?";
 
 		try {
 			bubbleDS.prepareStatement(sqlUpdateUser);
