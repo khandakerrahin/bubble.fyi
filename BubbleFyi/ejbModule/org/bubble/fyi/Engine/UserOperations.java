@@ -152,6 +152,9 @@ public class UserOperations {
 	public String GroupSMSDetailDB(String id, String sch_date,String message,String filename) {
 		return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date,message,filename).getJsonObject().toString();
 	}
+	public String OneToOneSMSDetailDB(String id, String sch_date,String filename) {
+		return new UserDBOperations(bubbleDS).createOneToOneSMSInfo(id, sch_date,filename).getJsonObject().toString();
+	}
 	public String RequestPackagePurchaseDB(String id, String package_name,String price) {
 		return new UserDBOperations(bubbleDS).packagePurchaseRequester(id, package_name,price).getJsonObject().toString();		
 	}
@@ -471,6 +474,23 @@ public class UserOperations {
 		}
 		if(json.getErrorCode().equals("0")) {
 				retval=GroupSMSDetailDB(json.getNString("id"),json.getNString("schedule_date"),json.getNString("smsText"),json.getNString("filename"));
+			
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String instantOneToOneSMSDetail(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+				retval=OneToOneSMSDetailDB(json.getNString("id"),json.getNString("schedule_date"),json.getNString("filename"));
 			
 		}else{
 			retval="E:JSON string invalid";

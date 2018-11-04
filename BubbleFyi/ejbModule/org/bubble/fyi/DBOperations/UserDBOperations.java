@@ -582,7 +582,8 @@ public class UserDBOperations {
 		String errorCode = "-1";
 		String newStatus = "-1";
 		// TODO needs to change
-		double smsPrice = 0.25;
+		// double smsPrice = 0.25;
+		double smsPrice = getCustomerChargingDetailUDB(customerId,1);
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		try {
 			// check if group associated with user //also check the status //Check balance
@@ -2333,11 +2334,11 @@ public class UserDBOperations {
 						jsonEncoder.addElement("filename", filename);
 						jsonEncoder.addElement("listId", groupid);
 					}
-					LogWriter.LOGGER.severe("groupid : " + groupid);
+					LogWriter.LOGGER.info("groupid : " + groupid);
 					insertSuccess = true;
 				} catch (SQLIntegrityConstraintViolationException de) {
 					errorCode = "1";// : Same listname Already exists
-					LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:" + de.getMessage());
+					LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
 				} catch (SQLException e) {
 					errorCode = "11";// :Inserting parameters failed
 					e.printStackTrace();
@@ -2377,11 +2378,11 @@ public class UserDBOperations {
 						jsonEncoder.addElement("filename", filename);
 						jsonEncoder.addElement("listId", groupid);
 					}
-					LogWriter.LOGGER.severe("groupid : " + groupid);
+					LogWriter.LOGGER.info("groupid : " + groupid);
 					insertSuccess = true;
 				} catch (SQLIntegrityConstraintViolationException de) {
 					errorCode = "1"; // : Same listname Already exists
-					LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:" + de.getMessage());
+					LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
 				} catch (SQLException e) {
 					errorCode = "11"; // :Inserting parameters failed
 					e.printStackTrace();
@@ -2411,6 +2412,116 @@ public class UserDBOperations {
 
 		return jsonEncoder;
 	}
+	
+	public JsonEncoder createOneToOneSMSInfo(String userId, String sch_date, String filename) {
+		JsonEncoder jsonEncoder = new JsonEncoder();
+
+		String errorCode = "-1";
+		String aparty = "";
+		String telcoDetail = "";
+
+		SMSSender ss = new SMSSender(bubbleDS);
+		aparty = ss.getAparty(userId);
+		if (!aparty.isEmpty())
+			telcoDetail = ss.getTelcoDetail(aparty);
+		try {
+			if (sch_date.isEmpty()) {
+
+				String sql = "INSERT INTO oneToOne_sender_info" + " (user_id,telco_partner,aparty) "
+						+ "VALUES (?,?,?)";
+
+				try {
+					// json: name,email,phone,password
+					bubbleDS.prepareStatement(sql, true);
+					bubbleDS.getPreparedStatement().setString(1, userId);
+					bubbleDS.getPreparedStatement().setString(2, telcoDetail);
+					bubbleDS.getPreparedStatement().setString(3, aparty);
+					errorCode = "0";// :Successfully Inserted
+					boolean insertSuccess = false;
+
+					bubbleDS.execute();
+					String oneToOneID = getNewGroupId();
+					String retval = bubbleOneToOneFileInsertInstant(filename, userId, oneToOneID);
+					if (!retval.equals("0")) {
+						errorCode = retval;
+					} else {
+						jsonEncoder.addElement("id", userId);
+						jsonEncoder.addElement("filename", filename);
+						jsonEncoder.addElement("oneToOneID", oneToOneID);
+					}
+					LogWriter.LOGGER.info("oneToOneID : " + oneToOneID);
+					insertSuccess = true;
+				} catch (SQLIntegrityConstraintViolationException de) {
+					errorCode = "1";// : Same listname Already exists
+					LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
+				} catch (SQLException e) {
+					errorCode = "11";// :Inserting parameters failed
+					e.printStackTrace();
+					LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+				} catch (Exception e) {
+					e.printStackTrace();
+					errorCode = "10"; // :other Exception
+					e.printStackTrace();
+				}
+			} else {
+				String sql = "INSERT INTO oneToOne_sender_info"
+						+ " (user_id,scheduled_date,telco_partner,aparty) " + "VALUES (?,?,?,?)";
+
+				try {
+					bubbleDS.prepareStatement(sql, true);
+					bubbleDS.getPreparedStatement().setString(1, userId);
+					bubbleDS.getPreparedStatement().setString(2, sch_date);
+					bubbleDS.getPreparedStatement().setString(3, telcoDetail);
+					bubbleDS.getPreparedStatement().setString(4, aparty);
+
+					errorCode = "0";// :Successfully Inserted
+					boolean insertSuccess = false;
+
+					bubbleDS.execute();
+					String oneToOneID = getNewGroupId();
+					String retval = bubbleOneToOneFileInsertInstant(filename, userId, oneToOneID);
+					if (!retval.equals("0")) {
+						errorCode = retval;
+					} else {
+						jsonEncoder.addElement("id", userId);
+						jsonEncoder.addElement("filename", filename);
+						jsonEncoder.addElement("oneToOneID", oneToOneID);
+					}
+					LogWriter.LOGGER.info("oneToOneID : " + oneToOneID);
+					insertSuccess = true;
+				} catch (SQLIntegrityConstraintViolationException de) {
+					errorCode = "1"; // : Same listname Already exists
+					LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
+				} catch (SQLException e) {
+					errorCode = "11"; // :Inserting parameters failed
+					e.printStackTrace();
+					LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+				} catch (Exception e) {
+					e.printStackTrace();
+					errorCode = "10"; // :other Exception
+					e.printStackTrace();
+				}
+			}
+		} finally {
+			if (bubbleDS.getConnection() != null) {
+				try {
+					bubbleDS.closePreparedStatement();
+					// bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode = "-4"; // :connection close Exception
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}
+		}
+		// LogWriter.LOGGER.info("UserID:"+userId);
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.buildJsonObject();
+		// errorCode=jsonEncoder;
+
+		return jsonEncoder;
+	}
+	
 	/**
 	 * 
 	 * @param userid
@@ -2779,7 +2890,6 @@ public class UserDBOperations {
 		String sqlInsert = "INSERT INTO bubble_file_info(file_name,user_id,groupID) VALUES(?,?,?)";
 		int gId = Integer.parseInt(groupid);
 		try {
-			// json: file_name,school_id
 			bubbleDS.prepareStatement(sqlInsert);
 			bubbleDS.getPreparedStatement().setString(1, filename);
 			bubbleDS.getPreparedStatement().setString(2, id);
@@ -2788,7 +2898,40 @@ public class UserDBOperations {
 				bubbleDS.execute();
 			} catch (SQLIntegrityConstraintViolationException de) {
 				errorCode = "-1:duplicate filename";
-				LogWriter.LOGGER.info("SQLIntegrityConstraintViolationException:" + de.getMessage());
+				LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
+			} catch (SQLException e) {
+				errorCode = "-11:Inserting failed";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+			}
+			// if(bubbleDS.getConnection() != null) bubbleDS.closePreparedStatement();
+			if (errorCode.equals("-1"))
+				errorCode = "0";
+		} catch (SQLException e) {
+			errorCode = "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		} catch (Exception e) {
+			errorCode = "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+			e.printStackTrace();
+		}
+		return errorCode;
+	}
+	
+	public String bubbleOneToOneFileInsertInstant(String filename, String id, String oneToOneID) {
+		String errorCode = "-1";// default errorCode
+		String sqlInsert = "INSERT INTO bubble_file_info(file_name,user_id,oneToOneID) VALUES(?,?,?)";
+		int otoID = Integer.parseInt(oneToOneID);
+		try {
+			bubbleDS.prepareStatement(sqlInsert);
+			bubbleDS.getPreparedStatement().setString(1, filename);
+			bubbleDS.getPreparedStatement().setString(2, id);
+			bubbleDS.getPreparedStatement().setInt(3, otoID);
+			try {
+				bubbleDS.execute();
+			} catch (SQLIntegrityConstraintViolationException de) {
+				errorCode = "-1:duplicate filename";
+				LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
 			} catch (SQLException e) {
 				errorCode = "-11:Inserting failed";
 				e.printStackTrace();

@@ -104,6 +104,11 @@ public class UserInfo {
 				}else {
 					jsonEncoder.addElement("targetSMS", "1");
 				}
+				if(featureList.endsWith("1") && featureList.length()>5) {
+				     jsonEncoder.addElement("oneToOneSMS", "1");
+			    }else {
+			    	jsonEncoder.addElement("oneToOneSMS", "0");
+				}
 				//jsonEncoder.addElement("smsRemaining", rs.getString("smsCount"));	
 				if(!rs.getString("user_type").equals("Admin")) {
 				jsonEncoder.addElement("custodian_name", rs.getString("custodian_name"));

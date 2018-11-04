@@ -138,6 +138,8 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).uploadFileListGetter(message,messageBody);
 			}else if(action.equalsIgnoreCase("sendBulkSMSInstant")) {// used for both group instant sms and group scheduled sms //TODO
 				retVal=new UserOperations(bubbleDS).instantGroupSMSDetail(message,messageBody); 
+			}else if(action.equalsIgnoreCase("sendOneToOneBulkSMSInstant")) {// used for both oneToOne instant sms and oneToOne scheduled sms //TODO
+				retVal=new UserOperations(bubbleDS).instantOneToOneSMSDetail(message,messageBody); 
 			}		
 			/*
 			else if(action.equalsIgnoreCase("sendScheduledSMS")) { //TODO Not in Use old version used Scheduled for bulk sms redundant;
