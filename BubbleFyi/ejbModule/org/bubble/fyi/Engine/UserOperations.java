@@ -196,6 +196,9 @@ public class UserOperations {
 	public String DownloadSingleSMSReport(String id, String start_date,String end_date,String output_type) {
 			return new UserDBOperations(bubbleDS).downloadSingleSMSReport(id, start_date,end_date,output_type).getJsonObject().toString();				
 	}
+	public String DownloadOneToOneSMSReport(String id, String start_date,String end_date,String output_type) {
+		return new UserDBOperations(bubbleDS).downloadOneToOneSMSReport(id, start_date,end_date,output_type).getJsonObject().toString();				
+	}	
 	public String GetBulkSMSSummary(String id,String start_date,String end_date,String output_type) {
 		return new UserDBOperations(bubbleDS).getBulkSMSSummary(id,start_date,end_date,output_type).getJsonObject().toString();				
     }
@@ -631,6 +634,23 @@ public class UserOperations {
 		if(json.getErrorCode().equals("0")) {
 			//mode=1 list mode=2 file 
 				retval=DownloadSingleSMSReport(json.getNString("id"),json.getNString("startDate"),json.getNString("endDate"),json.getNString("outputType"));
+		}else{
+			retval="E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String reportDownloadOneToOnesms(String message, String messageBody) {
+		String retval="E";
+		JsonDecoder json;
+		if(messageBody.isEmpty()) {
+			json=new JsonDecoder(message);
+		}else{
+			json=new JsonDecoder(messageBody);
+		}
+		if(json.getErrorCode().equals("0")) {
+			//mode=1 list mode=2 file 
+				retval=DownloadOneToOneSMSReport(json.getNString("id"),json.getNString("startDate"),json.getNString("endDate"),json.getNString("outputType"));
 		}else{
 			retval="E:JSON string invalid";
 		}

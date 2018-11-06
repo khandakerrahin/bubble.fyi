@@ -196,6 +196,8 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).reportDownloadSinglesms(message,messageBody); 
 			}else if(action.equalsIgnoreCase("requestBulkSMSSummaryReport")) {//documented
 				retVal=new UserOperations(bubbleDS).getBulkReportSummary(message,messageBody);
+			}else if(action.equalsIgnoreCase("requestOneToOneSMSReport")) {//documented	
+				retVal=new UserOperations(bubbleDS).reportDownloadOneToOnesms(message,messageBody); 
 			}else if(action.equalsIgnoreCase("downloadReports")) {//documented
 				retVal=new UserOperations(bubbleDS).getReportInfo(message,messageBody);
 			}else if(action.equalsIgnoreCase("getGeoLocation")) {//documented	

@@ -2425,10 +2425,41 @@ public class UserDBOperations {
 		if (!aparty.isEmpty())
 			telcoDetail = ss.getTelcoDetail(aparty);
 		try {
+			String oneToOneID = "";
+			String sqlBroadcastLog = "INSERT INTO broadcast_log" + " (user_id,broadcast_type) "
+					+ "VALUES (?,?)";
+
+			try {
+				// json: name,email,phone,password
+				bubbleDS.prepareStatement(sqlBroadcastLog, true);
+				bubbleDS.getPreparedStatement().setString(1, userId);
+				bubbleDS.getPreparedStatement().setString(2, "3");
+				
+				errorCode = "0";// :Successfully Inserted
+				
+				bubbleDS.execute();
+				
+				oneToOneID = getNewGroupId();
+				
+				LogWriter.LOGGER.info("inserted into broadcast_log for userID  : " + userId +", oneToOneID : "+oneToOneID);
+				
+			} catch (SQLIntegrityConstraintViolationException de) {
+				errorCode = "1";// : Same name Already exists
+				LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
+			} catch (SQLException e) {
+				errorCode = "11";// :Inserting parameters failed
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+			} catch (Exception e) {
+				e.printStackTrace();
+				errorCode = "10"; // :other Exception
+				e.printStackTrace();
+			}
+			
 			if (sch_date.isEmpty()) {
 
-				String sql = "INSERT INTO oneToOne_sender_info" + " (user_id,telco_partner,aparty) "
-						+ "VALUES (?,?,?)";
+				String sql = "INSERT INTO oneToOne_sender_info" + " (user_id,telco_partner,aparty,oneToOneID) "
+						+ "VALUES (?,?,?,?)";
 
 				try {
 					// json: name,email,phone,password
@@ -2436,11 +2467,11 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setString(1, userId);
 					bubbleDS.getPreparedStatement().setString(2, telcoDetail);
 					bubbleDS.getPreparedStatement().setString(3, aparty);
+					bubbleDS.getPreparedStatement().setString(4, oneToOneID);
 					errorCode = "0";// :Successfully Inserted
 					boolean insertSuccess = false;
 
 					bubbleDS.execute();
-					String oneToOneID = getNewGroupId();
 					String retval = bubbleOneToOneFileInsertInstant(filename, userId, oneToOneID);
 					if (!retval.equals("0")) {
 						errorCode = retval;
@@ -2465,7 +2496,7 @@ public class UserDBOperations {
 				}
 			} else {
 				String sql = "INSERT INTO oneToOne_sender_info"
-						+ " (user_id,scheduled_date,telco_partner,aparty) " + "VALUES (?,?,?,?)";
+						+ " (user_id,scheduled_date,telco_partner,aparty,oneToOneID) " + "VALUES (?,?,?,?,?)";
 
 				try {
 					bubbleDS.prepareStatement(sql, true);
@@ -2473,12 +2504,12 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setString(2, sch_date);
 					bubbleDS.getPreparedStatement().setString(3, telcoDetail);
 					bubbleDS.getPreparedStatement().setString(4, aparty);
+					bubbleDS.getPreparedStatement().setString(5, oneToOneID);
 
 					errorCode = "0";// :Successfully Inserted
 					boolean insertSuccess = false;
 
 					bubbleDS.execute();
-					String oneToOneID = getNewGroupId();
 					String retval = bubbleOneToOneFileInsertInstant(filename, userId, oneToOneID);
 					if (!retval.equals("0")) {
 						errorCode = retval;
@@ -2759,7 +2790,8 @@ public class UserDBOperations {
 				+ "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
 				+ "    else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
 				+ "    end AS Delivery_Time\r\n"
-				+ "FROM  smsinfo t  left JOIN   delivery_reports dr ON t.ID = dr.message_id\r\n" + "WHERE  t.userid = '"
+				+ "FROM  smsinfo t  left JOIN   delivery_reports dr ON t.ID = dr.message_id\r\n" + "WHERE  broadcastId in (select id from broadcast_log "
+				+ "where user_id='"+ userId + "' and broadcast_type=2) or broadcastId=0 and t.userid = '"
 				+ userId + "'  AND t.insert_date between '" + start_date + "' and '" + end_date + "' \r\n"
 				+ "ORDER BY t.ID DESC";
 		try {
@@ -2818,7 +2850,83 @@ public class UserDBOperations {
 		jsonEncoder.buildJsonObject();
 		return jsonEncoder;
 	}
+	
+	public JsonEncoder downloadOneToOneSMSReport(String userId, String start_date, String end_date, String output_type) {
+		JsonEncoder jsonEncoder = new JsonEncoder();
+		String errorCode = "-1";
+		String errorResponse = "";
 
+		String query = "SELECT  SUBSTRING((select f.file_name from bubble_file_info f where oneToOneID=t.broadcastId),7) AS FileName,"
+				+ "	   t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count, t.source_id AS SID,\r\n"
+				+ "    DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \r\n"
+				+ "    IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
+				+ "	 IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \r\n"
+				+ "	 Case when dr.operator='RANKSTEL' \r\n"
+				+ "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
+				+ "    else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
+				+ "    end AS Delivery_Time\r\n"
+				+ "FROM  smsinfo t  left JOIN   delivery_reports dr ON t.ID = dr.message_id\r\n" + "WHERE  broadcastId in (select id from broadcast_log "
+				+ "where user_id='"+ userId + "' and broadcast_type=3) and t.userid = '"
+				+ userId + "'  AND t.insert_date between '" + start_date + "' and '" + end_date + "' \r\n"
+				+ "ORDER BY t.ID DESC";
+
+		try {
+
+			String sql = "INSERT INTO file_dump_query (`user_id`,`query`, `output_type`) VALUES (?,?,?);";
+
+			try {
+				bubbleDS.prepareStatement(sql, true);
+				bubbleDS.getPreparedStatement().setString(1, userId);
+				bubbleDS.getPreparedStatement().setString(2, query);
+				bubbleDS.getPreparedStatement().setString(3, output_type);
+				errorCode = "0";
+				errorResponse = "Successfully Inserted";
+				bubbleDS.execute();
+
+			} catch (SQLException e) {
+				errorCode = "11";
+				errorResponse = "Inserting parameters failed";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+			} catch (Exception e) {
+				e.printStackTrace();
+				errorCode = "10";
+				errorResponse = "other Exception";
+				e.printStackTrace();
+			} finally {
+				if (bubbleDS.getConnection() != null) {
+					try {
+						bubbleDS.closePreparedStatement();
+						//// bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						errorCode = "-4";
+						errorResponse = "Connection close Exception";
+						e.printStackTrace();
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}
+			}
+		} finally {
+			if (bubbleDS.getConnection() != null) {
+				try {
+					bubbleDS.closePreparedStatement();
+					// bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode = "-4";
+					errorResponse = "Connection close Exception";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}
+		}
+		// LogWriter.LOGGER.info("UserID:"+userId);
+
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponse", errorResponse);
+		jsonEncoder.buildJsonObject();
+		return jsonEncoder;
+	}
+	
 	public boolean isUserAssociatedWithTrxID(String userid, String trxID) {
 		boolean retval = false;
 		String output = "";
