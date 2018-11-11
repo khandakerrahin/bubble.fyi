@@ -140,6 +140,8 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).instantGroupSMSDetail(message,messageBody); 
 			}else if(action.equalsIgnoreCase("sendOneToOneBulkSMSInstant")) {// used for both oneToOne instant sms and oneToOne scheduled sms //TODO
 				retVal=new UserOperations(bubbleDS).instantOneToOneSMSDetail(message,messageBody); 
+			}else if(action.equalsIgnoreCase("getFailedMsisdnList")) {
+				retVal=new UserOperations(bubbleDS).getFailedMsisdnList(message,messageBody); 
 			}		
 			/*
 			else if(action.equalsIgnoreCase("sendScheduledSMS")) { //TODO Not in Use old version used Scheduled for bulk sms redundant;
@@ -179,6 +181,10 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).uploadLogo(message,messageBody); 
 			}else if(action.equalsIgnoreCase("singleSMSReport")) {//documented
 				retVal=new UserOperations(bubbleDS).getSingleSMSReport(message,messageBody);
+			}else if(action.equalsIgnoreCase("getFailedUploadMsisdnList")) {
+				retVal=new UserOperations(bubbleDS).getFailedUploadMsisdnList(message,messageBody);
+			}else if(action.equalsIgnoreCase("requestFailedMsisdnReport")) {	
+				retVal=new UserOperations(bubbleDS).requestFailedMsisdnReport(message,messageBody); 
 			}else if(action.equalsIgnoreCase("deleteGroup")) {//documented
 				//retVal=new UserOperations().getSingleSMSReport(message,messageBody);
 				retVal=new UserOperations(bubbleDS).deleteGroup(message,messageBody);

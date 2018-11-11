@@ -2553,6 +2553,89 @@ public class UserDBOperations {
 		return jsonEncoder;
 	}
 	
+	public JsonEncoder getFailedMsisdns(String id, String oneToOneID, String listID, String groupID) {
+		JsonEncoder jsonEncoder = new JsonEncoder();
+		String smsType = "";
+		String oneToOneQuery = "SELECT msisdn FROM invalid_msisdn_list t where oneToOneID = ? order by insert_date desc;";
+		String listQuery = "SELECT msisdn FROM invalid_msisdn_list t where list_id = ? order by insert_date desc;";
+		String groupQuery = "SELECT msisdn FROM invalid_msisdn_list t where group_id = ? order by insert_date desc;";
+		String msisdnList = "";
+		
+		String query = "";
+		
+		if(!oneToOneID.equals("")) {
+			smsType = oneToOneID;
+			query = oneToOneQuery;
+		}else if(!listID.equals("")){
+			smsType = listID;
+			query = listQuery;
+		}else if(!groupID.equals("")){
+			smsType = groupID;
+			query = groupQuery;
+		}
+		System.out.println("query : "+query);
+		System.out.println("smsType : "+smsType);
+		System.out.println("groupID : "+groupID);
+		System.out.println("oneToOneID : "+oneToOneID);
+		System.out.println("listID : "+listID);
+		String errorCode = "-1";
+		
+		try {
+			try {
+				bubbleDS.prepareStatement(query);
+				bubbleDS.getPreparedStatement().setString(1, smsType);
+				
+				ResultSet rs = bubbleDS.executeQuery();
+				while (rs.next()) {
+					if(!rs.getString(1).equals("")) {
+						if(msisdnList=="")
+							msisdnList = msisdnList + rs.getString(1);
+						else
+							msisdnList = msisdnList + "," + rs.getString(1);
+						System.out.println("inside IF : " + msisdnList);
+					}
+					System.out.println("resultSet : " + rs.getString(1));
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				errorCode = "0";// :Successfully Inserted
+				
+				LogWriter.LOGGER.info("fetched invalid MSISDN list.");
+				
+			} catch (SQLIntegrityConstraintViolationException de) {
+				errorCode = "1";// : Same name Already exists
+				LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
+			} catch (SQLException e) {
+				errorCode = "11";// :Inserting parameters failed
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+			} catch (Exception e) {
+				e.printStackTrace();
+				errorCode = "10"; // :other Exception
+				e.printStackTrace();
+			}
+		} finally {
+			if (bubbleDS.getConnection() != null) {
+				try {
+					bubbleDS.closePreparedStatement();
+					// bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode = "-4"; // :connection close Exception
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}
+		}
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponse", "");
+		jsonEncoder.addElement("failedMsisdnList", msisdnList);
+		
+		jsonEncoder.buildJsonObject();
+		
+//  	{"ErrorCode:<error code>, "ErrorResponse": <errorResponse>, "failedMsisdnList":"<comma separated failed msisdn list>"}
+		return jsonEncoder;
+	}
+	
 	/**
 	 * 
 	 * @param userid
@@ -2865,20 +2948,27 @@ public class UserDBOperations {
 				+ "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
 				+ "    else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
 				+ "    end AS Delivery_Time\r\n"
-				+ "FROM  smsinfo t  left JOIN   delivery_reports dr ON t.ID = dr.message_id\r\n" + "WHERE  broadcastId in (select id from broadcast_log "
-				+ "where user_id='"+ userId + "' and broadcast_type=3) and t.userid = '"
+				+ "	FROM  smsinfo t  left JOIN   delivery_reports dr ON t.ID = dr.message_id\r\n" + "WHERE  broadcastId in (select id from broadcast_log "
+				+ "	where user_id='"+ userId + "' and broadcast_type=3) and t.userid = '"
 				+ userId + "'  AND t.insert_date between '" + start_date + "' and '" + end_date + "' \r\n"
 				+ "ORDER BY t.ID DESC";
 
+		String summaryQuery = "SELECT dr.delivery_status, count(dr.delivery_status) AS Delivery_Status "
+				+ "	FROM smsinfo t LEFT JOIN delivery_reports dr ON t.ID = dr.message_id "
+				+ "	WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = '"+ userId + "' AND "
+				+ "	broadcast_type = 3) AND t.userid = '"+ userId + "' AND t.insert_date between '" + start_date + "' and '" + end_date + "' "
+				+ " GROUP BY dr.delivery_status";
+		
 		try {
 
-			String sql = "INSERT INTO file_dump_query (`user_id`,`query`, `output_type`) VALUES (?,?,?);";
+			String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`, `output_type`) VALUES (?,?,?,?);";
 
 			try {
 				bubbleDS.prepareStatement(sql, true);
 				bubbleDS.getPreparedStatement().setString(1, userId);
 				bubbleDS.getPreparedStatement().setString(2, query);
-				bubbleDS.getPreparedStatement().setString(3, output_type);
+				bubbleDS.getPreparedStatement().setString(3, summaryQuery);
+				bubbleDS.getPreparedStatement().setString(4, output_type);
 				errorCode = "0";
 				errorResponse = "Successfully Inserted";
 				bubbleDS.execute();
@@ -2925,6 +3015,140 @@ public class UserDBOperations {
 		jsonEncoder.addElement("ErrorResponse", errorResponse);
 		jsonEncoder.buildJsonObject();
 		return jsonEncoder;
+	}
+	
+	public JsonEncoder downloadFailedMsisdnReport(String user_id, String file_id) {
+		JsonEncoder jsonEncoder = new JsonEncoder();
+		String errorCode = "-1";
+		String errorResponse = "";
+
+		String query = fetchQuery(user_id,file_id);
+		String output_type = "0";
+
+		String summaryQuery = "";
+		
+		try {
+
+			String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`, `output_type`) VALUES (?,?,?,?);";
+
+			try {
+				bubbleDS.prepareStatement(sql, true);
+				bubbleDS.getPreparedStatement().setString(1, user_id);
+				bubbleDS.getPreparedStatement().setString(2, query);
+				bubbleDS.getPreparedStatement().setString(3, summaryQuery);
+				bubbleDS.getPreparedStatement().setString(4, output_type);
+				errorCode = "0";
+				errorResponse = "Successfully Inserted";
+				bubbleDS.execute();
+
+			} catch (SQLException e) {
+				errorCode = "11";
+				errorResponse = "Inserting parameters failed";
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+			} catch (Exception e) {
+				e.printStackTrace();
+				errorCode = "10";
+				errorResponse = "other Exception";
+				e.printStackTrace();
+			} finally {
+				if (bubbleDS.getConnection() != null) {
+					try {
+						bubbleDS.closePreparedStatement();
+						//// bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						errorCode = "-4";
+						errorResponse = "Connection close Exception";
+						e.printStackTrace();
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}
+			}
+		} finally {
+			if (bubbleDS.getConnection() != null) {
+				try {
+					bubbleDS.closePreparedStatement();
+					// bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					errorCode = "-4";
+					errorResponse = "Connection close Exception";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}
+		}
+		// LogWriter.LOGGER.info("UserID:"+userId);
+
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("ErrorResponse", errorResponse);
+		jsonEncoder.buildJsonObject();
+		return jsonEncoder;
+	}
+	
+	public String fetchQuery(String user_id, String file_id) {
+		String querys = "SELECT groupID, listId, OneToOneID FROM bubble_file_info where file_name = ? order by created desc";
+		String groupID = "";
+		String listId = "";
+		String oneToOneID = "";
+		String retQuery = "";
+		
+		try {
+			try {
+				bubbleDS.prepareStatement(querys);
+				bubbleDS.getPreparedStatement().setString(1, file_id);
+				
+				ResultSet rs = bubbleDS.executeQuery();
+				while (rs.next()) {
+					groupID = rs.getString("groupID");
+					listId = rs.getString("listId");
+					oneToOneID = rs.getString("oneToOneID");
+					System.out.println("fileDetails : GID" + groupID + " LID" + listId+" OID"+oneToOneID);
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+				
+				String smsType = "";
+				String oneToOneQuery = "SELECT msisdn FROM invalid_msisdn_list t where oneToOneID = replaceMe order by insert_date desc";
+				String listQuery = "SELECT msisdn FROM invalid_msisdn_list t where list_id = replaceMe order by insert_date desc";
+				String groupQuery = "SELECT msisdn FROM invalid_msisdn_list t where group_id = replaceMe order by insert_date desc";
+				
+				if(!NullPointerExceptionHandler.isNullOrEmpty(oneToOneID)) {
+					smsType = oneToOneID;
+					retQuery = oneToOneQuery;
+				}else if(!NullPointerExceptionHandler.isNullOrEmpty(listId)){
+					smsType = listId;
+					retQuery = listQuery;
+				}else if(!NullPointerExceptionHandler.isNullOrEmpty(groupID)){
+					smsType = groupID;
+					retQuery = groupQuery;
+				}
+				
+				retQuery = retQuery.replace("replaceMe", smsType);
+				System.out.println("retQuery : " + retQuery);
+				
+				LogWriter.LOGGER.info("generated query for invalid MSISDN list.");
+				
+			} catch (SQLIntegrityConstraintViolationException de) {
+				LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
+			} catch (SQLException e) {
+				e.printStackTrace();
+				LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} finally {
+			if (bubbleDS.getConnection() != null) {
+				try {
+					bubbleDS.closePreparedStatement();
+					// bubbleDS.getConnection().close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+					LogWriter.LOGGER.severe(e.getMessage());
+				}
+			}
+		}
+		
+		return retQuery;
 	}
 	
 	public boolean isUserAssociatedWithTrxID(String userid, String trxID) {
@@ -3537,15 +3761,22 @@ public class UserDBOperations {
 				"  WHERE  t.user_id = "+ id + " AND t.insert_date between '" + start_date + "' and '" + end_date + "'  \r\n" + 
 				"    ORDER BY gs.ID DESC;";
 		
+		String summaryQuery = "SELECT dr.delivery_status, count(dr.delivery_status) AS Delivery_Status "
+				+ " FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id "
+				+ " left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id "
+				+ " WHERE  t.user_id = "+ id + " AND t.insert_date between '" + start_date + "' and '" + end_date 
+				+ "'GROUP BY dr.delivery_status";
+		
 		try {
 
-			String sql = "INSERT INTO file_dump_query (`user_id`,`query`, `output_type`) VALUES (?,?,?);";
+			String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`, `output_type`) VALUES (?,?,?,?);";
 
 			try {
 				bubbleDS.prepareStatement(sql, true);
 				bubbleDS.getPreparedStatement().setString(1, id);
 				bubbleDS.getPreparedStatement().setString(2, query);
-				bubbleDS.getPreparedStatement().setString(3, output_type);
+				bubbleDS.getPreparedStatement().setString(3, summaryQuery);
+				bubbleDS.getPreparedStatement().setString(4, output_type);
 				errorCode = "0";
 				errorResponse = "Successfully Inserted";
 				bubbleDS.execute();
@@ -3661,6 +3892,52 @@ public class UserDBOperations {
 			retval = errorCode;
 		}
 		LogWriter.LOGGER.severe(" return from  get list --> " + retval);
+		return retval;
+	}
+	
+	public String getFailedMsisdnList(String id) {
+		String retval = "";
+		String errorCode = "-1";
+		String sql = "SELECT min(i.id) as ID,f.file_name as FileName,count(*) as Invalid_msisdn_count,min(f.created) as insert_date "
+				+ "	FROM smsdb.bubble_file_info f,smsdb.invalid_msisdn_list i  "
+				+ " where f.user_id=i.user_id and f.user_id = ? and ( f.groupID=i.group_id or (f.groupID is null and i.group_id is null))"
+				+ " and ( f.listId=i.list_id or (f.listId is null and i.list_id is null))"
+				+ " and ( f.oneToOneID=i.oneToOneID or (f.oneToOneID is null and i.oneToOneID is null)) "
+				+ " group by f.file_name order by min(f.created) desc limit 0,10;";
+		try {
+			bubbleDS.prepareStatement(sql, true);
+			bubbleDS.getPreparedStatement().setString(1, id);
+			
+			ResultSet rs = bubbleDS.executeQuery();
+			LogWriter.LOGGER.info("getFailedMsisdnList executed");
+			while (rs.next()) {
+				retval += rs.getString("ID") + ",";
+				retval += rs.getString("FileName") + ",";
+				retval += rs.getString("Invalid_msisdn_count") + ",";
+				retval += "\"" + rs.getString("insert_date") + "\"";
+				retval += "|";
+			}
+			LogWriter.LOGGER.info("getFailedMsisdnList after execution ");
+			rs.close();
+			bubbleDS.closePreparedStatement();
+			if (NullPointerExceptionHandler.isNullOrEmpty(retval))
+				retval = "0";
+			int lio = retval.lastIndexOf("|");
+			if (lio > 0)
+				retval = retval.substring(0, lio);
+			errorCode = "0";
+			LogWriter.LOGGER.info("MapList : " + retval);
+		} catch (SQLException e) {
+			errorCode = "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		} catch (Exception e) {
+			errorCode = "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}
+		if (!errorCode.startsWith("0")) {
+			retval = errorCode;
+		}
+		LogWriter.LOGGER.info(" return from  getFailedMsisdnList --> " + retval);
 		return retval;
 	}
 
