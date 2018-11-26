@@ -2621,9 +2621,9 @@ public class UserDBOperations {
 							msisdnList = msisdnList + rs.getString(1);
 						else
 							msisdnList = msisdnList + "," + rs.getString(1);
-						System.out.println("inside IF : " + msisdnList);
+						//System.out.println("inside IF : " + msisdnList);
 					}
-					System.out.println("resultSet : " + rs.getString(1));
+					//System.out.println("resultSet : " + rs.getString(1));
 				}
 				bubbleDS.closeResultSet();
 				bubbleDS.closePreparedStatement();
