@@ -2550,18 +2550,22 @@ public class UserDBOperations {
 		return jsonEncoder;
 	}
 
-	public JsonEncoder getFailedMsisdns(String id, String oneToOneID, String listID, String groupID) {
+	public JsonEncoder getFailedMsisdns(String id, String fileName, String oneToOneID, String listID, String groupID) {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 
 		String status = "-5";
 		String smsType = "";
-		String oneToOneStatusQuery = "SELECT status from bubble_file_info where oneToOneID = ?";
-		String listStatusQuery = "SELECT status from bubble_file_info where listId = ?";
-		String groupStatusQuery = "SELECT status from bubble_file_info where groupID = ?";
+		String replaceFilename="";
+		if(!fileName.equalsIgnoreCase("")) {
+			replaceFilename = "and file_name='"+ fileName+"'";
+		}
+		String oneToOneStatusQuery = "SELECT status from bubble_file_info where oneToOneID = ? "+replaceFilename+"";
+		String listStatusQuery = "SELECT status from bubble_file_info where listId = ? "+replaceFilename+"";
+		String groupStatusQuery = "SELECT status from bubble_file_info where groupID = ? "+replaceFilename+"";
 
-		String oneToOneQuery = "SELECT msisdn FROM invalid_msisdn_list t where oneToOneID = ? order by insert_date desc;";
-		String listQuery = "SELECT msisdn FROM invalid_msisdn_list t where list_id = ? order by insert_date desc;";
-		String groupQuery = "SELECT msisdn FROM invalid_msisdn_list t where group_id = ? order by insert_date desc;";
+		String oneToOneQuery = "SELECT msisdn FROM invalid_msisdn_list t where oneToOneID = ? "+replaceFilename+" order by insert_date desc";
+		String listQuery = "SELECT msisdn FROM invalid_msisdn_list t where list_id = ? "+replaceFilename+" order by insert_date desc";
+		String groupQuery = "SELECT msisdn FROM invalid_msisdn_list t where group_id = ? "+replaceFilename+" order by insert_date desc";
 		String msisdnList = "";
 
 		String query = "";
@@ -2591,11 +2595,11 @@ public class UserDBOperations {
 			return jsonEncoder;
 		}
 		System.out.println("query : " + query);
-		System.out.println("statusQuery : " + statusQuery);
-		System.out.println("smsType : " + smsType);
-		System.out.println("groupID : " + groupID);
-		System.out.println("oneToOneID : " + oneToOneID);
-		System.out.println("listID : " + listID);
+		//System.out.println("statusQuery : " + statusQuery);
+		//System.out.println("smsType : " + smsType);
+		//System.out.println("groupID : " + groupID);
+		//System.out.println("oneToOneID : " + oneToOneID);
+		//System.out.println("listID : " + listID);
 		String errorCode = "-1";
 
 		try {
@@ -2607,7 +2611,7 @@ public class UserDBOperations {
 				ResultSet rs1 = bubbleDS.executeQuery();
 				while (rs1.next()) {
 					status = rs1.getString(1);
-					System.out.println("resultSet : status : " + rs1.getString(1));
+					//System.out.println("resultSet : status : " + rs1.getString(1));
 				}
 				LogWriter.LOGGER.info("fetched upload status : " + status);
 
@@ -2886,8 +2890,60 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		String errorCode = "-1";
 		String errorResponse = "";
-
+		
 		String query = "SELECT  t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count,\n"
+				+ "		DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \n"
+				+ "		IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
+				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \n"
+				+ "		Case when dr.operator='RANKSTEL' \n"
+				+ "		then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \n"
+				+ "		else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \n"
+				+ "		end AS Delivery_Time\n"
+				+ "		FROM  smsinfo t  left JOIN   delivery_reports dr ON concat('',t.ID) = dr.message_id \n"
+				+ "		WHERE  t.userid = " + userId + "  \n" + "		AND t.insert_date between '" + start_date + "'"
+				+ " 	and DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) \n"
+				+ "		union all "
+				+ "		SELECT  gs.msisdn AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count,\n"
+				+ "		DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.done_date, '%d-%m-%Y %h:%i %p') AS Exec_Date,\n"
+				+ "		IFNULL(ELT(FIELD(gs.response_code, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
+				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \n"
+				+ "		Case when dr.operator='RANKSTEL' \n"
+				+ "		then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record')\n"
+				+ "		else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record')\n"
+				+ "		end AS Delivery_Time \n"
+				+ "		FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \n"
+				+ "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" + start_date + "'"
+				+ "		and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)\n"
+				+ "		ORDER BY insert_date DESC";
+
+		String summaryQuery = "SELECT q.Delivery_Status as Delivery_Status,q.Recipient_Count AS Recipient_Count, q.SMS_count as SMS_count, "
+				+ "		q1.SMS_count as 'Single_SMS', q2.SMS_count as 'Bulk_SMS', q3.SMS_count as 'Customized_SMS' "
+				+ "		FROM (SELECT uTable.Delivery_Status, count(Receiver) AS Recipient_Count, sum(Sms_count) as SMS_count "
+				+ "		FROM (SELECT  t.bparty AS Receiver,t.Sms_Count AS Sms_count, IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success', 'Failed at Recipient Network'),'Failed at Recipient Network') "
+				+ "		AS Delivery_Status FROM  smsinfo t  left JOIN   delivery_reports dr ON concat('',t.ID) = dr.message_id WHERE  t.userid = " + userId + " "
+				+ "		AND t.insert_date between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) union all "
+				+ "		SELECT  gs.msisdn AS Receiver,t.Sms_Count AS Sms_count, IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success', 'Failed at Recipient Network'),'Failed at Recipient Network') "
+				+ "		AS Delivery_Status FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id "
+				+ "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" + start_date + "' and  DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND)) uTable GROUP BY uTable.Delivery_Status) as q "
+				+ "		LEFT JOIN (SELECT uTable1.Delivery_Status, sum(Sms_count) as SMS_count from(SELECT  t.Sms_Count AS Sms_count, "
+				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success', 'Failed at Recipient Network'),'Failed at Recipient Network') AS Delivery_Status FROM  smsinfo t  "
+				+ "		left JOIN   delivery_reports dr ON concat('',t.ID) = dr.message_id WHERE  (broadcastId in (select id from broadcast_log where user_id=" + userId + " and broadcast_type=2) or broadcastId=0) "
+				+ "		and t.userid = " + userId + " AND t.insert_date between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) ORDER BY t.ID DESC)uTable1 GROUP BY uTable1.Delivery_Status) as q1 "
+				+ "		ON q.Delivery_Status = q1.Delivery_Status LEFT JOIN (select uTable2.Delivery_Status, sum(Sms_count) as SMS_count "
+				+ "		from(SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0), 'Success','Failed at Recipient Network'),'Failed at Recipient Network') AS Delivery_Status, count(t.group_id) "
+				+ "		AS Recipient_Count, sum(t.Sms_Count) as SMS_count from smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t "
+				+ "		on t.group_id=gs.group_id  WHERE t.user_id = " + userId + " AND t.insert_date between '" + start_date + "'and  DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status) uTable2 "
+				+ "		GROUP BY uTable2.Delivery_Status) as q2 ON q1.Delivery_Status = q2.Delivery_Status LEFT JOIN (select uTable3.Delivery_Status, sum(Sms_count) as SMS_count "
+				+ "		from(SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success','Failed at Recipient Network'),'Failed at Recipient Network') AS Delivery_Status, count(t.ID) "
+				+ "		AS Recipient_Count, sum(t.sms_count) as SMS_count 	FROM smsinfo t LEFT JOIN delivery_reports dr ON concat('',t.ID) = dr.message_id "
+				+ "		WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = " + userId + " AND broadcast_type = 3) AND t.userid = " + userId + " AND t.insert_date "
+				+ "		between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status ) uTable3 GROUP BY uTable3.Delivery_Status) as q3 "
+				+ "		ON q2.Delivery_Status = q3.Delivery_Status order by Delivery_Status desc";
+
+		// old version
+		/*	
+		  		String query = "SELECT  t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count,\n"
+		 
 				+ "		DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \n"
 				+ "		IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
 				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \n"
@@ -2925,6 +2981,8 @@ public class UserDBOperations {
 				+ "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" + start_date + "'"
 				+ "		and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)) \n"
 				+ "		uTable GROUP BY uTable.Delivery_Status";
+				
+				*/
 
 		try {
 
@@ -2990,57 +3048,37 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		String errorCode = "-1";
 		String errorResponse = "";
-		// String query="select t.source_id as ID,t.bparty as Receiver,t.aparty as
-		// Sender,t.message as SMS_TEXT,t.sms_count,DATE_FORMAT(t.insert_date,
-		// \"%d-%m-%Y %H:%i\") as insert_date,DATE_FORMAT(t.exec_date, \"%d-%m-%Y
-		// %H:%i\") as exec_date,IFNULL(ELT(FIELD(t.responseCode,0, -3, -1,
-		// -500),'Success','Invalid Receiver','Sending Error','Timed Out'),'failed') AS
-		// Response FROM smsinfo t where t.userid="+userId+" and t.insert_date between
-		// '"+start_date+"' and '" +end_date+"' ORDER BY `ID` desc;";
-		/*
-		 * String query =
-		 * "SELECT  t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count, t.source_id AS SID,\r\n"
-		 * +
-		 * "    DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \r\n"
-		 * +
-		 * "    IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
-		 * +
-		 * "	 IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \r\n"
-		 * + "	 Case when dr.operator='RANKSTEL' \r\n" +
-		 * "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
-		 * +
-		 * "    else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
-		 * + "    end AS Delivery_Time\r\n" +
-		 * "FROM  smsinfo t  left JOIN   delivery_reports dr ON t.ID = dr.message_id\r\n"
-		 * + "WHERE  broadcastId in (select id from broadcast_log " + "where user_id='"+
-		 * userId + "' and broadcast_type=2) or broadcastId=0 and t.userid = '" + userId
-		 * + "'  AND t.insert_date between '" + start_date + "' and '" + end_date +
-		 * "' \r\n" + "ORDER BY t.ID DESC";/
-		 **/
-
+		
 		String query = "SELECT  t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count, t.source_id AS SID,\r\n"
-				+ "    DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \r\n"
-				+ "    IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
-				+ "	 IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \r\n"
-				+ "	 Case when dr.operator='RANKSTEL' \r\n"
-				+ "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
-				+ "    else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
-				+ "    end AS Delivery_Time\r\n"
-				+ "FROM  smsinfo t  left JOIN   delivery_reports dr ON concat('',t.ID) = dr.message_id\r\n"
-				+ "WHERE  broadcastId in (select id from broadcast_log " + "where user_id='" + userId
-				+ "' and broadcast_type=2) or broadcastId=0 and t.userid = '" + userId
-				+ "'  AND t.insert_date between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date
-				+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) \r\n" + "ORDER BY t.ID DESC";
-
+				+ "    	DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \r\n"
+				+ "    	IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
+				+ "	 	IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \r\n"
+				+ "	 	Case when dr.operator='RANKSTEL' \r\n"
+				+ "    	then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
+				+ "    	else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
+				+ "    	end AS Delivery_Time\r\n"
+				+ "		FROM  smsinfo t  left JOIN   delivery_reports dr ON concat('',t.ID) = dr.message_id\r\n"
+				+ "		WHERE  (broadcastId in (select id from broadcast_log " + "where user_id='" + userId
+				+ "' 	and broadcast_type=2) or broadcastId=0) and t.userid = '" + userId
+				+ "'  	AND t.insert_date between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date
+				+ "', 	INTERVAL 1 DAY),INTERVAL 1 SECOND) \r\n" + "ORDER BY t.ID DESC";
+		
+		String summaryQuery = "SELECT uTable.Delivery_Status, count(Recipient) AS Recipient_Count, sum(Sms_count) as SMS_count from(SELECT  t.Sms_Count AS Sms_count,  t.ID AS Recipient, "
+				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success', 'Failed at Recipient Network'),'Failed at Recipient Network') AS Delivery_Status FROM  smsinfo t  "
+				+ "		left JOIN   delivery_reports dr ON concat('',t.ID) = dr.message_id WHERE  (broadcastId in (select id from broadcast_log where user_id= '" + userId + "' and broadcast_type=2) or broadcastId=0) "
+				+ "		and t.userid = '" + userId + "' AND t.insert_date between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) ORDER BY t.ID DESC) uTable "
+				+ "		GROUP BY uTable.Delivery_Status order by uTable.Delivery_Status desc";
+		
 		try {
 
-			String sql = "INSERT INTO file_dump_query (`user_id`,`query`, `output_type`) VALUES (?,?,?);";
+			String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`, `output_type`) VALUES (?,?,?,?);";
 
 			try {
 				bubbleDS.prepareStatement(sql, true);
 				bubbleDS.getPreparedStatement().setString(1, userId);
 				bubbleDS.getPreparedStatement().setString(2, query);
-				bubbleDS.getPreparedStatement().setString(3, output_type);
+				bubbleDS.getPreparedStatement().setString(3, summaryQuery);
+				bubbleDS.getPreparedStatement().setString(4, output_type);
 				errorCode = "0";
 				errorResponse = "Successfully Inserted";
 				bubbleDS.execute();
@@ -3094,29 +3132,30 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		String errorCode = "-1";
 		String errorResponse = "";
-		/*
-		 * String query =
-		 * "SELECT  SUBSTRING((select f.file_name from bubble_file_info f where oneToOneID=t.broadcastId),7) AS FileName,"
-		 * +
-		 * "	   t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count, t.source_id AS SID,\r\n"
-		 * +
-		 * "    DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \r\n"
-		 * +
-		 * "    IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
-		 * +
-		 * "	 IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \r\n"
-		 * + "	 Case when dr.operator='RANKSTEL' \r\n" +
-		 * "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
-		 * +
-		 * "    else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
-		 * + "    end AS Delivery_Time\r\n" +
-		 * "	FROM  smsinfo t  left JOIN   delivery_reports dr ON t.ID = dr.message_id\r\n"
-		 * + "WHERE  broadcastId in (select id from broadcast_log " +
-		 * "	where user_id='"+ userId + "' and broadcast_type=3) and t.userid = '" +
-		 * userId + "'  AND t.insert_date between '" + start_date + "' and '" + end_date
-		 * + "' \r\n" + "ORDER BY t.ID DESC";/
-		 **/
 
+		String query = "SELECT t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count, t.source_id AS SID,\r\n"
+				+ "    	DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \r\n"
+				+ "    	IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
+				+ "	   	IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success', 'Failed at Recipient Network'),'Failed at Recipient Network') AS Delivery_Status, \r\n"
+				+ "	 	Case when dr.operator='RANKSTEL' \r\n"
+				+ "    	then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
+				+ "    	else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
+				+ "    	end AS Delivery_Time\r\n"
+				+ "		FROM  smsinfo t  left JOIN   delivery_reports dr ON concat('',t.ID) = dr.message_id\r\n"
+				+ " 	WHERE  broadcastId in (select id from broadcast_log " + "	where user_id='" + userId
+				+ "' 	and broadcast_type=3) and t.userid = '" + userId + "'  AND t.insert_date between '" + start_date
+				+ "' 	and DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) \r\n"
+				+ "		ORDER BY t.ID DESC";
+
+		
+		String summaryQuery = "select utable.Delivery_Status, count(Recipient) AS Recipient_Count, sum(Sms_count) as SMS_count from(SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success','Failed at Recipient Network'),\n" + 
+				"'Failed at Recipient Network')  AS Delivery_Status, t.ID AS Recipient, t.sms_count as SMS_count 	\n" + 
+				"FROM smsinfo t LEFT JOIN delivery_reports dr ON concat('',t.ID) = dr.message_id \n" + 
+				"WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = " + userId + " AND broadcast_type = 3) AND t.userid = " + userId + " AND t.insert_date \n" + 
+				"between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)) utable \n" + 
+				"GROUP BY utable.Delivery_Status order by utable.Delivery_Status desc";
+		
+		/*
 		String query = "SELECT t.bparty AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count, t.source_id AS SID,\r\n"
 				+ "    DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS Exec_Date, \r\n"
 				+ "    IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
@@ -3131,34 +3170,15 @@ public class UserDBOperations {
 				+ "' and DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) \r\n"
 				+ "ORDER BY t.ID DESC";
 
-		// DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)
-		/*
-		 * String summaryQuery =
-		 * "SELECT dr.delivery_status, count(dr.delivery_status) AS Delivery_Status " +
-		 * "	FROM smsinfo t LEFT JOIN delivery_reports dr ON t.ID = dr.message_id " +
-		 * "	WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = '"+
-		 * userId + "' AND " + "	broadcast_type = 3) AND t.userid = '"+ userId +
-		 * "' AND t.insert_date between '" + start_date + "' and '" + end_date + "' " +
-		 * " GROUP BY dr.delivery_status";/
-		 **/
-		/*
-		 * String summaryQuery =
-		 * "SELECT dr.delivery_status, count(dr.delivery_status) AS Delivery_Status " +
-		 * "	FROM smsinfo t LEFT JOIN delivery_reports dr ON t.ID = dr.message_id " +
-		 * "	WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = '"+
-		 * userId + "' AND " + "	broadcast_type = 3) AND t.userid = '"+ userId +
-		 * "' AND t.insert_date between '" + start_date + "' and DATE_SUB( DATE_ADD('" +
-		 * end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) " +
-		 * " GROUP BY dr.delivery_status"; /
-		 **/
-
+		
 		String summaryQuery = "SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered','Not Delivered'),'Status Unknown') \r\n"
 				+ "  AS Delivery_Status, count(t.ID) AS Recipient_Count, sum(t.sms_count) as SMS_count 	FROM smsinfo t LEFT JOIN delivery_reports dr ON concat('',t.ID) = dr.message_id "
 				+ "	WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = '" + userId
 				+ "' AND 	broadcast_type = 3) AND t.userid = '" + userId + "'" + " AND t.insert_date between '"
 				+ start_date + "' and DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) "
 				+ " GROUP BY dr.delivery_status";
-
+		 */
+		
 		try {
 
 			String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`, `output_type`) VALUES (?,?,?,?);";
@@ -3222,7 +3242,7 @@ public class UserDBOperations {
 		String errorCode = "-1";
 		String errorResponse = "";
 
-		String query = fetchQuery(user_id, file_id);
+		String query = "SELECT msisdn FROM invalid_msisdn_list where file_name = '"+file_id+"' order by insert_date desc";
 		String output_type = "0";
 
 		String summaryQuery = "";
@@ -3285,6 +3305,7 @@ public class UserDBOperations {
 		return jsonEncoder;
 	}
 
+	// this method is not used anymore as we now insert file_name into invalid msisdn list table 
 	public String fetchQuery(String user_id, String file_id) {
 		String querys = "SELECT groupID, listId, OneToOneID FROM bubble_file_info where file_name = ? order by created desc";
 		String groupID = "";
@@ -3896,10 +3917,36 @@ public class UserDBOperations {
 	public String getReportRecords(String id) {
 		String retval = "";
 		String errorCode = "-1";
-		String sql = "SELECT IFNULL(FILE_NAME,'File Generation in Progress') as file_name,DATE_FORMAT(insert_date, \"%d-%m-%Y %h:%i %p\") as insert_date,status,DATE_FORMAT(dump_time, \"%d-%m-%Y %h:%i %p\") as dump_time,output_type FROM smsdb.file_dump_query where user_id=? and visible=0 and  (insert_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) order by id desc";
+		int userReportHistoryLimit = 1;
+		
+		String historyLimitSql = "SELECT report_history_limit FROM tbl_users where id = ?";
+		String sql = "SELECT IFNULL(FILE_NAME,'File Generation in Progress') as file_name,DATE_FORMAT(insert_date, \"%d-%m-%Y %h:%i %p\") as insert_date,status,DATE_FORMAT(dump_time, \"%d-%m-%Y %h:%i %p\") as dump_time,output_type FROM smsdb.file_dump_query where user_id=? and visible=0 and  (insert_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) order by id desc";
+		try {
+			bubbleDS.prepareStatement(historyLimitSql);
+			bubbleDS.getPreparedStatement().setString(1, id);
+			ResultSet rs = bubbleDS.executeQuery();
+			while (rs.next()) {
+				userReportHistoryLimit =  rs.getInt(1);
+			}
+			rs.close();
+			bubbleDS.closePreparedStatement();
+			if (NullPointerExceptionHandler.isNullOrEmpty(userReportHistoryLimit))
+				userReportHistoryLimit = 1;
+			LogWriter.LOGGER.info("userReportHistoryLimit : " + userReportHistoryLimit);
+		} catch (SQLException e) {
+			errorCode = "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		} catch (Exception e) {
+			errorCode = "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}
+		
+		
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, id);
+			bubbleDS.getPreparedStatement().setInt(2, userReportHistoryLimit);
+			
 			ResultSet rs = bubbleDS.executeQuery();
 			while (rs.next()) {
 				retval += "\"" + rs.getString("file_name") + "\"" + ",";
@@ -3928,7 +3975,7 @@ public class UserDBOperations {
 		if (!errorCode.startsWith("0")) {
 			retval = errorCode;
 		}
-		LogWriter.LOGGER.severe(" return from  get list --> " + retval);
+		LogWriter.LOGGER.info(" return from  get list --> " + retval);
 		return retval;
 	}
 
@@ -3937,17 +3984,31 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		String errorCode = "-1";
 		String errorResponse = "";
+		
+		String query = "SELECT   gs.msisdn AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count,\r\n"
+				+ "      DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.done_date, '%d-%m-%Y %h:%i %p') AS Bubble_Process_Date,DATE_FORMAT(t.scheduled_date, '%d-%m-%Y %h:%i %p') AS Scheduled_Date,\r\n"
+				+ "    IFNULL(ELT(FIELD(gs.response_code, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
+				+ "    IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success', 'Failed at Recipient Network'),'Failed at Recipient Network') AS Delivery_Status, \r\n"
+				+ "     Case when dr.operator='RANKSTEL' \r\n"
+				+ "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
+				+ "     else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
+				+ "      end AS Delivery_Time\r\n"
+				+ "  FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \r\n"
+				+ "  WHERE  t.user_id = " + id + " AND t.insert_date between '" + start_date
+				+ "' and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)"
+				+ "    ORDER BY gs.ID DESC";
+		
+		String summaryQuery = "select utable.Delivery_Status, count(Recipient) as Recipient_Count, sum(Sms_count) as SMS_count from (SELECT t.group_id AS Recipient, IFNULL(ELT(FIELD(dr.delivery_status, 1, 0), " + 
+				"'Success','Failed at Recipient Network'),'Failed at Recipient Network') AS Delivery_Status,  \n" + 
+				"t.Sms_Count as SMS_count from smsdb.groupsms_sender gs \n" + 
+				"left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id  \n" + 
+				"left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id  WHERE t.user_id = "+id+" AND \n" + 
+				"t.insert_date between '" + start_date + "'and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)) utable \n" + 
+				"GROUP BY utable.Delivery_Status order by utable.Delivery_Status desc";
+		
+		
+		// old version
 		/*
-		 * String query =
-		 * "SELECT message as SMS_TEXT, sms_count as NumberOfSMS, IFNULL(ELT(FIELD(flag, -1,0,1,2,3,-2,5),'Approval Pending','Approved','SMS Sent','Rejected By admin','Cancelled By user','File not uploaded','low Balance'),'failed') AS Status, DATE_FORMAT(scheduled_date, '%d-%m-%Y %h:%i %p') AS scheduled_date, IFNULL(DATE_FORMAT(done_date, '%d-%m-%Y %h:%i %p'), 'Not Applicable') done_date,\r\n"
-		 * +
-		 * "(SELECT COUNT(*) FROM  groupsms_sender t  WHERE t.group_id = u.group_id) TotalNumber,\r\n"
-		 * +
-		 * "(SELECT COUNT(*) FROM groupsms_sender t WHERE t.group_id = u.group_id  AND t.response_code = 0) TotalSuccessCount\r\n"
-		 * + " FROM groupsms_sender_info u WHERE  user_id = " + id +
-		 * " and scheduled_date between '" + start_date + "' and '" + end_date +
-		 * "' ORDER BY group_id DESC LIMIT 0 , 50;"; /
-		 **/
 		String query = "SELECT   gs.msisdn AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count,\r\n"
 				+ "      DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.done_date, '%d-%m-%Y %h:%i %p') AS Bubble_Process_Date,DATE_FORMAT(t.scheduled_date, '%d-%m-%Y %h:%i %p') AS Scheduled_Date,\r\n"
 				+ "    IFNULL(ELT(FIELD(gs.response_code, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\r\n"
@@ -3960,32 +4021,15 @@ public class UserDBOperations {
 				+ "  WHERE  t.user_id = " + id + " AND t.insert_date between '" + start_date
 				+ "' and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)"
 				+ "    ORDER BY gs.ID DESC";
-		/*
-		 * String summaryQuery =
-		 * "SELECT dr.delivery_status, count(dr.delivery_status) AS Delivery_Status " +
-		 * " FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id "
-		 * + " left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id " +
-		 * " WHERE  t.user_id = "+ id + " AND t.insert_date between '" + start_date +
-		 * "' and '" + end_date + "'GROUP BY dr.delivery_status";/
-		 **/
-
+		
 		String summaryQuery = "SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0), 'Delivered','Not Delivered'),'Status Unknown') AS Delivery_Status, "
 				+ "	count(t.group_id) AS Recipient_Count, sum(t.Sms_Count) as SMS_count from smsdb.groupsms_sender gs "
 				+ " left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id  "
 				+ " left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id  WHERE t.user_id = " + id + " AND"
 				+ " t.insert_date between '" + start_date + "'and  DATE_SUB( DATE_ADD('" + end_date
 				+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status";
-
-		/*
-		 * String summaryQuery =
-		 * "SELECT dr.delivery_status, count(dr.delivery_status) AS Delivery_Status " +
-		 * " FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id "
-		 * + " left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id " +
-		 * " WHERE  t.user_id = "+ id + " AND t.insert_date between '" + start_date +
-		 * "' and  DATE_SUB( DATE_ADD('" + end_date +
-		 * "', INTERVAL 1 DAY),INTERVAL 1 SECOND)" + " GROUP BY dr.delivery_status";/
-		 **/
-
+		 */
+		
 		try {
 
 			String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`, `output_type`) VALUES (?,?,?,?);";
@@ -4117,23 +4161,22 @@ public class UserDBOperations {
 	public String getFailedMsisdnList(String id) {
 		String retval = "";
 		String errorCode = "-1";
-		String sql = "SELECT min(i.id) as ID,f.file_name as FileName,count(*) as Invalid_msisdn_count,min(f.created) as insert_date "
-				+ "	FROM smsdb.bubble_file_info f,smsdb.invalid_msisdn_list i  "
-				+ " where f.user_id=i.user_id and f.user_id = ? and ( f.groupID=i.group_id or (f.groupID is null and i.group_id is null))"
-				+ " and ( f.listId=i.list_id or (f.listId is null and i.list_id is null))"
-				+ " and ( f.oneToOneID=i.oneToOneID or (f.oneToOneID is null and i.oneToOneID is null)) "
-				+ " group by f.file_name order by min(f.created) desc limit 0,10;";
+		String sql = "select q.file_name as FileName, ifnull(t.Successful_msisdn_count,0) as Successful_msisdn_count, ifnull(r.Invalid_msisdn_count,0) as Invalid_msisdn_count, "
+				+ "q.Insert_time as 'Insert_time' from (select f.file_name, f.created as Insert_time from smsdb.bubble_file_info f where user_id="+id+") q "
+				+ "left join( select i.file_name as FileName,count(i.file_name) as Successful_msisdn_count, min(i.insert_date) as insert_date "
+				+ "FROM smsdb.uploaded_file i where i.user_id = "+id+" group by i.file_name order by min(i.insert_date)) t on q.file_name=t.FileName "
+				+ "left join (SELECT f.file_name as FileName,count(f.file_name) as Invalid_msisdn_count,min(f.insert_date) as insert_date "
+				+ "FROM smsdb.invalid_msisdn_list f where f.user_id = "+id+" group by f.file_name order by min(f.insert_date) ) r on q.file_name=r.FileName order by t.insert_date desc limit 0,15";
 		try {
 			bubbleDS.prepareStatement(sql, true);
-			bubbleDS.getPreparedStatement().setString(1, id);
-
+			
 			ResultSet rs = bubbleDS.executeQuery();
 			LogWriter.LOGGER.info("getFailedMsisdnList executed");
 			while (rs.next()) {
-				retval += rs.getString("ID") + ",";
 				retval += rs.getString("FileName") + ",";
+				retval += rs.getString("Successful_msisdn_count") + ",";
 				retval += rs.getString("Invalid_msisdn_count") + ",";
-				retval += "\"" + rs.getString("insert_date") + "\"";
+				retval += "\"" + rs.getString("Insert_time") + "\"";
 				retval += "|";
 			}
 			LogWriter.LOGGER.info("getFailedMsisdnList after execution ");
@@ -5488,15 +5531,21 @@ public class UserDBOperations {
 	 * @param jsonDecoder filename,schoolId,month
 	 * @return 0 is successfully inserted Anything -ve is error.
 	 */
-	public String bubbleFileInsert(JsonDecoder jsonDecoder) {
+	public JsonEncoder bubbleFileInsert(JsonDecoder jsonDecoder) {
+		JsonEncoder jsonEncoder = new JsonEncoder();
+		
 		String errorCode = "-1";// default errorCode
+		String filename = jsonDecoder.getEString("filename");
+		String id = jsonDecoder.getEString("id");
+		String listId = jsonDecoder.getEString("listId");
+		
 		String sqlInsert = "INSERT INTO bubble_file_info(" + "file_name,user_id,listId" + ") VALUES" + "(?,?,?)";
 		try {
 			// json: file_name,school_id
 			bubbleDS.prepareStatement(sqlInsert);
-			bubbleDS.getPreparedStatement().setString(1, jsonDecoder.getEString("filename"));
-			bubbleDS.getPreparedStatement().setString(2, jsonDecoder.getEString("id"));
-			bubbleDS.getPreparedStatement().setString(3, jsonDecoder.getEString("listId"));
+			bubbleDS.getPreparedStatement().setString(1, filename);
+			bubbleDS.getPreparedStatement().setString(2, id);
+			bubbleDS.getPreparedStatement().setString(3, listId);
 			try {
 				bubbleDS.execute();
 			} catch (SQLIntegrityConstraintViolationException de) {
@@ -5522,7 +5571,14 @@ public class UserDBOperations {
 			 * bubbleDS.getConnection().close(); } catch (SQLException e) { errorCode="-4";
 			 * LogWriter.LOGGER.severe(e.getMessage()); } } }/
 			 **/
-		return errorCode;
+
+		jsonEncoder.addElement("ErrorCode", errorCode);
+		jsonEncoder.addElement("Filename", filename);
+		jsonEncoder.addElement("listId", listId);
+		jsonEncoder.buildJsonObject();
+		// errorCode=jsonEncoder;
+
+		return jsonEncoder;
 	}
 
 	/**

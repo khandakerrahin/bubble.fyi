@@ -155,8 +155,8 @@ public class UserOperations {
 		return new UserDBOperations(bubbleDS).createOneToOneSMSInfo(id, sch_date, filename).getJsonObject().toString();
 	}
 
-	public String getFailedMsisdn(String id, String oneToOneID, String listID, String groupID) {
-		return new UserDBOperations(bubbleDS).getFailedMsisdns(id, oneToOneID, listID, groupID).getJsonObject().toString();
+	public String getFailedMsisdn(String id, String fileName, String oneToOneID, String listID, String groupID) {
+		return new UserDBOperations(bubbleDS).getFailedMsisdns(id, fileName, oneToOneID, listID, groupID).getJsonObject().toString();
 	}
 
 	public String RequestPackagePurchaseDB(String id, String package_name, String price) {
@@ -537,7 +537,7 @@ public class UserOperations {
 			json = new JsonDecoder(messageBody);
 		}
 		if (json.getErrorCode().equals("0")) {
-			retval = getFailedMsisdn(json.getNString("id"), json.getNString("oneToOneID"), json.getNString("listID"), json.getNString("groupID"));
+			retval = getFailedMsisdn(json.getNString("id"), (json.isParameterPresent("fileName")?json.getNString("fileName"):""), json.getNString("oneToOneID"), json.getNString("listID"), json.getNString("groupID"));
 		} else {
 			retval = "E:JSON string invalid";
 		}
@@ -1331,7 +1331,7 @@ public class UserOperations {
 			json = new JsonDecoder(messageBody);
 		}
 		if (json.getErrorCode().equals("0")) {
-			retval = new UserDBOperations(bubbleDS).bubbleFileInsert(json);
+			retval = new UserDBOperations(bubbleDS).bubbleFileInsert(json).getJsonObject().toString();;
 		} else {
 			retval = "E:JSON string invalid";
 		}
