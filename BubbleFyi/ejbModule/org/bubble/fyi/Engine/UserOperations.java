@@ -158,6 +158,10 @@ public class UserOperations {
 	public String getFailedMsisdn(String id, String fileName, String oneToOneID, String listID, String groupID) {
 		return new UserDBOperations(bubbleDS).getFailedMsisdns(id, fileName, oneToOneID, listID, groupID).getJsonObject().toString();
 	}
+	
+	public String getUploadStatusV2(String filename, String extended) {
+		return new UserDBOperations(bubbleDS).getFileUploadStatus(filename,extended).getJsonObject().toString();
+	}
 
 	public String RequestPackagePurchaseDB(String id, String package_name, String price) {
 		return new UserDBOperations(bubbleDS).packagePurchaseRequester(id, package_name, price).getJsonObject()
@@ -543,7 +547,7 @@ public class UserOperations {
 		}
 		return retval;
 	}
-
+	
 	public String packagePurchaseRequester(String message, String messageBody) {
 		String retval = "E";
 		JsonDecoder json;
@@ -1332,6 +1336,22 @@ public class UserOperations {
 		}
 		if (json.getErrorCode().equals("0")) {
 			retval = new UserDBOperations(bubbleDS).bubbleFileInsert(json).getJsonObject().toString();;
+		} else {
+			retval = "E:JSON string invalid";
+		}
+		return retval;
+	}
+	
+	public String uploadStatusGetterV2(String message, String messageBody) {
+		String retval = "E";
+		JsonDecoder json;
+		if (messageBody.isEmpty()) {
+			json = new JsonDecoder(message);
+		} else {
+			json = new JsonDecoder(messageBody);
+		}
+		if (json.getErrorCode().equals("0")) {
+			retval = getUploadStatusV2(json.getNString("filename"), (json.isParameterPresent("extended")?json.getNString("extended"):""));
 		} else {
 			retval = "E:JSON string invalid";
 		}

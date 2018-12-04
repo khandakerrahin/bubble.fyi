@@ -2556,7 +2556,7 @@ public class UserDBOperations {
 		String status = "-5";
 		String smsType = "";
 		String replaceFilename="";
-		if(!fileName.equalsIgnoreCase("")) {
+		if(!NullPointerExceptionHandler.isNullOrEmpty(fileName)) {
 			replaceFilename = "and file_name='"+ fileName+"'";
 		}
 		String oneToOneStatusQuery = "SELECT status from bubble_file_info where oneToOneID = ? "+replaceFilename+"";
@@ -2571,15 +2571,15 @@ public class UserDBOperations {
 		String query = "";
 		String statusQuery = "";
 
-		if (!oneToOneID.equals("")) {
+		if (!NullPointerExceptionHandler.isNullOrEmpty(oneToOneID)) {
 			smsType = oneToOneID;
 			query = oneToOneQuery;
 			statusQuery = oneToOneStatusQuery;
-		} else if (!listID.equals("")) {
+		} else if (!NullPointerExceptionHandler.isNullOrEmpty(listID)) {
 			smsType = listID;
 			query = listQuery;
 			statusQuery = listStatusQuery;
-		} else if (!groupID.equals("")) {
+		} else if (!NullPointerExceptionHandler.isNullOrEmpty(groupID)) {
 			smsType = groupID;
 			query = groupQuery;
 			statusQuery = groupStatusQuery;
@@ -2668,6 +2668,123 @@ public class UserDBOperations {
 
 //  	{"ErrorCode:<error code>, "ErrorResponse": <errorResponse>, "failedMsisdnList":"<comma separated failed msisdn list>"}
 		return jsonEncoder;
+	}
+	
+	
+	public JsonEncoder getFileUploadStatus(String filename, String extended) {
+		JsonEncoder jsonEncoder = new JsonEncoder();
+
+		String status = "-5";
+		String user_id = "";
+		String created = "";
+		String uploaded = "";
+		String estimated_upload_time = "";
+		String comments = "";
+		String listId = "";
+		String groupID = "";
+		String oneToOneID = "";
+		
+		
+		
+		String statusQuery = "SELECT status from smsdb.bubble_file_info where file_name = ?";
+		String allQuery = "SELECT file_name, user_id, created, uploaded, status, estimated_upload_time, comments, groupID, listId, oneToOneID from smsdb.bubble_file_info where file_name = ?";
+		String query = "";
+		boolean fetchAll = false;
+		
+		if(!NullPointerExceptionHandler.isNullOrEmpty(extended)) {
+			if(extended.equals("1")) {
+				query = allQuery;
+				fetchAll = true;
+			}else {
+				query = statusQuery;
+			}
+		}else {
+			query = statusQuery;
+		}
+		
+		if (!NullPointerExceptionHandler.isNullOrEmpty(filename)) {
+			LogWriter.LOGGER.info("query : " + query);
+			String errorCode = "-1";
+
+			try {
+				try {
+					LogWriter.LOGGER.info("fetching upload status.");
+					bubbleDS.prepareStatement(query);
+					bubbleDS.getPreparedStatement().setString(1, filename);
+
+					ResultSet rs = bubbleDS.executeQuery();
+					while (rs.next()) {
+						status = rs.getString("status");
+						if(fetchAll) {
+							user_id = rs.getString("user_id");
+							created = rs.getString("created");
+							uploaded = rs.getString("uploaded");
+							estimated_upload_time = rs.getString("estimated_upload_time");
+							comments = rs.getString("comments");
+							listId = rs.getString("listId");
+							groupID = rs.getString("groupID");
+							oneToOneID = rs.getString("oneToOneID");
+						}
+					}
+					LogWriter.LOGGER.info("fetched upload status : " + status);
+
+					bubbleDS.closeResultSet();
+					bubbleDS.closePreparedStatement();
+					errorCode = "0";// :Successfully Inserted
+				}catch (SQLException e) {
+					errorCode = "11";// :Inserting parameters failed
+					e.printStackTrace();
+					LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+				} catch (Exception e) {
+					e.printStackTrace();
+					errorCode = "10"; // :other Exception
+					e.printStackTrace();
+				}
+			} finally {
+				if (bubbleDS.getConnection() != null) {
+					try {
+						bubbleDS.closePreparedStatement();
+						// bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						errorCode = "-4"; // :connection close Exception
+						e.printStackTrace();
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}
+			}
+			jsonEncoder.addElement("errorCode", errorCode);
+			jsonEncoder.addElement("errorResponse", "");
+			jsonEncoder.addElement("status", status);
+			if(fetchAll) {
+				user_id = (NullPointerExceptionHandler.isNullOrEmpty(user_id)? "":user_id);
+				created = (NullPointerExceptionHandler.isNullOrEmpty(created)? "":created);
+				uploaded = (NullPointerExceptionHandler.isNullOrEmpty(uploaded)? "":uploaded);
+				estimated_upload_time = (NullPointerExceptionHandler.isNullOrEmpty(estimated_upload_time)? "":estimated_upload_time);
+				comments = (NullPointerExceptionHandler.isNullOrEmpty(comments)? "":comments);
+				listId = (NullPointerExceptionHandler.isNullOrEmpty(listId)? "":listId);
+				groupID = (NullPointerExceptionHandler.isNullOrEmpty(groupID)? "":groupID);
+				oneToOneID = (NullPointerExceptionHandler.isNullOrEmpty(oneToOneID)? "":oneToOneID);
+				
+				jsonEncoder.addElement("filename", filename);
+				jsonEncoder.addElement("user_id", user_id);
+				jsonEncoder.addElement("insert_date", created);
+				jsonEncoder.addElement("uploaded_date", uploaded);
+				jsonEncoder.addElement("estimated_upload_time", estimated_upload_time);
+				jsonEncoder.addElement("comments", comments);
+				jsonEncoder.addElement("groupID", groupID);
+				jsonEncoder.addElement("listId", listId);
+				jsonEncoder.addElement("oneToOneID", oneToOneID);
+			}
+			
+			jsonEncoder.buildJsonObject();
+			return jsonEncoder;
+		}else {
+			jsonEncoder.addElement("ErrorCode", "-10");
+			jsonEncoder.addElement("ErrorResponse", "wrong/empty parameter");
+			
+			jsonEncoder.buildJsonObject();
+			return jsonEncoder;
+		}
 	}
 
 	/**
