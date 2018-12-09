@@ -3007,9 +3007,10 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		String errorCode = "-1";
 		String errorResponse = "";
+		String reportFeature = "";
 		
 		String query = "SELECT  t.bparty AS Receiver,t.aparty AS Sender,t.message AS 'SMS Content',t.Sms_Count as 'Sms Unit Count',\n"
-				+ "		DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS 'Insert Date',DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS 'Execution Date', \n"
+				+ "		DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS 'InsertDate',DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS 'Execution Date', \n"
 				+ "		IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
 				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Not Delivered') AS 'Delivery Status', \n"
 				+ "		Case when dr.operator='RANKSTEL' \n"
@@ -3031,7 +3032,7 @@ public class UserDBOperations {
 				+ "		FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \n"
 				+ "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" + start_date + "'"
 				+ "		and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)\n"
-				+ "		ORDER BY 'Insert Date' DESC";
+				+ "		ORDER BY InsertDate DESC";
 
 		String summaryQuery = "SELECT q.Delivery_Status as 'Delivery Status',q.Recipient_Count AS 'Recipient Count', q.SMS_count as 'SMS Unit count', "
 				+ "		q1.SMS_count as 'Single SMS', q2.SMS_count as 'Bulk SMS', q3.SMS_count as 'Customized SMS' "
@@ -3056,6 +3057,11 @@ public class UserDBOperations {
 				+ "		WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = " + userId + " AND broadcast_type = 3) AND t.userid = " + userId + " AND t.insert_date "
 				+ "		between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status ) uTable3 GROUP BY uTable3.Delivery_Status) as q3 "
 				+ "		ON q2.Delivery_Status = q3.Delivery_Status order by q.Delivery_Status desc";
+		
+		String rejectedQuery = "SELECT msisdn as 'Rejected Numbers', file_name as 'File Name', insert_date as 'Upload Date' "
+				+ "FROM smsdb.invalid_msisdn_list where user_id = " + userId + " and group_id is not null and insert_date between '" + start_date + "' and "
+				+ "DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) order by insert_date desc";
+		
 
 		// old version
 		/*	
@@ -3102,19 +3108,58 @@ public class UserDBOperations {
 				*/
 
 		try {
-
-			String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`, `output_type`) VALUES (?,?,?,?);";
+			String getReportFeatureSQL = "SELECT report_feature FROM smsdb.tbl_users where id=?";
 
 			try {
-				bubbleDS.prepareStatement(sql, true);
+				bubbleDS.prepareStatement(getReportFeatureSQL);
 				bubbleDS.getPreparedStatement().setString(1, userId);
-				bubbleDS.getPreparedStatement().setString(2, query);
-				bubbleDS.getPreparedStatement().setString(3, summaryQuery);
-				bubbleDS.getPreparedStatement().setString(4, output_type);
-				errorCode = "0";
-				errorResponse = "Successfully Inserted";
-				bubbleDS.execute();
 
+				ResultSet rs = bubbleDS.executeQuery();
+				while (rs.next()) {
+					reportFeature = rs.getString("report_feature");
+					
+					System.out.println("reportFeature : " + reportFeature);
+				}
+				String sql = "INSERT INTO file_dump_query (`user_id`,`query`,`summaryQuery`,`rejectedQuery`, `output_type`) VALUES (?,?,?,?,?)";
+
+				try {
+					bubbleDS.prepareStatement(sql, true);
+					bubbleDS.getPreparedStatement().setString(1, userId);
+					bubbleDS.getPreparedStatement().setString(2, query);
+					bubbleDS.getPreparedStatement().setString(3, summaryQuery);
+					if(reportFeature.endsWith("1")) {
+						bubbleDS.getPreparedStatement().setString(4, rejectedQuery);
+					}else {
+						bubbleDS.getPreparedStatement().setNull(4, java.sql.Types.VARCHAR);
+					}
+					bubbleDS.getPreparedStatement().setString(5, output_type);
+					errorCode = "0";
+					errorResponse = "Successfully Inserted";
+					bubbleDS.execute();
+
+				} catch (SQLException e) {
+					errorCode = "11";
+					errorResponse = "Inserting parameters failed";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+				} catch (Exception e) {
+					e.printStackTrace();
+					errorCode = "10";
+					errorResponse = "other Exception";
+					e.printStackTrace();
+				} finally {
+					if (bubbleDS.getConnection() != null) {
+						try {
+							bubbleDS.closePreparedStatement();
+							//// bubbleDS.getConnection().close();
+						} catch (SQLException e) {
+							errorCode = "-4";
+							errorResponse = "Connection close Exception";
+							e.printStackTrace();
+							LogWriter.LOGGER.severe(e.getMessage());
+						}
+					}
+				}
 			} catch (SQLException e) {
 				errorCode = "11";
 				errorResponse = "Inserting parameters failed";
@@ -3125,18 +3170,6 @@ public class UserDBOperations {
 				errorCode = "10";
 				errorResponse = "other Exception";
 				e.printStackTrace();
-			} finally {
-				if (bubbleDS.getConnection() != null) {
-					try {
-						bubbleDS.closePreparedStatement();
-						//// bubbleDS.getConnection().close();
-					} catch (SQLException e) {
-						errorCode = "-4";
-						errorResponse = "Connection close Exception";
-						e.printStackTrace();
-						LogWriter.LOGGER.severe(e.getMessage());
-					}
-				}
 			}
 		} finally {
 			if (bubbleDS.getConnection() != null) {
