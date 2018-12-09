@@ -1214,7 +1214,6 @@ public class UserOperations {
 			Credentials = new JsonDecoder(messageBody);
 		}
 		retval = new UserDBOperations(bubbleDS).getPendingBulksmsList(Credentials.getNString("id"));
-		LogWriter.LOGGER.info("i am here . . . ");
 		return retval;
 	}
 
