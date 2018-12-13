@@ -3051,12 +3051,12 @@ public class UserDBOperations {
 				+ "		from(SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0), 'Success','Delivery Failed (at Recipient Network)'),'Delivery Failed (at Recipient Network)') AS Delivery_Status, count(t.group_id) "
 				+ "		AS Recipient_Count, sum(t.Sms_Count) as SMS_count from smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t "
 				+ "		on t.group_id=gs.group_id  WHERE t.user_id = " + userId + " AND t.insert_date between '" + start_date + "'and  DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status) uTable2 "
-				+ "		GROUP BY uTable2.Delivery_Status) as q2 ON q1.Delivery_Status = q2.Delivery_Status LEFT JOIN (select uTable3.Delivery_Status, sum(Sms_count) as SMS_count "
+				+ "		GROUP BY uTable2.Delivery_Status) as q2 ON q.Delivery_Status = q2.Delivery_Status LEFT JOIN (select uTable3.Delivery_Status, sum(Sms_count) as SMS_count "
 				+ "		from(SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success','Delivery Failed (at Recipient Network)'),'Delivery Failed (at Recipient Network)') AS Delivery_Status, count(t.ID) "
 				+ "		AS Recipient_Count, sum(t.sms_count) as SMS_count 	FROM smsinfo t LEFT JOIN delivery_reports dr ON concat('',t.ID) = dr.message_id "
 				+ "		WHERE broadcastId IN (SELECT id FROM broadcast_log WHERE user_id = " + userId + " AND broadcast_type = 3) AND t.userid = " + userId + " AND t.insert_date "
 				+ "		between '" + start_date + "' and DATE_SUB( DATE_ADD('" + end_date+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status ) uTable3 GROUP BY uTable3.Delivery_Status) as q3 "
-				+ "		ON q2.Delivery_Status = q3.Delivery_Status order by q.Delivery_Status desc";
+				+ "		ON q.Delivery_Status = q3.Delivery_Status order by q.Delivery_Status desc";
 		
 		String rejectedQuery = "SELECT msisdn as 'Rejected Numbers', file_name as 'File Name', insert_date as 'Upload Date' "
 				+ "FROM smsdb.invalid_msisdn_list where user_id = " + userId + " and group_id is not null and insert_date between '" + start_date + "' and "
