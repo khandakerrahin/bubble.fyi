@@ -4485,7 +4485,7 @@ public class UserDBOperations {
 		String retval = "";
 		String errorCode = "-1";
 		String sql = "SELECT list_id, list_name,DATE_FORMAT(created, \"%d-%m-%Y %h:%i %p\") as created,status, (select count(*) from group_msisdn_list t where t.list_id=u.list_id) msisdnCount\r\n"
-				+ " FROM group_list  u \r\n" + " where user_id = ? ORDER BY list_id desc limit 0,25";
+				+ " FROM group_list  u \r\n" + " where user_id = ? ORDER BY list_id desc limit 0,100";
 		try {
 
 			bubbleDS.prepareStatement(sql);
