@@ -5555,7 +5555,7 @@ public class UserDBOperations {
 			e.printStackTrace();
 		}
 		LogWriter.LOGGER
-				.severe(" return from  get getPendingBulksmsList list --> userFlag : " + userFlag + ":" + retval);
+				.info(" return from  get getPendingBulksmsList list --> userFlag : " + userFlag + ":" + retval);
 		return retval;
 	}
 
