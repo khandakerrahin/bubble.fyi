@@ -3011,7 +3011,7 @@ public class UserDBOperations {
 		
 		String query = "SELECT  t.bparty AS Receiver,t.aparty AS Sender,t.message AS 'SMS Content',t.Sms_Count as 'Sms Unit Count',\n"
 				+ "		DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS 'InsertDate',DATE_FORMAT(t.exec_date, '%d-%m-%Y %h:%i %p') AS 'Execution Date', \n"
-				+ "		IFNULL(ELT(FIELD(t.responseCode, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
+				+ "		IFNULL(ELT(FIELD(t.responseCode, 0, -3, -1, -500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
 				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Not Delivered') AS 'Delivery Status', \n"
 				+ "		Case when dr.operator='RANKSTEL' \n"
 				+ "		then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \n"
@@ -3023,7 +3023,7 @@ public class UserDBOperations {
 				+ "		union all "
 				+ "		SELECT  gs.msisdn AS Receiver,t.aparty AS Sender,t.message AS SMS_Content,t.Sms_Count,\n"
 				+ "		DATE_FORMAT(t.insert_date, '%d-%m-%Y %h:%i %p') AS Insert_Date,DATE_FORMAT(t.done_date, '%d-%m-%Y %h:%i %p') AS Exec_Date,\n"
-				+ "		IFNULL(ELT(FIELD(gs.response_code, 0, - 3, - 1, - 500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
+				+ "		IFNULL(ELT(FIELD(gs.response_code, 0, -3, -1, -500),'Processed','Invalid Receiver','Sending Error','Timed Out'),'failed') AS Response,\n"
 				+ "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status, \n"
 				+ "		Case when dr.operator='RANKSTEL' \n"
 				+ "		then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record')\n"
