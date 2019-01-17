@@ -163,6 +163,8 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).sentSMSFromList(message,messageBody); 			
 			}else if(action.equalsIgnoreCase("getBulksmsDetail")) {//documented	
 				retVal=new UserOperations(bubbleDS).getBulksmsDetailC(message,messageBody); 
+			}else if(action.equalsIgnoreCase("getCustomizedSMSDetail")) {//documented	
+				retVal=new UserOperations(bubbleDS).getCustomizedSMSDetail(message,messageBody); 
 			}else if(action.equalsIgnoreCase("getBulkSendStatus")) {
 				retVal=new UserOperations(bubbleDS).BulkSendStatus(message,messageBody); 
 			}else if(action.equalsIgnoreCase("getAddressBook")) {//documented	

@@ -1005,7 +1005,19 @@ public class UserOperations {
 		retval = new UserDBOperations(bubbleDS).getBulkSMSDetailOfCustomer(Credentials.getNString("id"));
 		return retval;
 	}
-
+	
+	public String getCustomizedSMSDetail(String message, String messageBody) {
+		String retval = "E";
+		JsonDecoder Credentials;
+		if (messageBody.isEmpty()) {
+			Credentials = new JsonDecoder(message);
+		} else {
+			Credentials = new JsonDecoder(messageBody);
+		}
+		retval = new UserDBOperations(bubbleDS).getCustomizedSMSDetailOfCustomer(Credentials.getNString("id")).getJsonObject().toString();
+		return retval;
+	}
+	
 	public String getAddressBook(String message, String messageBody) {
 		String retval = "E";
 		JsonDecoder Credentials;
