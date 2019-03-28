@@ -462,7 +462,7 @@ public class UserDBOperations {
 				// t.`scheduled_date`,t.`flag`, t.`message`, t.`sms_count` FROM
 				// `groupsms_sender_info` t, tbl_users u WHERE t.user_id=u.id and t.`flag`=?
 				// order by t.`scheduled_date` asc";
-				String sql = "SELECT t.id,u.custodian_name,u.organization_name,geo_target,demography_target,psychographic_target,behavioural_target,message,sms_count,budget,target_msisdn_count,DATE_FORMAT(t.schedule_date, \"%d-%m-%Y %H:%i\") as schedule_date FROM smsdb.targetSMS t,smsdb.tbl_users u WHERE t.user_id=u.id and t.flag=? order by t.id desc limit 0,20";
+				String sql = "SELECT t.id,u.custodian_name,u.organization_name,geo_target,demography_target,psychographic_target,behavioural_target,message,sms_count,budget,target_msisdn_count,DATE_FORMAT(t.schedule_date, \"%d-%m-%Y %H:%i\") as schedule_date FROM targetSMS t,tbl_users u WHERE t.user_id=u.id and t.flag=? order by t.id desc limit 0,20";
 				try {
 					bubbleDS.prepareStatement(sql);
 
@@ -523,7 +523,7 @@ public class UserDBOperations {
 		try {
 			userFlag = getUserTypeCustomerList(id);
 			// TODO needs to change to some other flag for sales rep now admin
-			String sql = "SELECT id,geo_target,demography_target,psychographic_target,behavioural_target,message,sms_count,budget,target_msisdn_count,DATE_FORMAT(t.schedule_date, \"%d-%m-%Y %H:%i\") as schedule_date,actualCost,actualReach,flag FROM smsdb.targetSMS t WHERE t.user_id=? order by id desc limit 0,5";
+			String sql = "SELECT id,geo_target,demography_target,psychographic_target,behavioural_target,message,sms_count,budget,target_msisdn_count,DATE_FORMAT(t.schedule_date, \"%d-%m-%Y %H:%i\") as schedule_date,actualCost,actualReach,flag FROM targetSMS t WHERE t.user_id=? order by id desc limit 0,5";
 			try {
 				bubbleDS.prepareStatement(sql);
 
@@ -694,9 +694,9 @@ public class UserDBOperations {
 
 	public String deleteMsisdnFromList(String msisdn, String listId) {
 		String errorCode = "-1";
-		String sql = "delete FROM smsdb.group_msisdn_list where list_id=? and msisdn=? and id>0;";
+		String sql = "delete FROM group_msisdn_list where list_id=? and msisdn=? and id>0;";
 		// TODO
-		// String sql = "delete FROM smsdb.group_msisdn_list where list_id=? and msisdn
+		// String sql = "delete FROM group_msisdn_list where list_id=? and msisdn
 		// like '%?%' and id>0;";
 		try {
 			// json: name,email,phone,password
@@ -732,7 +732,7 @@ public class UserDBOperations {
 		 */
 
 		String errorCode = "-1";
-		String sql = "delete from smsdb.group_list where list_id=?;";
+		String sql = "delete from group_list where list_id=?;";
 		try {
 			// json: name,email,phone,password
 			bubbleDS.prepareStatement(sql);
@@ -762,7 +762,7 @@ public class UserDBOperations {
 		boolean retval = false;
 		int output = -1;
 
-		String sql = "SELECT count(*) as counter FROM smsdb.group_msisdn_list t where t.msisdn=? and t.list_id=?";
+		String sql = "SELECT count(*) as counter FROM group_msisdn_list t where t.msisdn=? and t.list_id=?";
 
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -797,7 +797,7 @@ public class UserDBOperations {
 	public boolean ifListAssociatedWIthUser(String userId, String listId) {
 		boolean retval = false;
 		String output = "-1";
-		String sql = "SELECT count(*) as counter FROM smsdb.group_list t where t.user_id=? and t.list_id=?;";
+		String sql = "SELECT count(*) as counter FROM group_list t where t.user_id=? and t.list_id=?;";
 
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -1150,30 +1150,30 @@ public class UserDBOperations {
 		String count = "-1";
 		/*
 		 * String sql="select ifnull(sum(p.counter),0) as sumC from (\r\n" +
-		 * "select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n" +
+		 * "select count(*)*t.sms_count as counter from smsinfo t \r\n" +
 		 * "where t.userid=? and t.sms_count is not null\r\n" +
 		 * " group by t.userid,t.sms_count ) p;";/
 		 **/
 		/*
 		 * String sql="select ifnull(sum(s.sumC+r.sumBulk),0) as sumAll from \r\n" +
 		 * "(select \r\n" + "ifnull(sum(q.bulkCounter),0) as sumBulk from\r\n" +
-		 * "(SELECT p.msisdn_count*p.sms_count as bulkCounter FROM smsdb.groupsms_sender_info p where p.user_id=? and p.flag=1\r\n"
+		 * "(SELECT p.msisdn_count*p.sms_count as bulkCounter FROM groupsms_sender_info p where p.user_id=? and p.flag=1\r\n"
 		 * + "and p.msisdn_count is not null group by p.group_id,p.sms_count) q) r,\r\n"
 		 * + "(select \r\n" + "ifnull(sum(p.counter),0) as sumC from \r\n" +
-		 * "(select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n" +
+		 * "(select count(*)*t.sms_count as counter from smsinfo t \r\n" +
 		 * "where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s;"
 		 * ;/
 		 **/
 
 		String sql = "select ifnull(sum(s.sumC+r.sumBulk+sdump.sumCdump),0) as sumAll from \r\n" + "(select \r\n"
 				+ "ifnull(sum(q.bulkCounter),0) as sumBulk from\r\n"
-				+ "(SELECT p.msisdn_count*p.sms_count as bulkCounter FROM smsdb.groupsms_sender_info p where p.user_id=? and p.flag=1\r\n"
+				+ "(SELECT p.msisdn_count*p.sms_count as bulkCounter FROM groupsms_sender_info p where p.user_id=? and p.flag=1\r\n"
 				+ "and p.msisdn_count is not null group by p.group_id,p.sms_count) q) r,\r\n" + "(select \r\n"
 				+ "ifnull(sum(p.counter),0) as sumC from \r\n"
-				+ "(select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n"
+				+ "(select count(*)*t.sms_count as counter from smsinfo t \r\n"
 				+ "where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s, \r\n"
 				+ "(select ifnull(sum(q.counter),0) as sumCdump from \r\n "
-				+ "(select count(*)*t.sms_count as counter  from smsdb.smsinfo_dump t \r\n"
+				+ "(select count(*)*t.sms_count as counter  from smsinfo_dump t \r\n"
 				+ "where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) q \r\n" + " ) sdump;";
 
 		// TODO need to add smsinfo_dump
@@ -1253,17 +1253,17 @@ public class UserDBOperations {
 		String count = "-1";
 		/*
 		 * String sql="select ifnull(sum(p.counter),0) as sumC from (\r\n" +
-		 * "select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n" +
+		 * "select count(*)*t.sms_count as counter from smsinfo t \r\n" +
 		 * "where t.responseCode=0 and t.userid=? and t.sms_count is not null\r\n" +
 		 * " group by t.userid,t.sms_count ) p;";/
 		 **/
 
 		String sql = "select ifnull(sum(s.sumC+r.sumBulk),0) as sumAll from \r\n" + "(select \r\n"
 				+ "ifnull(sum(q.bulkCounter),0) as sumBulk from\r\n"
-				+ "(SELECT (SELECT count(*) FROM smsdb.groupsms_sender gs where gs.response_code=0 and gs.group_id=p.group_id)*p.sms_count as bulkCounter FROM smsdb.groupsms_sender_info p where p.user_id=? and p.flag=1\r\n"
+				+ "(SELECT (SELECT count(*) FROM groupsms_sender gs where gs.response_code=0 and gs.group_id=p.group_id)*p.sms_count as bulkCounter FROM groupsms_sender_info p where p.user_id=? and p.flag=1\r\n"
 				+ "and p.msisdn_count is not null group by p.group_id,p.sms_count) q) r,\r\n" + "(select \r\n"
 				+ "ifnull(sum(p.counter),0) as sumC from \r\n"
-				+ "(select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n"
+				+ "(select count(*)*t.sms_count as counter from smsinfo t \r\n"
 				+ "where t.responseCode=0 and  t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s;";
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -1295,17 +1295,17 @@ public class UserDBOperations {
 		String count = "-1";
 		/*
 		 * String sql="select ifnull(sum(p.counter),0) as sumC from (\r\n" +
-		 * "select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n" +
+		 * "select count(*)*t.sms_count as counter from smsinfo t \r\n" +
 		 * "where DATE(t.insert_date) = CURDATE() and t.responseCode=0 and t.userid=? and t.sms_count is not null\r\n"
 		 * + " group by t.userid,t.sms_count ) p;";/
 		 */
 
 		String sql = "select ifnull(sum(p.counter),0) as sumC from (\r\n"
-				+ "select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n"
+				+ "select count(*)*t.sms_count as counter from smsinfo t \r\n"
 				+ "where (t.insert_date >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)) and t.responseCode=0 and t.userid=? and t.sms_count is not null\r\n"
 				+ " group by t.userid,t.sms_count ) p;";
 		/*
-		 * select count(*)from smsdb.smsinfo t where t.responseCode=0 and t.userid=1;
+		 * select count(*)from smsinfo t where t.responseCode=0 and t.userid=1;
 		 */
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -1330,13 +1330,13 @@ public class UserDBOperations {
 		String count = "-1";
 		String sql = "select ifnull(sum(s.sumC+r.sumBulk),0) as sumAll from \r\n" + "(select  \r\n"
 				+ "ifnull(sum(q.bulkCounter),0) as sumBulk from \r\n"
-				+ "(SELECT p.msisdn_count*p.sms_count as bulkCounter FROM smsdb.groupsms_sender_info p where (p.done_date >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)) and p.user_id=? and p.flag=1 \r\n"
+				+ "(SELECT p.msisdn_count*p.sms_count as bulkCounter FROM groupsms_sender_info p where (p.done_date >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)) and p.user_id=? and p.flag=1 \r\n"
 				+ "and p.msisdn_count is not null group by p.group_id,p.sms_count) q) r, \r\n"
 				+ "(select ifnull(sum(p.counter),0) as sumC from \r\n"
-				+ "(select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n"
+				+ "(select count(*)*t.sms_count as counter from smsinfo t \r\n"
 				+ "where (t.insert_date >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)) and t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s;";
 		/*
-		 * select count(*)from smsdb.smsinfo t where t.responseCode=0 and t.userid=1;
+		 * select count(*)from smsinfo t where t.responseCode=0 and t.userid=1;
 		 */
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -1368,11 +1368,11 @@ public class UserDBOperations {
 	public String getLast7DaysSMSCount(String userid) {
 		String count = "-1";
 		String sql = "select ifnull(sum(p.counter),0) as sumC from (\r\n"
-				+ "select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n"
+				+ "select count(*)*t.sms_count as counter from smsinfo t \r\n"
 				+ "where (t.insert_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)) and t.responseCode=0 and t.userid=? and t.sms_count is not null\r\n"
 				+ " group by t.userid,t.sms_count ) p;";
 		/*
-		 * select count(*)from smsdb.smsinfo t where t.responseCode=0 and t.userid=1;
+		 * select count(*)from smsinfo t where t.responseCode=0 and t.userid=1;
 		 */
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -1396,11 +1396,11 @@ public class UserDBOperations {
 	public String getLast30DaysSMSCount(String userid) {
 		String count = "-1";
 		String sql = "select ifnull(sum(p.counter),0) as sumC from (\r\n"
-				+ "select count(*)*t.sms_count as counter from smsdb.smsinfo t \r\n"
+				+ "select count(*)*t.sms_count as counter from smsinfo t \r\n"
 				+ "where (t.insert_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) and t.responseCode=0 and t.userid=? and t.sms_count is not null\r\n"
 				+ " group by t.userid,t.sms_count ) p;";
 		/*
-		 * select count(*)from smsdb.smsinfo t where t.responseCode=0 and t.userid=1;
+		 * select count(*)from smsinfo t where t.responseCode=0 and t.userid=1;
 		 */
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -1563,7 +1563,7 @@ public class UserDBOperations {
 	/*
 	 * public String getEmailSubject(String id,String subject_id ) { //TODO needs to
 	 * update with price String retval=""; //double retval=-1; String
-	 * sql="SELECT subject1 FROM smsdb.emailSenderDetail where id=?"; try {
+	 * sql="SELECT subject1 FROM emailSenderDetail where id=?"; try {
 	 * bubbleDS.prepareStatement(sql); bubbleDS.getPreparedStatement().setString(1,
 	 * id); bubbleDS.executeQuery(); if(bubbleDS.getResultSet().next()) {
 	 * retval=bubbleDS.getResultSet().getString(1); }else { retval=-2; }
@@ -1608,7 +1608,7 @@ public class UserDBOperations {
 	public double getTargetSMSCost(String recordId) {
 		// TODO needs to update with price
 		double retval = -1;
-		String sql = "SELECT actualCost FROM smsdb.targetSMS where id=?";
+		String sql = "SELECT actualCost FROM targetSMS where id=?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, recordId);
@@ -1637,7 +1637,7 @@ public class UserDBOperations {
 	public String getGroupSMSText(String userId, String groupId) {
 		// TODO needs to update with price
 		String retval = "";
-		String sql = "SELECT message FROM smsdb.groupsms_sender_info where user_id=? and group_id=?";
+		String sql = "SELECT message FROM groupsms_sender_info where user_id=? and group_id=?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userId);
@@ -1809,7 +1809,7 @@ public class UserDBOperations {
 		String organization = "";
 		String custodian = "";
 		String retval = "";
-		String sql = "SELECT custodian_name,organization_name FROM smsdb.tbl_users where id =?";
+		String sql = "SELECT custodian_name,organization_name FROM tbl_users where id =?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userId);
@@ -1838,7 +1838,7 @@ public class UserDBOperations {
 	 */
 	public String getUserName(String userId) {
 		String custodian = "";
-		String sql = "SELECT custodian_name FROM smsdb.tbl_users where id =?";
+		String sql = "SELECT custodian_name FROM tbl_users where id =?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userId);
@@ -1862,7 +1862,7 @@ public class UserDBOperations {
 	 */
 	public String getTelcoPartner(String userId) {
 		String retval = "";
-		String sql = "SELECT telco FROM smsdb.customer_balance where user_id =?";
+		String sql = "SELECT telco FROM customer_balance where user_id =?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userId);
@@ -2686,8 +2686,8 @@ public class UserDBOperations {
 		String groupID = "";
 		String oneToOneID = "";
 
-		String statusQuery = "SELECT status from smsdb.bubble_file_info where file_name = ?";
-		String allQuery = "SELECT file_name, user_id, created, uploaded, status, estimated_upload_time, comments, groupID, listId, oneToOneID from smsdb.bubble_file_info where file_name = ?";
+		String statusQuery = "SELECT status from bubble_file_info where file_name = ?";
+		String allQuery = "SELECT file_name, user_id, created, uploaded, status, estimated_upload_time, comments, groupID, listId, oneToOneID from bubble_file_info where file_name = ?";
 		String query = "";
 		boolean fetchAll = false;
 
@@ -3030,7 +3030,7 @@ public class UserDBOperations {
 				+ "		then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record')\n"
 				+ "		else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record')\n"
 				+ "		end AS Delivery_Time \n"
-				+ "		FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \n"
+				+ "		FROM  groupsms_sender gs left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN groupsms_sender_info t on t.group_id=gs.group_id \n"
 				+ "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" + start_date + "'"
 				+ "		and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)\n"
 				+ "		ORDER BY InsertDate DESC";
@@ -3043,7 +3043,7 @@ public class UserDBOperations {
 				+ userId + " " + "		AND t.insert_date between '" + start_date + "' and DATE_SUB( DATE_ADD('"
 				+ end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) union all "
 				+ "		SELECT  gs.msisdn AS Receiver,t.Sms_Count AS Sms_count, IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Success', 'Delivery Failed (at Recipient Network)'),'Delivery Failed (at Recipient Network)') "
-				+ "		AS Delivery_Status FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id "
+				+ "		AS Delivery_Status FROM  groupsms_sender gs left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN groupsms_sender_info t on t.group_id=gs.group_id "
 				+ "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" + start_date
 				+ "' and  DATE_SUB( DATE_ADD('" + end_date
 				+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND)) uTable GROUP BY uTable.Delivery_Status) as q "
@@ -3055,7 +3055,7 @@ public class UserDBOperations {
 				+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) ORDER BY t.ID DESC)uTable1 GROUP BY uTable1.Delivery_Status) as q1 "
 				+ "		ON q.Delivery_Status = q1.Delivery_Status LEFT JOIN (select uTable2.Delivery_Status, sum(Sms_count) as SMS_count "
 				+ "		from(SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0), 'Success','Delivery Failed (at Recipient Network)'),'Delivery Failed (at Recipient Network)') AS Delivery_Status, count(t.group_id) "
-				+ "		AS Recipient_Count, sum(t.Sms_Count) as SMS_count from smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t "
+				+ "		AS Recipient_Count, sum(t.Sms_Count) as SMS_count from groupsms_sender gs left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN groupsms_sender_info t "
 				+ "		on t.group_id=gs.group_id  WHERE t.user_id = " + userId + " AND t.insert_date between '"
 				+ start_date + "'and  DATE_SUB( DATE_ADD('" + end_date
 				+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status) uTable2 "
@@ -3069,7 +3069,7 @@ public class UserDBOperations {
 				+ "		ON q.Delivery_Status = q3.Delivery_Status order by q.Delivery_Status desc";
 
 		String rejectedQuery = "SELECT msisdn as 'Rejected Numbers', file_name as 'File Name', insert_date as 'Upload Date' "
-				+ "FROM smsdb.invalid_msisdn_list where user_id = " + userId
+				+ "FROM invalid_msisdn_list where user_id = " + userId
 				+ " and group_id is not null and insert_date between '" + start_date + "' and " + "DATE_SUB( DATE_ADD('"
 				+ end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND) order by insert_date desc";
 
@@ -3106,7 +3106,7 @@ public class UserDBOperations {
 		 * +
 		 * "		else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record')\n"
 		 * + "		end AS Delivery_Time \n" +
-		 * "		FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \n"
+		 * "		FROM  groupsms_sender gs left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN groupsms_sender_info t on t.group_id=gs.group_id \n"
 		 * + "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" +
 		 * start_date + "'" + "		and  DATE_SUB( DATE_ADD('" + end_date +
 		 * "', INTERVAL 1 DAY),INTERVAL 1 SECOND)\n" +
@@ -3125,7 +3125,7 @@ public class UserDBOperations {
 		 * "		SELECT  gs.msisdn AS Receiver,t.Sms_Count AS Sms_count,\n" +
 		 * "		IFNULL(ELT(FIELD(dr.delivery_status, 1, 0),'Delivered', 'Not Delivered'),'Status Unknown') AS Delivery_Status  \n"
 		 * +
-		 * "		FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \n"
+		 * "		FROM  groupsms_sender gs left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN groupsms_sender_info t on t.group_id=gs.group_id \n"
 		 * + "		WHERE  t.user_id = " + userId + " AND t.insert_date between '" +
 		 * start_date + "'" + "		and  DATE_SUB( DATE_ADD('" + end_date +
 		 * "', INTERVAL 1 DAY),INTERVAL 1 SECOND)) \n" +
@@ -3134,7 +3134,7 @@ public class UserDBOperations {
 		 */
 
 		try {
-			String getReportFeatureSQL = "SELECT report_feature FROM smsdb.tbl_users where id=?";
+			String getReportFeatureSQL = "SELECT report_feature FROM tbl_users where id=?";
 
 			try {
 				bubbleDS.prepareStatement(getReportFeatureSQL);
@@ -4062,7 +4062,7 @@ public class UserDBOperations {
 
 		String retval = "";
 		String errorCode = "-1";
-		String sql = "SELECT DATE_FORMAT(insert_date, \"%d-%m-%Y %h:%i %p\") as insert_date,package_name,price,purchase_status,process_date FROM smsdb.payment_log where user_id=? ORDER BY `ID` desc limit 0,25";
+		String sql = "SELECT DATE_FORMAT(insert_date, \"%d-%m-%Y %h:%i %p\") as insert_date,package_name,price,purchase_status,process_date FROM payment_log where user_id=? ORDER BY `ID` desc limit 0,25";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, id);
@@ -4111,7 +4111,7 @@ public class UserDBOperations {
 
 		String historyLimitSql = "SELECT report_history_limit FROM tbl_users where id = ?";
 		String sql = "SELECT IFNULL(FILE_NAME,'File Generation in Progress') as file_name,DATE_FORMAT(insert_date, \"%d-%m-%Y %h:%i %p\") as insert_date,status,"
-				+ "DATE_FORMAT(dump_time, \"%d-%m-%Y %h:%i %p\") as dump_time,output_type FROM smsdb.file_dump_query where user_id=? and visible=0 "
+				+ "DATE_FORMAT(dump_time, \"%d-%m-%Y %h:%i %p\") as dump_time,output_type FROM file_dump_query where user_id=? and visible=0 "
 				+ "and  (insert_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)) order by id desc";
 		try {
 			bubbleDS.prepareStatement(historyLimitSql);
@@ -4184,16 +4184,16 @@ public class UserDBOperations {
 				+ "    then IFNULL(ELT(FIELD(dr.delivery_status, 0,1),'No Record',DATE_FORMAT(DATE_ADD(dr.delivery_time, INTERVAL 4 HOUR),'%d-%m-%Y %h:%i %p')),'No Record') \r\n"
 				+ "     else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
 				+ "      end AS 'Delivery Time'\r\n"
-				+ "  FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \r\n"
+				+ "  FROM  groupsms_sender gs left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN groupsms_sender_info t on t.group_id=gs.group_id \r\n"
 				+ "  WHERE  t.user_id = " + id + " AND t.insert_date between '" + start_date
 				+ "' and  DATE_SUB( DATE_ADD('" + end_date + "', INTERVAL 1 DAY),INTERVAL 1 SECOND)"
 				+ "    ORDER BY gs.ID DESC";
 
 		String summaryQuery = "select utable.Delivery_Status as 'Delivery Status', count(Recipient) as 'Recipient Count', sum(Sms_count) as 'SMS Count' from (SELECT t.group_id AS Recipient, IFNULL(ELT(FIELD(dr.delivery_status, 1, 0), "
 				+ "'Success','Delivery Failed (at Recipient Network)'),'Delivery Failed (at Recipient Network)') AS Delivery_Status,  \n"
-				+ "t.Sms_Count as SMS_count from smsdb.groupsms_sender gs \n"
-				+ "left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id  \n"
-				+ "left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id  WHERE t.user_id = " + id
+				+ "t.Sms_Count as SMS_count from groupsms_sender gs \n"
+				+ "left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id  \n"
+				+ "left JOIN groupsms_sender_info t on t.group_id=gs.group_id  WHERE t.user_id = " + id
 				+ " AND \n" + "t.insert_date between '" + start_date + "'and  DATE_SUB( DATE_ADD('" + end_date
 				+ "', INTERVAL 1 DAY),INTERVAL 1 SECOND)) utable \n"
 				+ "GROUP BY utable.Delivery_Status order by utable.Delivery_Status desc";
@@ -4213,7 +4213,7 @@ public class UserDBOperations {
 		 * +
 		 * "     else IFNULL(DATE_FORMAT(dr.delivery_time,'%d-%m-%Y %h:%i %p') ,'No Record') \r\n"
 		 * + "      end AS Delivery_Time\r\n" +
-		 * "  FROM  smsdb.groupsms_sender gs left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id \r\n"
+		 * "  FROM  groupsms_sender gs left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id left JOIN groupsms_sender_info t on t.group_id=gs.group_id \r\n"
 		 * + "  WHERE  t.user_id = " + id + " AND t.insert_date between '" + start_date
 		 * + "' and  DATE_SUB( DATE_ADD('" + end_date +
 		 * "', INTERVAL 1 DAY),INTERVAL 1 SECOND)" + "    ORDER BY gs.ID DESC";
@@ -4221,11 +4221,11 @@ public class UserDBOperations {
 		 * String summaryQuery =
 		 * "SELECT IFNULL(ELT(FIELD(dr.delivery_status, 1, 0), 'Delivered','Not Delivered'),'Status Unknown') AS Delivery_Status, "
 		 * +
-		 * "	count(t.group_id) AS Recipient_Count, sum(t.Sms_Count) as SMS_count from smsdb.groupsms_sender gs "
+		 * "	count(t.group_id) AS Recipient_Count, sum(t.Sms_Count) as SMS_count from groupsms_sender gs "
 		 * +
-		 * " left JOIN smsdb.delivery_reports dr ON concat('B',gs.ID) = dr.message_id  "
+		 * " left JOIN delivery_reports dr ON concat('B',gs.ID) = dr.message_id  "
 		 * +
-		 * " left JOIN smsdb.groupsms_sender_info t on t.group_id=gs.group_id  WHERE t.user_id = "
+		 * " left JOIN groupsms_sender_info t on t.group_id=gs.group_id  WHERE t.user_id = "
 		 * + id + " AND" + " t.insert_date between '" + start_date +
 		 * "'and  DATE_SUB( DATE_ADD('" + end_date +
 		 * "', INTERVAL 1 DAY),INTERVAL 1 SECOND) GROUP BY dr.delivery_status";
@@ -4363,13 +4363,13 @@ public class UserDBOperations {
 		String retval = "";
 		String errorCode = "-1";
 		String sql = "select q.file_name as FileName, ifnull(t.Successful_msisdn_count,0) as Successful_msisdn_count, ifnull(r.Invalid_msisdn_count,0) as Invalid_msisdn_count, "
-				+ "q.Insert_time as 'Insert_time' from (select f.file_name, f.created as Insert_time from smsdb.bubble_file_info f where user_id="
+				+ "q.Insert_time as 'Insert_time' from (select f.file_name, f.created as Insert_time from bubble_file_info f where user_id="
 				+ id + ") q "
 				+ "left join( select i.file_name as FileName,count(i.file_name) as Successful_msisdn_count, min(i.insert_date) as insert_date "
-				+ "FROM smsdb.uploaded_file i where i.user_id = " + id
+				+ "FROM uploaded_file i where i.user_id = " + id
 				+ " group by i.file_name order by min(i.insert_date)) t on q.file_name=t.FileName "
 				+ "left join (SELECT f.file_name as FileName,count(f.file_name) as Invalid_msisdn_count,min(f.insert_date) as insert_date "
-				+ "FROM smsdb.invalid_msisdn_list f where f.user_id = " + id
+				+ "FROM invalid_msisdn_list f where f.user_id = " + id
 				+ " group by f.file_name order by min(f.insert_date) ) r on q.file_name=r.FileName order by q.Insert_time desc limit 0,15";
 		try {
 			bubbleDS.prepareStatement(sql, true);
@@ -4539,13 +4539,13 @@ public class UserDBOperations {
 
 		String sql = "SELECT q.oneToOneID as oneToOneID, q.file_name AS FileName, IFNULL(t.Successful_msisdn_count, 0) AS Successful_msisdn_count, "
 				+ "IFNULL(r.Invalid_msisdn_count, 0) AS Invalid_msisdn_count, s.Status, q.Insert_time AS 'Insert_time' "
-				+ "FROM (SELECT f.file_name, f.oneToOneID, f.created AS Insert_time FROM smsdb.bubble_file_info f WHERE user_id = "+id+" and oneToOneID is not null) q "
-				+ "LEFT JOIN (SELECT i.file_name AS FileName, COUNT(i.file_name) AS Successful_msisdn_count, MIN(i.insert_date) AS insert_date FROM smsdb.uploaded_file i "
+				+ "FROM (SELECT f.file_name, f.oneToOneID, f.created AS Insert_time FROM bubble_file_info f WHERE user_id = "+id+" and oneToOneID is not null) q "
+				+ "LEFT JOIN (SELECT i.file_name AS FileName, COUNT(i.file_name) AS Successful_msisdn_count, MIN(i.insert_date) AS insert_date FROM uploaded_file i "
 				+ "WHERE i.user_id = "+id+" and oneToOneID is not null GROUP BY i.file_name ORDER BY MIN(i.insert_date)) t ON q.file_name = t.FileName "
-				+ "LEFT JOIN (SELECT f.file_name AS FileName, COUNT(f.file_name) AS Invalid_msisdn_count, MIN(f.insert_date) AS insert_date FROM smsdb.invalid_msisdn_list f "
+				+ "LEFT JOIN (SELECT f.file_name AS FileName, COUNT(f.file_name) AS Invalid_msisdn_count, MIN(f.insert_date) AS insert_date FROM invalid_msisdn_list f "
 				+ "WHERE f.user_id = "+id+" and oneToOneID is not null GROUP BY f.file_name ORDER BY MIN(f.insert_date)) r ON q.file_name = r.FileName "
 				+ "LEFT JOIN (SELECT b.id, ELT(FIELD(ifnull(min(s.flag),-1), 0, 1, -1, -99),'Processing','Processed','Sending Error','Sending Failed') as Status, count(*) as Recipient_count "
-				+ "FROM smsdb.broadcast_log b left join smsdb.smsinfo s on b.id=s.broadcastId where b.user_id="+id+" and b.broadcast_type=3 group by b.id) s on s.id=q.oneToOneID "
+				+ "FROM broadcast_log b left join smsinfo s on b.id=s.broadcastId where b.user_id="+id+" and b.broadcast_type=3 group by b.id) s on s.id=q.oneToOneID "
 				+ "ORDER BY q.Insert_time DESC LIMIT 0 , 15";
 
 		try {
@@ -4755,7 +4755,7 @@ public class UserDBOperations {
 		// getUserTypeCustomerList(id);
 		String retval = "";
 		String errorCode = "-1";
-		String sql = "SELECT msisdn,field2,field3 FROM smsdb.group_msisdn_list where list_id in (SELECT t.list_id FROM smsdb.group_list t where t.user_id=?);";
+		String sql = "SELECT msisdn,field2,field3 FROM group_msisdn_list where list_id in (SELECT t.list_id FROM group_list t where t.user_id=?);";
 		try {
 
 			bubbleDS.prepareStatement(sql);
@@ -4797,7 +4797,7 @@ public class UserDBOperations {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		String retval = "-1";
 		String errorCode = "-1";
-		String sql = "SELECT count(msisdn) as counter FROM smsdb.group_msisdn_list where list_id in (SELECT t.list_id FROM smsdb.group_list t where t.user_id=?);";
+		String sql = "SELECT count(msisdn) as counter FROM group_msisdn_list where list_id in (SELECT t.list_id FROM group_list t where t.user_id=?);";
 		try {
 
 			bubbleDS.prepareStatement(sql);
@@ -4836,10 +4836,10 @@ public class UserDBOperations {
 		// getUserTypeCustomerList(id);
 		String retval = "";
 		String errorCode = "-1";
-		// String sql = "SELECT msisdn,field2,field3 FROM smsdb.group_msisdn_list where
-		// list_id in (SELECT t.list_id FROM smsdb.group_list t where t.user_id=? and
+		// String sql = "SELECT msisdn,field2,field3 FROM group_msisdn_list where
+		// list_id in (SELECT t.list_id FROM group_list t where t.user_id=? and
 		// t.list_id=?);";
-		String sql = "SELECT id,list_id,msisdn,field2,field3 FROM smsdb.group_msisdn_list where list_id in (SELECT t.list_id FROM smsdb.group_list t where t.user_id=? and t.list_id=?);";
+		String sql = "SELECT id,list_id,msisdn,field2,field3 FROM group_msisdn_list where list_id in (SELECT t.list_id FROM group_list t where t.user_id=? and t.list_id=?);";
 
 		try {
 
@@ -4887,10 +4887,10 @@ public class UserDBOperations {
 	public String getListMsisdnRowFunc(String id, String rowId) {
 		String retval = "";
 		String errorCode = "-1";
-		// String sql = "SELECT msisdn,field2,field3 FROM smsdb.group_msisdn_list where
-		// list_id in (SELECT t.list_id FROM smsdb.group_list t where t.user_id=? and
+		// String sql = "SELECT msisdn,field2,field3 FROM group_msisdn_list where
+		// list_id in (SELECT t.list_id FROM group_list t where t.user_id=? and
 		// t.list_id=?);";
-		String sql = "SELECT p.id,p.list_id,p.msisdn,p.field2,p.field3 FROM smsdb.group_msisdn_list p where p.list_id in (SELECT t.list_id FROM smsdb.group_list t where t.user_id=?) and p.id=?;";
+		String sql = "SELECT p.id,p.list_id,p.msisdn,p.field2,p.field3 FROM group_msisdn_list p where p.list_id in (SELECT t.list_id FROM group_list t where t.user_id=?) and p.id=?;";
 
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -5709,10 +5709,10 @@ public class UserDBOperations {
 	public String getFileList(String userId, String userType) {
 		String retval = "-1";
 		String errorCode = "-1";
-		String sql = "select u.custodian_name,u.organization_name,t.message,t.sms_count,date_format(t.insert_date,'%Y-%m-%d %H:%i:%s') as created, (select COUNT(msisdn) from smsdb.groupsms_sender gsi where t.group_id=gsi.group_id) as msisdnCount, t.flag \r\n"
+		String sql = "select u.custodian_name,u.organization_name,t.message,t.sms_count,date_format(t.insert_date,'%Y-%m-%d %H:%i:%s') as created, (select COUNT(msisdn) from groupsms_sender gsi where t.group_id=gsi.group_id) as msisdnCount, t.flag \r\n"
 				+ ",t.action_date from groupsms_sender_info t , tbl_users u WHERE t.user_id=u.id order by t.insert_date asc where user_id=?";
 
-		String sqlAdmin = "select u.custodian_name,u.organization_name,t.message,t.sms_count,date_format(t.insert_date,'%Y-%m-%d %H:%i:%s') as created, (select COUNT(msisdn) from smsdb.groupsms_sender gsi where t.group_id=gsi.group_id) as msisdnCount, t.flag \r\n"
+		String sqlAdmin = "select u.custodian_name,u.organization_name,t.message,t.sms_count,date_format(t.insert_date,'%Y-%m-%d %H:%i:%s') as created, (select COUNT(msisdn) from groupsms_sender gsi where t.group_id=gsi.group_id) as msisdnCount, t.flag \r\n"
 				+ ",t.action_date from groupsms_sender_info t , tbl_users u WHERE t.user_id=u.id order by t.insert_date asc limit 0,50";
 		try {
 

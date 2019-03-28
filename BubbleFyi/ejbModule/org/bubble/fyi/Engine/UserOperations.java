@@ -1014,7 +1014,8 @@ public class UserOperations {
 		} else {
 			Credentials = new JsonDecoder(messageBody);
 		}
-		retval = new UserDBOperations(bubbleDS).getCustomizedSMSDetailOfCustomer(Credentials.getNString("id")).getJsonObject().toString();
+		retval = new UserDBOperations(bubbleDS).getCustomizedSMSDetailOfCustomer(Credentials.getNString("id")).getJsonObject()
+				.toString();
 		return retval;
 	}
 	

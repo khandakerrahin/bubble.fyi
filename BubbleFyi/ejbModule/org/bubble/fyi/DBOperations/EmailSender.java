@@ -71,7 +71,7 @@ https://120.50.5.39:8443/HttpReceiver/HttpReceiver?destinationName=spiderpostbox
 			String sender="";
 			String reciever="";
 			LogWriter.LOGGER.info("sendEmailToGroup:SenderId:"+mailId+" mailBody:"+mailBody);
-			String sql="SELECT sender,receiver,mailSubject FROM smsdb.emailSenderDetail where id=? and status=1 ;";
+			String sql="SELECT sender,receiver,mailSubject FROM emailSenderDetail where id=? and status=1 ;";
 
 			try {
 				bubbleDS.prepareStatement(sql);

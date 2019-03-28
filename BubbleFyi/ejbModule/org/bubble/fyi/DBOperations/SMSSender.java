@@ -593,7 +593,7 @@ public class SMSSender {
 	 */
 	private String createInsertId(String userId,int broadcastType,int msisdnCount) {
 		String id="-1";
-		String sql="INSERT INTO smsdb.broadcast_log" + 
+		String sql="INSERT INTO broadcast_log" + 
 				"(user_id,broadcast_type,msisdn_count) " + 
 				"VALUES (?,?,?)";						
 		try {
@@ -690,7 +690,7 @@ public class SMSSender {
 		//query using userid and masking, true only if it returns true for both 
 		boolean retval = false;
 		String output = "-1";
-		String sql = "SELECT count(*) as counter FROM smsdb.masking_detail t where t.user_id=? and t.masking=?";
+		String sql = "SELECT count(*) as counter FROM masking_detail t where t.user_id=? and t.masking=?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userid);
@@ -730,10 +730,10 @@ public class SMSSender {
 		//query using userid and masking, true only if it returns true for both 
 		//  SQL upper case issue faced while trying to check irrespective of masking case
 		boolean retval = false;
-		String sql = "SELECT count(*) as counter FROM smsdb.masking_detail t where t.telco_prefix=? and t.masking=?";
+		String sql = "SELECT count(*) as counter FROM masking_detail t where t.telco_prefix=? and t.masking=?";
 		if(caseSensitivity==1) {
 			masking=masking.toUpperCase();
-			sql="SELECT count(*) as counter FROM smsdb.masking_detail t where t.telco_prefix=? and upper(t.masking)=?";
+			sql="SELECT count(*) as counter FROM masking_detail t where t.telco_prefix=? and upper(t.masking)=?";
 		}
 		String output = "-1";
 
@@ -777,7 +777,7 @@ public class SMSSender {
 		//TODO query using userid and masking, true only if it returns true for both 
 		boolean retval = false;
 		String output = "-1";
-		String sql = "SELECT count(*) as counter FROM smsdb.customer_balance t where t.user_id=? and t.aparty=?";
+		String sql = "SELECT count(*) as counter FROM customer_balance t where t.user_id=? and t.aparty=?";
 
 		try {
 			bubbleDS.prepareStatement(sql);
@@ -814,7 +814,7 @@ public class SMSSender {
 	public boolean ifmasking(String aparty) {
 		boolean retval = false;
 		String output = "-1";
-		String sql = "SELECT count(*) as counter FROM smsdb.masking_detail t where t.masking=?";
+		String sql = "SELECT count(*) as counter FROM masking_detail t where t.masking=?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, aparty);
