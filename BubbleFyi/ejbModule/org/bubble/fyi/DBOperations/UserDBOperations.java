@@ -1907,7 +1907,7 @@ public class UserDBOperations {
 		SMSSender ss = new SMSSender(bubbleDS);
 		aparty = ss.getAparty(userId);
 		if (!aparty.isEmpty())
-			telcoDetail = ss.getTelcoDetail(aparty);
+			telcoDetail = ss.getTelcoDetail(userId,aparty);
 		/**/
 		try {
 			String tempUid = isListTaggedUid_v2(listId);
@@ -2303,7 +2303,7 @@ public class UserDBOperations {
 		SMSSender ss = new SMSSender(bubbleDS);
 		aparty = ss.getAparty(userId);
 		if (!aparty.isEmpty())
-			telcoDetail = ss.getTelcoDetail(aparty);
+			telcoDetail = ss.getTelcoDetail(userId,aparty);
 		try {
 			if (sch_date.isEmpty()) {
 
@@ -2420,7 +2420,7 @@ public class UserDBOperations {
 		SMSSender ss = new SMSSender(bubbleDS);
 		aparty = ss.getAparty(userId);
 		if (!aparty.isEmpty())
-			telcoDetail = ss.getTelcoDetail(aparty);
+			telcoDetail = ss.getTelcoDetail(userId,aparty);
 		try {
 			String oneToOneID = "";
 			String sqlBroadcastLog = "INSERT INTO broadcast_log" + " (user_id,broadcast_type) " + "VALUES (?,?)";

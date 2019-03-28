@@ -144,7 +144,7 @@ public class SMSSender {
 	 * @return String telco name based on sender prefix RT BP BL GP TT
 	 */
 	//public String getTelcoDetail(String userId,String aparty) {
-	public String getTelcoDetail(String aparty) { 
+	public String getTelcoDetail_v1(String aparty) { 
 		String retval="-1"; //TODO needs to change after mobile number portability comes
 		if(aparty.startsWith("035") || aparty.startsWith("88035") || aparty.startsWith("+88035")) {
 			retval= "BP";
@@ -175,6 +175,46 @@ public class SMSSender {
 			retval="-2";
 			LogWriter.LOGGER.info("getTelcoDetail(): "+e.getMessage());
 		}		
+		LogWriter.LOGGER.info("getAparty(): "+retval);/**/
+		return retval;
+	}
+	
+	/**
+	 * 
+	 * @param aparty
+	 * @return String telco name based on sender prefix RT BP BL GP TT
+	 */
+	public String getTelcoDetail(String userId,String aparty) { 
+		String retval="-1"; //TODO needs to change after mobile number portability comes
+		if(aparty.startsWith("035") || aparty.startsWith("88035") || aparty.startsWith("+88035")) {
+			retval= "BP";
+		}else if(aparty.startsWith("+880444") || aparty.startsWith("880444") ) {
+			retval= "RT";
+		}else if(aparty.startsWith("+88019") || aparty.startsWith("88019") || aparty.startsWith("019")) {
+			retval= "BL";
+		}else if(aparty.startsWith("+88017") || aparty.startsWith("88017") || aparty.startsWith("017") ) {
+			retval= "GP";
+		}else if(aparty.startsWith("+88015") || aparty.startsWith("88015") || aparty.startsWith("015")) {
+			retval= "TT";
+		}else {
+			String sql="select telco from customer_balance where user_id=?";
+			try {
+				bubbleDS.prepareStatement(sql);
+				bubbleDS.getPreparedStatement().setString(1, userId);
+				bubbleDS.executeQuery();
+				if(bubbleDS.getResultSet().next()) {
+					retval=bubbleDS.getResultSet().getString(1);
+					//retval+=""+bubbleDS.getResultSet().getString(2);
+				}
+				bubbleDS.closeResultSet();
+				bubbleDS.closePreparedStatement();
+			} catch (SQLException e) {
+				retval="-2";
+				LogWriter.LOGGER.info("getTelcoDetail(): "+e.getMessage());
+			}	
+		}
+		
+			
 		LogWriter.LOGGER.info("getAparty(): "+retval);/**/
 		return retval;
 	}
@@ -313,7 +353,7 @@ public class SMSSender {
 			try {
 				String userStatus=getUserType(userID);
 				String aparty=getAparty(userID);
-				String telco =getTelcoDetail(aparty);
+				String telco =getTelcoDetail(userID,aparty);
 				int smsCount=getSMSSize(message);
 				// if aparty null check 
 				//if(userStatus.equals("1") || userStatus.equals("5")) { 
@@ -435,7 +475,7 @@ public class SMSSender {
 				try {
 					String userStatus=getUserType(userID);
 					String aparty=getAparty(userID);
-					String telco =getTelcoDetail(aparty);
+					String telco =getTelcoDetail(userID,aparty);
 					//if aparty null check 
 					//if(userStatus.equals("1") || userStatus.equals("5")) { 
 					//1=active customer 5=admin 10=high value customer				
@@ -866,7 +906,7 @@ public class SMSSender {
 				String userStatus=getUserType(userID);
 				String aparty=getAparty(userID);
 				int smsCount=getSMSSize(message);
-				String telco =getTelcoDetail(aparty);
+				String telco =getTelcoDetail(userID,aparty);
 				//1=active customer 5=admin 10=high value customer
 				if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
 
