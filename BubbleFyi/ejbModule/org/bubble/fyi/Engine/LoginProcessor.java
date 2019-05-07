@@ -86,18 +86,19 @@ public class LoginProcessor {
 		}
 		if(loginCredentials.getErrorCode().equals("0")) {
 			retval=this.checkCredentials(loginCredentials);
+			if(retval.equals("1")) {
+				respCode="0000";
+				//retval=fetchUserInfo(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode"));
+				retval=new UserInfo(bubbleDS).fetchUserInfoApi(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode")).getJsonObject().toString();
+				//new UserInfo(bubbleDS).fetchUserInfo(id, mode).getJsonObject().toString();
+			}else{
+				//retval="-6:Error in user Credentials";
+				respCode="0010";			
+			}
 		}else{
 			respCode="0009";
 		}
-		if(retval.equals("1")) {
-			respCode="0000";
-			//retval=fetchUserInfo(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode"));
-			retval=new UserInfo(bubbleDS).fetchUserInfoApi(loginCredentials.getJsonObject().getString("username"),loginCredentials.getJsonObject().getString("mode")).getJsonObject().toString();
-			//new UserInfo(bubbleDS).fetchUserInfo(id, mode).getJsonObject().toString();
-		}else{
-			//retval="-6:Error in user Credentials";
-			respCode="0010";			
-		}
+		
 		
 		if(!respCode.equals("0000")) {
 			JsonEncoder jsonEncoder=new JsonEncoder();
