@@ -9,6 +9,7 @@ import org.bubble.fyi.DataSources.BubbleFyiDS;
 import org.bubble.fyi.Engine.JsonEncoder;
 import org.bubble.fyi.Initializations.LoadConfigurations;
 import org.bubble.fyi.Logs.LogWriter;
+import org.bubble.fyi.Utilities.NullPointerExceptionHandler;
 import org.bubble.fyi.Api.AuthenticationToken;
 
 /**
@@ -76,12 +77,12 @@ public class UserInfo {
 			ResultSet rs = bubbleDS.executeQuery();
 			if (rs.next()) {
 				jsonEncoder.addElement("id", rs.getString("id"));
-				jsonEncoder.addElement("username", rs.getString("username"));
-				jsonEncoder.addElement("email", rs.getString("email"));
-				jsonEncoder.addElement("phoneNumber", rs.getString("phone"));
-				jsonEncoder.addElement("userType", rs.getString("user_type"));
-				jsonEncoder.addElement("status", rs.getString("flag"));
-				jsonEncoder.addElement("logoFileName", rs.getString("logofile"));
+				jsonEncoder.addElement("username", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("username"))?"":rs.getString("username")));
+				jsonEncoder.addElement("email", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("email"))?"":rs.getString("email")));
+				jsonEncoder.addElement("phoneNumber", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("phone"))?"":rs.getString("phone")));
+				jsonEncoder.addElement("userType", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("user_type"))?"":rs.getString("user_type")));
+				jsonEncoder.addElement("status", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("flag"))?"":rs.getString("flag")));
+				jsonEncoder.addElement("logoFileName", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("logofile"))?"":rs.getString("logofile")));
 				
 				String featureList= rs.getString("feature_list");
 				if(featureList.length()>=5) {
@@ -111,11 +112,11 @@ public class UserInfo {
 				}
 				//jsonEncoder.addElement("smsRemaining", rs.getString("smsCount"));	
 				if(!rs.getString("user_type").equals("Admin")) {
-				jsonEncoder.addElement("custodian_name", rs.getString("custodian_name"));
-				jsonEncoder.addElement("address", rs.getString("address"));
-				jsonEncoder.addElement("organization_name", rs.getString("organization_name"));
-				jsonEncoder.addElement("postcode", rs.getString("postcode"));
-				jsonEncoder.addElement("city", rs.getString("city"));
+				jsonEncoder.addElement("custodian_name", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("custodian_name"))?"":rs.getString("custodian_name")));
+				jsonEncoder.addElement("address", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("address"))?"":rs.getString("address")));
+				jsonEncoder.addElement("organization_name", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("organization_name"))?"":rs.getString("organization_name")));
+				jsonEncoder.addElement("postcode", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("postcode"))?"":rs.getString("postcode")));
+				jsonEncoder.addElement("city", (NullPointerExceptionHandler.isNullOrEmpty(rs.getString("city"))?"":rs.getString("city")));
 				}
 				
 				errorCode="0";

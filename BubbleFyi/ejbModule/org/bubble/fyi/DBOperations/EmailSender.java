@@ -37,6 +37,11 @@ https://120.50.5.39:8443/HttpReceiver/HttpReceiver?destinationName=spiderpostbox
 			 */
 			this.destinationName="spiderpostboxrelay";
 			this.clientId="spiderpostboxrelay";
+			
+			// to bypass relay
+//			this.destinationName="spiderpostbox";
+//			this.clientId="spiderpostbox";
+			
 			this.target="ENGINE";
 			this.LoadConf="N";
 			this.reply="true";
