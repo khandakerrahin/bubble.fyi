@@ -1879,7 +1879,7 @@ public class UserDBOperations {
 		return retval;
 	}
 
-	public JsonEncoder sendSMSFromList(String userId, String sch_date, String message, String listId) {
+	public JsonEncoder sendSMSFromList(String userId, String sch_date, String message, String listId, String masking) {
 		String errorCode = "-1";
 		String userFlag = "-1";
 		String aparty = "";
@@ -4095,7 +4095,43 @@ public class UserDBOperations {
 		if (!errorCode.startsWith("0")) {
 			retval = errorCode;
 		}
-		LogWriter.LOGGER.severe(" return from  get list --> " + retval);
+		LogWriter.LOGGER.info(" return from  get list --> " + retval);
+		return retval;
+	}
+	
+	public String getUserMaskings(String id) {
+
+		String retval = "";
+		String errorCode = "-1";
+		String sql = "SELECT id, masking FROM masking_configurations where user_id=? and flag =0";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, id);
+			ResultSet rs = bubbleDS.executeQuery();
+
+			while (rs.next()) {
+				retval += rs.getString("id") + ",";
+				retval += rs.getString("masking") + "|";
+			}
+			rs.close();
+			bubbleDS.closePreparedStatement();
+			if (NullPointerExceptionHandler.isNullOrEmpty(retval))
+				retval = "";
+			int lio = retval.lastIndexOf("|");
+			if (lio > 0)
+				retval = retval.substring(0, lio);
+			errorCode = "0";
+			LogWriter.LOGGER.info("MapList : " + retval);
+		} catch (SQLException e) {
+			errorCode = "-2";
+			LogWriter.LOGGER.severe(e.getMessage());
+		} catch (Exception e) {
+			errorCode = "-3";
+			LogWriter.LOGGER.severe(e.getMessage());
+		}
+		if (!errorCode.startsWith("0")) {
+			retval = errorCode;
+		}
 		return retval;
 	}
 

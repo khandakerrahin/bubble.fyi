@@ -67,7 +67,7 @@ public class SMSProcessor {
 		SMSSender sendSMS=new SMSSender(bubbleDS);
 		if(SMSInfo.getErrorCode().equals("0")) {
 			retval=sendSMS.insertToSenderV2(SMSInfo).getJsonObject().toString();
-			LogWriter.LOGGER.info("retval from insertToSenderV2 : "+retval);
+			//LogWriter.LOGGER.info("retval from insertToSenderV2 : "+retval);
 			
 		}else{
 			String errorCode="E";

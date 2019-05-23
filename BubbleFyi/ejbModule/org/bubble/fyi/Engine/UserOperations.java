@@ -172,8 +172,8 @@ public class UserOperations {
 		return new UserDBOperations(bubbleDS).updatePaymentInfoDB(id, trxID, price, status);
 	}
 
-	public String SendSMSFromListDB(String id, String sch_date, String message, String listId) {
-		return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date, message, listId).getJsonObject().toString();
+	public String SendSMSFromListDB(String id, String sch_date, String message, String listId, String masking) {
+		return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date, message, listId, masking).getJsonObject().toString();
 	}
 
 	public String smsDistributionPreProcessor(String id, String groupId) {
@@ -203,9 +203,9 @@ public class UserOperations {
 	 * @param mode
 	 * @return
 	 */
-	public String SendScheduledSMS(String id, String sch_date, String message, String listFile, String mode) {
+	public String SendScheduledSMS(String id, String sch_date, String message, String listFile, String mode, String masking) {
 		if (mode.equalsIgnoreCase("1")) {
-			return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date, message, listFile).getJsonObject()
+			return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date, message, listFile, masking).getJsonObject()
 					.toString();
 		} else {
 			return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date, message, listFile).getJsonObject()
@@ -594,7 +594,7 @@ public class UserOperations {
 		}
 		if (json.getErrorCode().equals("0")) {
 			retval = SendSMSFromListDB(json.getNString("id"), json.getNString("schedule_date"),
-					json.getNString("smsText"), json.getNString("listId"));
+					json.getNString("smsText"), json.getNString("listId"), json.getNString("masking"));
 
 		} else {
 			retval = "E:JSON string invalid";
@@ -669,7 +669,7 @@ public class UserOperations {
 		if (json.getErrorCode().equals("0")) {
 			// mode=1 list mode=2 file
 			retval = SendScheduledSMS(json.getNString("id"), json.getNString("schedule_date"),
-					json.getNString("smsText"), json.getNString("listFile"), json.getNString("mode"));
+					json.getNString("smsText"), json.getNString("listFile"), json.getNString("mode"), json.getNString("masking"));
 
 		} else {
 			retval = "E:JSON string invalid";
@@ -840,6 +840,18 @@ public class UserOperations {
 			Credentials = new JsonDecoder(messageBody);
 		}
 		retval = new UserDBOperations(bubbleDS).getPaymentRecords(Credentials.getNString("id"));
+		return retval;
+	}
+	
+	public String getUserMaskings(String message, String messageBody) {
+		String retval = "E";
+		JsonDecoder Credentials;
+		if (messageBody.isEmpty()) {
+			Credentials = new JsonDecoder(message);
+		} else {
+			Credentials = new JsonDecoder(messageBody);
+		}
+		retval = new UserDBOperations(bubbleDS).getUserMaskings(Credentials.getNString("id"));
 		return retval;
 	}
 

@@ -132,10 +132,73 @@ public class SMSSender {
 			bubbleDS.closePreparedStatement();
 		} catch (SQLException e) {
 			retval="-2";
-			LogWriter.LOGGER.info("getAparty(): "+e.getMessage());
+			LogWriter.LOGGER.severe("getAparty(): "+e.getMessage());
 		}		
 		LogWriter.LOGGER.info("getAparty(): "+retval);
 		return retval;
+	}
+	
+	/**
+	 * 
+	 * @param String userID, String msisdn, String masking
+	 * @return Aparty, telcoDetails
+	 */
+	public JsonEncoder getSenderInfo(String userID, String msisdn, String masking) {
+		String aparty = "";
+		String telco = "";
+		String BL = "";
+		String GP = "";
+		String AR = "";
+		String MR = "";
+		String maskingFlag = "1";
+		JsonEncoder jsonEncoder = new JsonEncoder();
+		String sql="SELECT ifnull(masking,'') as masking, ifnull(BL_masking,'') as BL, ifnull(GP_masking,'') as GP, "
+				+ "ifnull(AR_masking,'') as AR, ifnull(MR_masking,'') as MR FROM masking_configurations where user_id=? and flag=0 and id=?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setString(1, userID);
+			bubbleDS.getPreparedStatement().setString(2, masking);
+			bubbleDS.executeQuery();
+			if(bubbleDS.getResultSet().next()) {
+				//aparty = bubbleDS.getResultSet().getString(1);
+				BL = bubbleDS.getResultSet().getString(2);
+				GP = bubbleDS.getResultSet().getString(3);
+				AR = bubbleDS.getResultSet().getString(4);
+				MR = bubbleDS.getResultSet().getString(5);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			LogWriter.LOGGER.severe("getAparty(): "+e.getMessage());
+		}		
+		
+		if(msisdn.startsWith("88019") || msisdn.startsWith("88014")) {
+			aparty = BL;
+			telco = "BL";
+		}else if(msisdn.startsWith("88017") || msisdn.startsWith("88013")) {
+			aparty = GP;
+			telco = "GP";
+		}else if(msisdn.startsWith("88018") || msisdn.startsWith("88016")) {
+			aparty = AR;
+			telco = "AR";
+		}
+		if(aparty.equals("")) {
+			if(MR.equals("")) {
+				maskingFlag = "0";
+				aparty = getAparty(userID);
+				telco = getTelcoDetail(userID,aparty);
+			}else {
+				aparty = MR;
+				telco = "MR";
+			}
+		}
+		
+		jsonEncoder.addElement("aparty", aparty);
+		jsonEncoder.addElement("telco", telco);
+		jsonEncoder.addElement("maskingFlag", maskingFlag);
+		
+		jsonEncoder.buildJsonObject();
+		return jsonEncoder;
 	}
 
 	/**
@@ -210,12 +273,12 @@ public class SMSSender {
 				bubbleDS.closePreparedStatement();
 			} catch (SQLException e) {
 				retval="-2";
-				LogWriter.LOGGER.info("getTelcoDetail(): "+e.getMessage());
+				LogWriter.LOGGER.severe("getTelcoDetail(): "+e.getMessage());
 			}	
 		}
 		
 			
-		LogWriter.LOGGER.info("getAparty(): "+retval);/**/
+		LogWriter.LOGGER.info("getTelcoDetail(): "+retval);/**/
 		return retval;
 	}
 
@@ -453,19 +516,34 @@ public class SMSSender {
 		String broadcast_id="0";
 		String errorCodetmp = "-1";
 		String errorResponsetmp = "-1";	
+		
+		String masking = jsonDecoder.getNString("masking");
+		
 		UserDBOperations UDOp=new UserDBOperations(bubbleDS);
 		String userID=jsonDecoder.getJsonObject().getString("id");
 		String msisdnList=jsonDecoder.getEString("msisdn");
 		String [] msisdnListArray= msisdnList.split(",");
 		int arraySize =msisdnListArray.length;
 		msisdnCount=arraySize;
-		double smsPrice=UDOp.getCustomerChargingDetailUDB(userID,1);//1=regular non masking charge
+		double nonMaskingSmsPrice=UDOp.getCustomerChargingDetailUDB(userID,1);//1=regular non masking charge
+		double maskingSmsPrice=UDOp.getCustomerChargingDetailUDB(userID,2);//2= masking charge
+		String maskingFlag = "0";
 		String message=jsonDecoder.getJsonObject().getString("smsText");
-		int smsCount=getSMSSize(message);		
+		int smsCount=getSMSSize(message);
+		double smsPrice = 0.0;
+		
+		if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
+			smsPrice = nonMaskingSmsPrice;
+		} else {
+			smsPrice = maskingSmsPrice;
+		}
+		
+		
 		double tmpSMSCost=smsPrice*smsCount;
 		double temptotalCost=tmpSMSCost*arraySize;
 		smsCost=(double)Math.round(tmpSMSCost * 100d) / 100d;
 		double totalCost=(double)Math.round(temptotalCost * 100d) / 100d;
+		
 
 		if(getCustomerBalance(userID)>=totalCost) {
 			LogWriter.LOGGER.info("Sufficent balance: arraySize: "+arraySize+" totalCost: "+totalCost);
@@ -473,9 +551,15 @@ public class SMSSender {
 			if(smsPrice>0.0) {		
 				LogWriter.LOGGER.info(" ----message----:"+message);
 				try {
-					String userStatus=getUserType(userID);
-					String aparty=getAparty(userID);
-					String telco =getTelcoDetail(userID,aparty);
+					String userStatus = getUserType(userID);
+					String aparty = "";
+					String telco = "";
+					
+					if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
+						LogWriter.LOGGER.info("No masking provided.");
+						aparty=getAparty(userID);
+						telco =getTelcoDetail(userID,aparty);
+					}
 					//if aparty null check 
 					//if(userStatus.equals("1") || userStatus.equals("5")) { 
 					//1=active customer 5=admin 10=high value customer				
@@ -485,8 +569,22 @@ public class SMSSender {
 					}
 					if(userStatus.equals("1") || userStatus.equals("5") || userStatus.equals("10")) {
 						for(int i=0;i<arraySize;i++){
+							if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
+							}else {
+								JsonDecoder jd = new JsonDecoder(getSenderInfo(userID,this.msisdnNormalize(msisdnListArray[i]), masking).getJsonObject().toString());
+								aparty = jd.getNString("aparty");
+								telco = jd.getNString("telco");
+								maskingFlag = jd.getNString("maskingFlag");
+								if(maskingFlag.equals("0")) {
+									smsPrice = nonMaskingSmsPrice;
+								} else {
+									smsPrice = maskingSmsPrice;
+								}
+								tmpSMSCost=smsPrice*smsCount;
+								smsCost=(double)Math.round(tmpSMSCost * 100d) / 100d;
+							}
 							if(isValidMsisdn(msisdnListArray[i])) {						
-							LogWriter.LOGGER.info("bparty :"+ msisdnListArray[i]+" ,smsCost:"+smsCost+" smsPrice:"+smsPrice+" smsCount:"+smsCount);
+							LogWriter.LOGGER.info("aparty : " + aparty + " ,bparty :"+ msisdnListArray[i]+" , telco : " + telco + " ,smsCost:"+smsCost+" smsPrice:"+smsPrice+" smsCount:"+smsCount);
 							String sqlInsert="INSERT INTO smsinfo"
 									+ " (userid,message,bparty,source,aparty,telco_partner,cost,sms_count,broadcastId) "
 									+ "VALUES (?, ?, ?,'bubble',?,?,?,?,?)";

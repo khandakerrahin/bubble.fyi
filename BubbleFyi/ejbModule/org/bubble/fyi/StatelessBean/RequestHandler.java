@@ -202,6 +202,8 @@ public class RequestHandler implements RequestHandlerLocal {
 				retVal=new UserOperations(bubbleDS).lowBalanceBulkSMSResend(message,messageBody);			
 			}else if(action.equalsIgnoreCase("getPaymentReports")) {//documented
 				retVal=new UserOperations(bubbleDS).getPaymentLog(message,messageBody);
+			}else if(action.equalsIgnoreCase("getUserMaskings")) {//TODO documentation
+				retVal=new UserOperations(bubbleDS).getUserMaskings(message,messageBody);
 			}else if(action.equalsIgnoreCase("requestSingleSMSReport")) {//documented	
 				retVal=new UserOperations(bubbleDS).reportDownloadSinglesms(message,messageBody); 
 			}else if(action.equalsIgnoreCase("requestBulkSMSSummaryReport")) {//documented

@@ -39,7 +39,7 @@ public class JsonDecoder {
 		jsonObject=null;
 		jsonObjectMap=null;
 		try {
-			LogWriter.LOGGER.info("Decoding : "+ this.inputJSONString);
+			//LogWriter.LOGGER.info("Decoding : "+ this.inputJSONString);
 			
 			if(!jsonString.isEmpty()) {
 
@@ -56,14 +56,14 @@ public class JsonDecoder {
 		} catch (UnsupportedEncodingException e) {
 			errorCode="2"; this.errorMessage=e.getMessage();
 
-			LogWriter.LOGGER.info("Decoding ERROR: UnsupportedEncodingException " +e);
+			LogWriter.LOGGER.severe("Decoding ERROR: UnsupportedEncodingException " +e);
 		} catch (IOException e) {
 			errorCode="3"; this.errorMessage=e.getMessage();
-			LogWriter.LOGGER.info("Decoding ERROR: 1  "+e);
+			LogWriter.LOGGER.severe("Decoding ERROR: 1  "+e);
 			e.printStackTrace();
 		} catch (Exception e) {
 			errorCode="4"; this.errorMessage=e.getMessage();
-			LogWriter.LOGGER.info("Decoding ERROR: 2 "+e);e.printStackTrace();
+			LogWriter.LOGGER.severe("Decoding ERROR: 2 "+e);e.printStackTrace();
 		}
 	}
 	/**
