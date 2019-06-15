@@ -149,11 +149,12 @@ public class SMSSender {
 		String BL = "";
 		String GP = "";
 		String AR = "";
+		String TT = "";
 		String MR = "";
 		String maskingFlag = "1";
 		JsonEncoder jsonEncoder = new JsonEncoder();
 		String sql="SELECT ifnull(masking,'') as masking, ifnull(BL_masking,'') as BL, ifnull(GP_masking,'') as GP, "
-				+ "ifnull(AR_masking,'') as AR, ifnull(MR_masking,'') as MR FROM masking_configurations where user_id=? and flag=0 and id=?";
+				+ "ifnull(AR_masking,'') as AR, ifnull(MR_masking,'') as MR, ifnull(TT_masking,'') as TT  FROM masking_configurations where user_id=? and flag=0 and id=?";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, userID);
@@ -165,6 +166,7 @@ public class SMSSender {
 				GP = bubbleDS.getResultSet().getString(3);
 				AR = bubbleDS.getResultSet().getString(4);
 				MR = bubbleDS.getResultSet().getString(5);
+				TT = bubbleDS.getResultSet().getString(6);
 			}
 			bubbleDS.closeResultSet();
 			bubbleDS.closePreparedStatement();
@@ -180,7 +182,10 @@ public class SMSSender {
 			telco = "GP";
 		}else if(msisdn.startsWith("88018") || msisdn.startsWith("88016")) {
 			aparty = AR;
-			telco = "AR";
+			telco = "MR";
+		}else if(msisdn.startsWith("88015")) {
+			aparty = TT;
+			telco = "TT";
 		}
 		if(aparty.equals("")) {
 			if(MR.equals("")) {

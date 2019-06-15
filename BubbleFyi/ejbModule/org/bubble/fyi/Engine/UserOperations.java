@@ -146,13 +146,13 @@ public class UserOperations {
 		return new UserDBOperations(bubbleDS).createGroupInfo(id, listname);
 	}
 
-	public String GroupSMSDetailDB(String id, String sch_date, String message, String filename) {
-		return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date, message, filename).getJsonObject()
+	public String GroupSMSDetailDB(String id, String sch_date, String message, String filename, String masking) {
+		return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date, message, filename, masking).getJsonObject()
 				.toString();
 	}
 
-	public String OneToOneSMSDetailDB(String id, String sch_date, String filename) {
-		return new UserDBOperations(bubbleDS).createOneToOneSMSInfo(id, sch_date, filename).getJsonObject().toString();
+	public String OneToOneSMSDetailDB(String id, String sch_date, String filename, String masking) {
+		return new UserDBOperations(bubbleDS).createOneToOneSMSInfo(id, sch_date, filename, masking).getJsonObject().toString();
 	}
 
 	public String getFailedMsisdn(String id, String fileName, String oneToOneID, String listID, String groupID) {
@@ -208,7 +208,7 @@ public class UserOperations {
 			return new UserDBOperations(bubbleDS).sendSMSFromList(id, sch_date, message, listFile, masking).getJsonObject()
 					.toString();
 		} else {
-			return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date, message, listFile).getJsonObject()
+			return new UserDBOperations(bubbleDS).createGroupSMSInfo(id, sch_date, message, listFile, masking).getJsonObject()
 					.toString();
 		}
 	}
@@ -506,7 +506,7 @@ public class UserOperations {
 		}
 		if (json.getErrorCode().equals("0")) {
 			retval = GroupSMSDetailDB(json.getNString("id"), json.getNString("schedule_date"),
-					json.getNString("smsText"), json.getNString("filename"));
+					json.getNString("smsText"), json.getNString("filename"), json.getNString("masking"));
 
 		} else {
 			retval = "E:JSON string invalid";
@@ -524,7 +524,7 @@ public class UserOperations {
 		}
 		if (json.getErrorCode().equals("0")) {
 			retval = OneToOneSMSDetailDB(json.getNString("id"), json.getNString("schedule_date"),
-					json.getNString("filename"));
+					json.getNString("filename"), json.getNString("masking"));
 
 		} else {
 			retval = "E:JSON string invalid";

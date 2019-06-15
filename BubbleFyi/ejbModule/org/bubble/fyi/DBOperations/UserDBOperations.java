@@ -1171,7 +1171,7 @@ public class UserDBOperations {
 				+ "and p.msisdn_count is not null group by p.group_id,p.sms_count) q) r,\r\n" + "(select \r\n"
 				+ "ifnull(sum(p.counter),0) as sumC from \r\n"
 				+ "(select count(*)*t.sms_count as counter from smsinfo t \r\n"
-				+ "where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s, \r\n"
+				+ "where t.userid=? and t.group_id is null and t.sms_count is not null group by t.userid,t.sms_count ) p) s, \r\n"
 				+ "(select ifnull(sum(q.counter),0) as sumCdump from \r\n "
 				+ "(select count(*)*t.sms_count as counter  from smsinfo_dump t \r\n"
 				+ "where t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) q \r\n" + " ) sdump;";
@@ -1334,7 +1334,7 @@ public class UserDBOperations {
 				+ "and p.msisdn_count is not null group by p.group_id,p.sms_count) q) r, \r\n"
 				+ "(select ifnull(sum(p.counter),0) as sumC from \r\n"
 				+ "(select count(*)*t.sms_count as counter from smsinfo t \r\n"
-				+ "where (t.insert_date >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)) and t.userid=? and t.sms_count is not null group by t.userid,t.sms_count ) p) s;";
+				+ "where (t.insert_date >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)) and t.userid=? and t.group_id is null and t.sms_count is not null group by t.userid,t.sms_count ) p) s";
 		/*
 		 * select count(*)from smsinfo t where t.responseCode=0 and t.userid=1;
 		 */
@@ -1905,9 +1905,19 @@ public class UserDBOperations {
 			emailTemp = "Auto Approved";
 		}
 		SMSSender ss = new SMSSender(bubbleDS);
-		aparty = ss.getAparty(userId);
-		if (!aparty.isEmpty())
-			telcoDetail = ss.getTelcoDetail(userId,aparty);
+		
+		if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
+			LogWriter.LOGGER.info("No masking provided.");
+			aparty = ss.getAparty(userId);
+			masking = "0";
+			if (!aparty.isEmpty()){
+				telcoDetail = ss.getTelcoDetail(userId,aparty);
+			}
+		}else {
+			aparty = ss.getAparty(userId);
+			telcoDetail = "MK";	// for masking
+		}
+		
 		/**/
 		try {
 			String tempUid = isListTaggedUid_v2(listId);
@@ -1926,13 +1936,13 @@ public class UserDBOperations {
 
 					if (customerBalance >= (smsCost)) {
 						if (updateBalanceBulkSMS(userId, listMsCount * smsCount, smsPrice)) {
-							// count LIST maisdn, check with balance then deduct
+							// count LIST msisdn, check with balance then deduct
 
 							if (sch_date.isEmpty()) { // INSTANT SMS
 
 								String sql = "INSERT INTO groupsms_sender_info"
-										+ " (user_id,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,update_by) "
-										+ "VALUES (?,?,?,?,?,?,?,?,?)";
+										+ " (user_id,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,update_by,masking_conf) "
+										+ "VALUES (?,?,?,?,?,?,?,?,?,?)";
 								try {
 									bubbleDS.prepareStatement(sql, true);
 									bubbleDS.getPreparedStatement().setString(1, userId);
@@ -1944,6 +1954,7 @@ public class UserDBOperations {
 									bubbleDS.getPreparedStatement().setString(7, aparty);
 									bubbleDS.getPreparedStatement().setDouble(8, smsCost);
 									bubbleDS.getPreparedStatement().setString(9, updated_by);
+									bubbleDS.getPreparedStatement().setInt(10, Integer.parseInt(masking));
 									bubbleDS.execute();
 									String groupid = getNewGroupId();
 
@@ -1994,8 +2005,8 @@ public class UserDBOperations {
 								 * " Number of Recipient:"+listMsCount+" \n SMS GROUP ID:"+groupId;;
 								 */
 								String sql = "INSERT INTO groupsms_sender_info"
-										+ " (user_id,scheduled_date,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,update_by) "
-										+ "VALUES (?,?,?,?,?,?,?,?,?,?)";
+										+ " (user_id,scheduled_date,message,sms_count,flag,msisdn_count,telco_partner,aparty,cost,update_by,masking_conf) "
+										+ "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
 								// SELECT `group_id`, `user_id`, `aparty`, `msisdn_count`, `insert_date`,
 								// `scheduled_date`, `flag`, `message`, `sms_count`, `done_date` FROM
@@ -2016,6 +2027,7 @@ public class UserDBOperations {
 									bubbleDS.getPreparedStatement().setString(8, aparty);
 									bubbleDS.getPreparedStatement().setDouble(9, smsCost);
 									bubbleDS.getPreparedStatement().setString(10, updated_by);
+									bubbleDS.getPreparedStatement().setInt(11, Integer.parseInt(masking));
 									bubbleDS.execute();
 
 									String groupid = getNewGroupId();
@@ -2290,7 +2302,7 @@ public class UserDBOperations {
 	 * "RT"; }else { retval= "RT"; } return retval; }/
 	 **/
 
-	public JsonEncoder createGroupSMSInfo(String userId, String sch_date, String message, String filename) {
+	public JsonEncoder createGroupSMSInfo(String userId, String sch_date, String message, String filename, String masking) {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 
 		// NEED to incorporate cost
@@ -2301,14 +2313,24 @@ public class UserDBOperations {
 		String telcoDetail = "";
 
 		SMSSender ss = new SMSSender(bubbleDS);
-		aparty = ss.getAparty(userId);
-		if (!aparty.isEmpty())
-			telcoDetail = ss.getTelcoDetail(userId,aparty);
+		
+		if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
+			LogWriter.LOGGER.info("No masking provided.");
+			masking = "0";
+			aparty = ss.getAparty(userId);
+			if (!aparty.isEmpty()){
+				telcoDetail = ss.getTelcoDetail(userId,aparty);
+			}
+		}else {
+			aparty = ss.getAparty(userId);
+			telcoDetail = "MK";	// for masking
+		}
+		
 		try {
 			if (sch_date.isEmpty()) {
 
-				String sql = "INSERT INTO groupsms_sender_info" + " (user_id,message,sms_count,telco_partner,aparty) "
-						+ "VALUES (?,?,?,?,?)";
+				String sql = "INSERT INTO groupsms_sender_info" + " (user_id,message,sms_count,telco_partner,aparty,masking_conf) "
+						+ "VALUES (?,?,?,?,?,?)";
 
 				try {
 					// json: name,email,phone,password
@@ -2318,6 +2340,7 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setInt(3, smsCount);
 					bubbleDS.getPreparedStatement().setString(4, telcoDetail);
 					bubbleDS.getPreparedStatement().setString(5, aparty);
+					bubbleDS.getPreparedStatement().setInt(6, Integer.parseInt(masking));
 					errorCode = "0";// :Successfully Inserted
 					boolean insertSuccess = false;
 
@@ -2347,7 +2370,7 @@ public class UserDBOperations {
 				}
 			} else {
 				String sql = "INSERT INTO groupsms_sender_info"
-						+ " (user_id,scheduled_date,message,sms_count,telco_partner,aparty) " + "VALUES (?,?,?,?,?,?)";
+						+ " (user_id,scheduled_date,message,sms_count,telco_partner,aparty,masking_conf) " + "VALUES (?,?,?,?,?,?,?)";
 
 				// SELECT `group_id`, `user_id`, `aparty`, `msisdn_count`, `insert_date`,
 				// `scheduled_date`, `flag`, `message`, `sms_count`, `done_date` FROM
@@ -2361,6 +2384,7 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setInt(4, smsCount);
 					bubbleDS.getPreparedStatement().setString(5, telcoDetail);
 					bubbleDS.getPreparedStatement().setString(6, aparty);
+					bubbleDS.getPreparedStatement().setInt(7, Integer.parseInt(masking));
 
 					errorCode = "0";// :Successfully Inserted
 					boolean insertSuccess = false;
@@ -2410,7 +2434,7 @@ public class UserDBOperations {
 		return jsonEncoder;
 	}
 
-	public JsonEncoder createOneToOneSMSInfo(String userId, String sch_date, String filename) {
+	public JsonEncoder createOneToOneSMSInfo(String userId, String sch_date, String filename, String masking) {
 		JsonEncoder jsonEncoder = new JsonEncoder();
 
 		String errorCode = "-1";
@@ -2418,9 +2442,19 @@ public class UserDBOperations {
 		String telcoDetail = "";
 
 		SMSSender ss = new SMSSender(bubbleDS);
-		aparty = ss.getAparty(userId);
-		if (!aparty.isEmpty())
-			telcoDetail = ss.getTelcoDetail(userId,aparty);
+		
+		if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
+			LogWriter.LOGGER.info("No masking provided.");
+			masking = "0";
+			aparty = ss.getAparty(userId);
+			if (!aparty.isEmpty()){
+				telcoDetail = ss.getTelcoDetail(userId,aparty);
+			}
+		}else {
+			aparty = ss.getAparty(userId);
+			telcoDetail = "MK";	// for masking
+		}
+		
 		try {
 			String oneToOneID = "";
 			String sqlBroadcastLog = "INSERT INTO broadcast_log" + " (user_id,broadcast_type) " + "VALUES (?,?)";
@@ -2455,8 +2489,8 @@ public class UserDBOperations {
 
 			if (sch_date.isEmpty()) {
 
-				String sql = "INSERT INTO oneToOne_sender_info" + " (user_id,telco_partner,aparty,oneToOneID) "
-						+ "VALUES (?,?,?,?)";
+				String sql = "INSERT INTO oneToOne_sender_info" + " (user_id,telco_partner,aparty,oneToOneID,masking_conf) "
+						+ "VALUES (?,?,?,?,?)";
 
 				try {
 					// json: name,email,phone,password
@@ -2465,6 +2499,7 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setString(2, telcoDetail);
 					bubbleDS.getPreparedStatement().setString(3, aparty);
 					bubbleDS.getPreparedStatement().setString(4, oneToOneID);
+					bubbleDS.getPreparedStatement().setInt(5, Integer.parseInt(masking));
 					errorCode = "0";// :Successfully Inserted
 					boolean insertSuccess = false;
 
@@ -2493,7 +2528,7 @@ public class UserDBOperations {
 				}
 			} else {
 				String sql = "INSERT INTO oneToOne_sender_info"
-						+ " (user_id,scheduled_date,telco_partner,aparty,oneToOneID) " + "VALUES (?,?,?,?,?)";
+						+ " (user_id,scheduled_date,telco_partner,aparty,oneToOneID,masking_conf) " + "VALUES (?,?,?,?,?,?)";
 
 				try {
 					bubbleDS.prepareStatement(sql, true);
@@ -2502,6 +2537,7 @@ public class UserDBOperations {
 					bubbleDS.getPreparedStatement().setString(3, telcoDetail);
 					bubbleDS.getPreparedStatement().setString(4, aparty);
 					bubbleDS.getPreparedStatement().setString(5, oneToOneID);
+					bubbleDS.getPreparedStatement().setInt(6, Integer.parseInt(masking));
 
 					errorCode = "0";// :Successfully Inserted
 					boolean insertSuccess = false;
@@ -4103,7 +4139,7 @@ public class UserDBOperations {
 
 		String retval = "";
 		String errorCode = "-1";
-		String sql = "SELECT id, masking FROM masking_configurations where user_id=? and flag =0";
+		String sql = "SELECT id, masking FROM masking_configurations where user_id=? and flag =0 order by id desc";
 		try {
 			bubbleDS.prepareStatement(sql);
 			bubbleDS.getPreparedStatement().setString(1, id);
