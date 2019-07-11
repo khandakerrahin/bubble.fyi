@@ -263,7 +263,9 @@ public class UserDBOperations {
 	 * @return
 	 */
 	public String modifyBulksmsPStatus(String userId, String customerId, String groupId, String Status) {
-		double smsPrice = getCustomerChargingDetailUDB(customerId, 1);
+		String maskingConf = getGroupSmsSenderMasking(groupId);
+		int chargingType = getChargingType(userId,maskingConf);
+		double smsPrice = getCustomerChargingDetailUDB(customerId, chargingType);
 		String organization = getOrganizationName(customerId);
 		String adminName = getUserName(userId);
 		String retval = "-1";
@@ -1830,6 +1832,50 @@ public class UserDBOperations {
 		}
 		return retval;
 	}
+	
+	public int getChargingType(String userId, String masking) {
+		int chargingType = 1;
+		String sql = "SELECT case when (BL_masking = '' or BL_masking is null) and " + 
+				"(GP_masking = '' or GP_masking is null) and " + 
+				"(AR_masking = '' or AR_masking is null) and  " + 
+				"(TT_masking = '' or TT_masking is null) and  " + 
+				"(MR_masking = '' or MR_masking is null) then 1 else 2 end as chargingType, count(*) " + 
+				"FROM masking_configurations where user_id=? and flag=0 and id=?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setInt(1, Integer.parseInt(userId));
+			bubbleDS.getPreparedStatement().setInt(2, Integer.parseInt(masking));
+			bubbleDS.executeQuery();
+			if (bubbleDS.getResultSet().next()) {
+				chargingType = bubbleDS.getResultSet().getInt(1);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			LogWriter.LOGGER.severe("Exception(): " + e.getMessage());
+		}
+		
+		return chargingType;
+	}
+	
+	public String getGroupSmsSenderMasking(String groupID) {
+		String masking = "0";
+		String sql = "SELECT masking_conf FROM groupsms_sender_info where group_id = ?";
+		try {
+			bubbleDS.prepareStatement(sql);
+			bubbleDS.getPreparedStatement().setInt(1, Integer.parseInt(groupID));
+			bubbleDS.executeQuery();
+			if (bubbleDS.getResultSet().next()) {
+				masking = bubbleDS.getResultSet().getString(1);
+			}
+			bubbleDS.closeResultSet();
+			bubbleDS.closePreparedStatement();
+		} catch (SQLException e) {
+			LogWriter.LOGGER.severe("Exception(): " + e.getMessage());
+		}
+		
+		return masking;
+	}
 
 	/**
 	 * 
@@ -1885,7 +1931,24 @@ public class UserDBOperations {
 		String aparty = "";
 		String telcoDetail = "";
 		String updated_by = "-1";
-		double smsPrice = getCustomerChargingDetailUDB(userId, 1);
+		int chargeType = 1;
+		
+		SMSSender ss = new SMSSender(bubbleDS);
+		
+		if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
+			LogWriter.LOGGER.info("No masking provided.");
+			aparty = ss.getAparty(userId);
+			masking = "0";
+			if (!aparty.isEmpty()){
+				telcoDetail = ss.getTelcoDetail(userId,aparty);
+			}
+		}else {
+			chargeType = getChargingType(userId,masking);
+			aparty = ss.getAparty(userId);
+			telcoDetail = "MK";	// for masking
+		}
+		
+		double smsPrice = getCustomerChargingDetailUDB(userId, chargeType);
 		String organization = getOrganizationName(userId);
 		String emailTemp = "Approval Pending";
 
@@ -1904,19 +1967,7 @@ public class UserDBOperations {
 			statusFlag = 0;
 			emailTemp = "Auto Approved";
 		}
-		SMSSender ss = new SMSSender(bubbleDS);
 		
-		if(NullPointerExceptionHandler.isNullOrEmpty(masking)) {
-			LogWriter.LOGGER.info("No masking provided.");
-			aparty = ss.getAparty(userId);
-			masking = "0";
-			if (!aparty.isEmpty()){
-				telcoDetail = ss.getTelcoDetail(userId,aparty);
-			}
-		}else {
-			aparty = ss.getAparty(userId);
-			telcoDetail = "MK";	// for masking
-		}
 		
 		/**/
 		try {
