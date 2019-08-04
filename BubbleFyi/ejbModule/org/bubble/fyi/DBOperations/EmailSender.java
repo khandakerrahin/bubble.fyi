@@ -1,5 +1,6 @@
 package org.bubble.fyi.DBOperations;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -35,12 +36,12 @@ public class EmailSender {
 			/**
 https://120.50.5.39:8443/HttpReceiver/HttpReceiver?destinationName=spiderpostbox&destinationType=queue&clientid=spiderpostbox&target=ENGINE&LoadConf=N&reply=true&action=sendEmail
 			 */
-			this.destinationName="spiderpostboxrelay";
-			this.clientId="spiderpostboxrelay";
+//			this.destinationName="spiderpostboxrelay";
+//			this.clientId="spiderpostboxrelay";
 			
 			// to bypass relay
-//			this.destinationName="spiderpostbox";
-//			this.clientId="spiderpostbox";
+			this.destinationName="spiderpostbox";
+			this.clientId="spiderpostbox";
 			
 			this.target="ENGINE";
 			this.LoadConf="N";
@@ -93,7 +94,8 @@ https://120.50.5.39:8443/HttpReceiver/HttpReceiver?destinationName=spiderpostbox
 				LogWriter.LOGGER.severe("sendEmailToGroup sql exception: "+e);
 			}
 			
-			return sendEmailtoQueue(sender, reciever, emailSubject,mailBody,true);
+//			return sendEmailtoQueue(sender, reciever, emailSubject,mailBody,true);
+			return sendEmailByInsert(sender, reciever, emailSubject,mailBody);
 		}
 		
 		/**
@@ -177,6 +179,54 @@ https://120.50.5.39:8443/HttpReceiver/HttpReceiver?destinationName=spiderpostbox
 				LogWriter.LOGGER.severe(e.getStackTrace().toString());
 			//	this.logWriter.appendLog("SendEmail:"+retval);
 			//	this.logWriter.setStatus(0);
+			}
+			return retval;
+		}
+		
+		//	insertToPostalServices
+		public String sendEmailByInsert(String sender, String reciever, String emailSubject, String mailBody) {
+			String app_name = "bubble.fyi";
+			String retval = "-1";
+			try {
+				String sqlTransactionLog = "INSERT INTO PostalServices.app_email_queues (app_name, subject, mailbody, to_address, from_address, cc_address, bcc_address) values (?, ?, ?, ?, ?, ?, ?)";
+
+				try {
+					bubbleDS.prepareStatement(sqlTransactionLog, true);
+					bubbleDS.getPreparedStatement().setString(1, app_name);
+					bubbleDS.getPreparedStatement().setString(2, emailSubject);
+					bubbleDS.getPreparedStatement().setString(3, mailBody);
+					bubbleDS.getPreparedStatement().setString(4, reciever);
+					bubbleDS.getPreparedStatement().setString(5, sender);
+					bubbleDS.getPreparedStatement().setString(6, "");
+					bubbleDS.getPreparedStatement().setString(7, "");
+
+					bubbleDS.execute();
+
+					retval="0";
+
+				} catch (SQLIntegrityConstraintViolationException de) {
+					retval="1";
+					LogWriter.LOGGER.severe("SQLIntegrityConstraintViolationException:" + de.getMessage());
+				} catch (SQLException e) {
+					retval="11";
+					e.printStackTrace();
+					LogWriter.LOGGER.severe("SQLException" + e.getMessage());
+				} catch (Exception e) {
+					e.printStackTrace();
+					retval="-3";
+					e.printStackTrace();
+				}
+			} finally {
+				if (bubbleDS.getConnection() != null) {
+					try {
+						bubbleDS.closePreparedStatement();
+						// bubbleDS.getConnection().close();
+					} catch (SQLException e) {
+						retval="11";
+						e.printStackTrace();
+						LogWriter.LOGGER.severe(e.getMessage());
+					}
+				}
 			}
 			return retval;
 		}

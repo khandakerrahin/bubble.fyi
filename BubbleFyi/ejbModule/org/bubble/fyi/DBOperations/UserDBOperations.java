@@ -282,8 +282,8 @@ public class UserDBOperations {
 						} else {
 							repStatus = "Rejected";
 						}
-						String mailBody = repStatus + " by " + adminName + ".\n" + " Broadcast ID:" + groupId
-								+ " \n  Company name: " + organization + ".";
+						String mailBody = repStatus + " by " + adminName + ".<br>" + " Broadcast ID:" + groupId
+								+ "<br>Company name: " + organization + ".";
 
 						new EmailSender(bubbleDS).sendEmailToGroup("1", mailBody);
 						// new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);
@@ -2015,10 +2015,10 @@ public class UserDBOperations {
 										errorCode = "0";
 										transaction_logger(userId, smsCost, 1, 1, "listId:" + listId);
 
-										String mailBody = emailTemp + "\n Broadcast ID:" + groupid + "\n Company name: "
+										String mailBody = "<strong>"+emailTemp + "</strong><br>Broadcast ID:" + groupid + "<br>Company name: "
 												+ organization
-												+ "\n Scheduled Date: instant SMS(approve now) \n Message text: "
-												+ message + " \n" + "Number of Recipient:" + listMsCount;
+												+ "<br>Scheduled Date: instant SMS(approve now) <br>Message text: "
+												+ message + " <br>" + "Number of Recipient:" + listMsCount;
 
 										// new EmailSender(bubbleDS).sendEmailToGroup("1",emailSubject,mailBody);
 										new EmailSender(bubbleDS).sendEmailToGroup("1", mailBody);
