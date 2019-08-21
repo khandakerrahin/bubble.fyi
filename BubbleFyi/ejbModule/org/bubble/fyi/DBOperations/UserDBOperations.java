@@ -2015,7 +2015,7 @@ public class UserDBOperations {
 										errorCode = "0";
 										transaction_logger(userId, smsCost, 1, 1, "listId:" + listId);
 
-										String mailBody = "<strong>"+emailTemp + "</strong><br>Broadcast ID:" + groupid + "<br>Company name: "
+										String mailBody = "<strong>"+emailTemp + "</strong> <a href=\"https://bubble.fyi\">Click Here</a><br>Broadcast ID:" + groupid + "<br>Company name: "
 												+ organization
 												+ "<br>Scheduled Date: instant SMS(approve now) <br>Message text: "
 												+ message + " <br>" + "Number of Recipient:" + listMsCount;
@@ -2085,7 +2085,7 @@ public class UserDBOperations {
 									if (insertToGroupSMSSenderFromList(listId, groupid)) {
 
 										errorCode = "0";
-										String mailBody = emailTemp + "\n Broadcast ID:" + groupid + "\n Company name: "
+										String mailBody = emailTemp + " <a href=\\\"https://bubble.fyi\\\">Click Here</a>\n Broadcast ID:" + groupid + "\n Company name: "
 												+ organization + "\n Scheduled Date:" + sch_date + " \n  Message text: "
 												+ message + " \n" + "Number of Recipient:" + listMsCount;
 
@@ -4718,7 +4718,7 @@ public class UserDBOperations {
 		// getUserTypeCustomerList(id);
 		String retval = "";
 		String errorCode = "-1";
-		String sql = "SELECT list_id, list_name,DATE_FORMAT(created, \"%d-%m-%Y %h:%i %p\") as created,status, (select count(*) from group_msisdn_list t where t.list_id=u.list_id) msisdnCount\r\n"
+		String sql = "SELECT list_id, list_name,DATE_FORMAT(created, \"%d-%m-%Y %h:%i %p\") as created,status, 0 as msisdnCount\r\n"
 				+ " FROM group_list  u \r\n" + " where user_id = ? ORDER BY list_id desc limit 0,100";
 		try {
 
